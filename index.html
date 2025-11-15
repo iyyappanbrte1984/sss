@@ -1,159 +1,143 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
 <head>
-    <meta charset="utf-8">
-    <title>**** ** Trash - ***** → micro:bit</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 12px;
-        }
-
-        video {
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-
-        button {
-            margin: 6px;
-            padding: 8px 12px;
-            font-size: 16px;
-        }
-
-        #status {
-            margin-top: 6px;
-            font-weight: 600;
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>Fish vs Trash - Phone → micro:bit</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 12px; }
+    video { border: 1px solid #ccc; border-radius: 8px; }
+    button { margin:6px; padding:8px 12px; font-size:16px; }
+    #status { margin-top:6px; font-weight:600; }
+  </style>
 </head>
-
 <body>
-    <h1>**** vs Trash &mdash; Vision Demo</h1><span class="fr-video fr-deletable fr-fvc fr-dvi fr-draggable" contenteditable="false"><video id="webcam" autoplay="" playsinline="" width="320" height="240"><br></video></span>
-    <div><button id="btnStart">***** ****** &amp; Load Model</button> <button id="btnConnect">Connect micro:bit</button></div>
-    <div id="status">Status: idle</div>
-    <div id="label">Label: --</div>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
-    <script>
-        // ===== CONFIG: only change MODEL_PATH if necessary =====
-        const MODEL_PATH = "model/model.json"; // default when you upload to GitHub Pages
-        const CLASS_NAMES = null; // set to null to auto-read metadata.json labels, otherwise e.g. ['Fish','Trash']
-        
-        // BLE UART UUIDs
-        const UART_SERVICE_UUID  = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-        const UART_TX_CHAR_UUID  = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write
-        
-        let model = null;
-        let video = document.getElementById('webcam');
-        let btnStart = document.getElementById('btnStart');
-        let btnConnect = document.getElementById('btnConnect');
-        let statusEl = document.getElementById('status');
-        let labelEl = document.getElementById('label');
-        
-        let uartTxChar = null;
-        let classNames = CLASS_NAMES; // array of labels (string)
-        
-        async function loadModelAndLabels() {
-          statusEl.innerText = 'Status: loading model...';
-          model = await tf.loadGraphModel(MODEL_PATH);
-          statusEl.innerText = 'Status: model loaded';
-          if (!classNames) {
-            try {
-              const metaResp = await fetch(MODEL_PATH.replace('model.json','metadata.json'));
-              if (metaResp.ok) {
-                const meta = await metaResp.json();
-                if (meta.labels) classNames = meta.labels;
-              }
-            } catch(e) { console.warn('metadata.json not found or unreadable'); }
-          }
-          if (!classNames) classNames = ['Fish','Trash']; // fallback: ensure something
-          console.log('Class names:', classNames);
-        }
-        
-        async function startCamera() {
-          statusEl.innerText = 'Status: starting camera...';
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-          video.srcObject = stream;
-          await video.play();
-          statusEl.innerText = 'Status: camera started';
-          requestAnimationFrame(classifyLoop);
-        }
-        
-        async function classifyLoop() {
-          if (!model || video.readyState !== 4) {
-            requestAnimationFrame(classifyLoop);
-            return;
-          }
-          // typical Teachable Machine exports expect 224x224 input
-          const inputSize = 224;
-          const t = tf.browser.fromPixels(video).resizeNearestNeighbor([inputSize,inputSize]).toFloat().div(255.0).expandDims();
-          const preds = model.predict(t);
-          const data = await preds.data();
-          t.dispose();
-          preds.dispose();
-        
-          // pick max
-          let maxI = 0;
-          for (let i=1;i<data.length;i++) if (data[i] > data[maxI]) maxI = i;
-          const conf = Math.round(data[maxI]*100);
-          const label = classNames[maxI] || ("Class"+maxI);
-          labelEl.innerText = `Label: ${label} (${conf}%)`;
-          statusEl.innerText = 'Status: running inference';
-        
-          // only send if confident enough (avoid spam) — adjust threshold as needed
-          if (uartTxChar && conf >= 50) {
-            sendToMicrobit(label.toUpperCase());
-          }
-          // run at ~2 fps to save battery
-          setTimeout(()=>requestAnimationFrame(classifyLoop), 450);
-        }
-        
-        async function connectMicrobit() {
-          try {
-            statusEl.innerText = 'Status: requesting device...';
-            const device = await navigator.bluetooth.requestDevice({
-              filters: [{ namePrefix: 'BBC micro:bit' }],
-              optionalServices: [UART_SERVICE_UUID]
-            });
-            statusEl.innerText = 'Status: connecting...';
-            const server = await device.gatt.connect();
-            const service = await server.getPrimaryService(UART_SERVICE_UUID);
-            uartTxChar = await service.getCharacteristic(UART_TX_CHAR_UUID);
-            statusEl.innerText = 'Status: connected to ' + (device.name||'micro:bit');
-          } catch (err) {
-            console.error(err);
-            statusEl.innerText = 'Status: Bluetooth failed';
-            alert('Bluetooth/connection failed. Use Chrome on Android and ensure micro:bit has a BLE UART service enabled.');
-          }
-        }
-        
-        async function sendToMicrobit(text) {
-          if (!uartTxChar) return;
-          const enc = new TextEncoder();
-          try {
-            await uartTxChar.writeValue(enc.encode(text + '\n'));
-            console.log('Sent to micro:bit:', text);
-          } catch(e) {
-            console.warn('Write failed', e);
-            statusEl.innerText = 'Status: write failed';
-          }
-        }
-        
-        btnStart.onclick = async () => {
-          try {
-            if (!model) await loadModelAndLabels();
-            await startCamera();
-          } catch(e) {
-            console.error(e);
-            statusEl.innerText = 'Status: error: ' + e.message;
-            alert('Error starting camera or loading model. Check console.');
-          }
-        };
-        btnConnect.onclick = async () => { await connectMicrobit(); };
-    </script>
+  <h1>Fish vs Trash — Vision Demo</h1>
+  <video id="webcam" autoplay playsinline width="320" height="240"></video>
+  <div>
+    <button id="btnStart">Start Camera & Load Model</button>
+    <button id="btnConnect">Connect micro:bit</button>
+  </div>
+  <div id="status">Status: idle</div>
+  <div id="label">Label: --</div>
 
-<div style="color: red"> THANK YOU "> . </a> . </div>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+  <script>
+  // ===== CONFIG: only change MODEL_PATH if necessary =====
+  const MODEL_PATH = "model/model.json"; // default when you upload to GitHub Pages
+  const CLASS_NAMES = null; // set to null to auto-read metadata.json labels, otherwise e.g. ['Fish','Trash']
+
+  // BLE UART UUIDs
+  const UART_SERVICE_UUID  = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+  const UART_TX_CHAR_UUID  = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write
+
+  let model = null;
+  let video = document.getElementById('webcam');
+  let btnStart = document.getElementById('btnStart');
+  let btnConnect = document.getElementById('btnConnect');
+  let statusEl = document.getElementById('status');
+  let labelEl = document.getElementById('label');
+
+  let uartTxChar = null;
+  let classNames = CLASS_NAMES; // array of labels (string)
+
+  async function loadModelAndLabels() {
+    statusEl.innerText = 'Status: loading model...';
+    model = await tf.loadGraphModel(MODEL_PATH);
+    statusEl.innerText = 'Status: model loaded';
+    if (!classNames) {
+      try {
+        const metaResp = await fetch(MODEL_PATH.replace('model.json','metadata.json'));
+        if (metaResp.ok) {
+          const meta = await metaResp.json();
+          if (meta.labels) classNames = meta.labels;
+        }
+      } catch(e) { console.warn('metadata.json not found or unreadable'); }
+    }
+    if (!classNames) classNames = ['Fish','Trash']; // fallback: ensure something
+    console.log('Class names:', classNames);
+  }
+
+  async function startCamera() {
+    statusEl.innerText = 'Status: starting camera...';
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    video.srcObject = stream;
+    await video.play();
+    statusEl.innerText = 'Status: camera started';
+    requestAnimationFrame(classifyLoop);
+  }
+
+  async function classifyLoop() {
+    if (!model || video.readyState !== 4) {
+      requestAnimationFrame(classifyLoop);
+      return;
+    }
+    // typical Teachable Machine exports expect 224x224 input
+    const inputSize = 224;
+    const t = tf.browser.fromPixels(video).resizeNearestNeighbor([inputSize,inputSize]).toFloat().div(255.0).expandDims();
+    const preds = model.predict(t);
+    const data = await preds.data();
+    t.dispose();
+    preds.dispose();
+
+    // pick max
+    let maxI = 0;
+    for (let i=1;i<data.length;i++) if (data[i] > data[maxI]) maxI = i;
+    const conf = Math.round(data[maxI]*100);
+    const label = classNames[maxI] || ("Class"+maxI);
+    labelEl.innerText = `Label: ${label} (${conf}%)`;
+    statusEl.innerText = 'Status: running inference';
+
+    // only send if confident enough (avoid spam) — adjust threshold as needed
+    if (uartTxChar && conf >= 50) {
+      sendToMicrobit(label.toUpperCase());
+    }
+    // run at ~2 fps to save battery
+    setTimeout(()=>requestAnimationFrame(classifyLoop), 450);
+  }
+
+  async function connectMicrobit() {
+    try {
+      statusEl.innerText = 'Status: requesting device...';
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'BBC micro:bit' }],
+        optionalServices: [UART_SERVICE_UUID]
+      });
+      statusEl.innerText = 'Status: connecting...';
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(UART_SERVICE_UUID);
+      uartTxChar = await service.getCharacteristic(UART_TX_CHAR_UUID);
+      statusEl.innerText = 'Status: connected to ' + (device.name||'micro:bit');
+    } catch (err) {
+      console.error(err);
+      statusEl.innerText = 'Status: Bluetooth failed';
+      alert('Bluetooth/connection failed. Use Chrome on Android and ensure micro:bit has a BLE UART service enabled.');
+    }
+  }
+
+  async function sendToMicrobit(text) {
+    if (!uartTxChar) return;
+    const enc = new TextEncoder();
+    try {
+      await uartTxChar.writeValue(enc.encode(text + '\n'));
+      console.log('Sent to micro:bit:', text);
+    } catch(e) {
+      console.warn('Write failed', e);
+      statusEl.innerText = 'Status: write failed';
+    }
+  }
+
+  btnStart.onclick = async () => {
+    try {
+      if (!model) await loadModelAndLabels();
+      await startCamera();
+    } catch(e) {
+      console.error(e);
+      statusEl.innerText = 'Status: error: ' + e.message;
+      alert('Error starting camera or loading model. Check console.');
+    }
+  };
+  btnConnect.onclick = async () => { await connectMicrobit(); };
+  </script>
 </body>
-
 </html>
