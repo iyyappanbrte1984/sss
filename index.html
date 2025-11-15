@@ -49,17 +49,76 @@
 
     .center-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 10px 30px rgba(6,20,40,0.06);display:flex;flex-direction:column;align-items:center;gap:10px}
     video#webcam{width:100%;max-width:520px;border-radius:10px;background:#000;aspect-ratio:4/3;object-fit:cover;box-shadow:0 8px 30px rgba(6,20,40,0.06)}
-    .ocean-controls{background:var(--ocean-box);border-radius:10px;padding:12px;display:flex;gap:10px;align-items:center;justify-content:center;width:100%;max-width:520px;flex-wrap:wrap}
-    .ocean-controls button{border:0;padding:10px 14px;border-radius:8px;font-weight:800;color:#fff;background:transparent;cursor:pointer}
-    .ocean-controls .start{background:rgba(255,255,255,0.08);box-shadow: inset 0 -2px 0 rgba(255,255,255,0.03)}
-    .ocean-controls .connect{background:rgba(255,255,255,0.12)}
-    .ocean-controls .csv{background:rgba(0,0,0,0.12)}
-    .status{color:#e8f5ff;font-weight:700;margin-top:4px;font-size:14px;text-align:center}
+    /* ------- Replace old ocean-controls + status styles with this ------- */
 
-    .labelbar{display:flex;gap:12px;align-items:center;width:100%;max-width:520px;margin-top:6px}
-    .label{flex:1;font-weight:800;color:var(--ocean-900);background:#fff;padding:8px 10px;border-radius:8px;text-align:center}
-    .confidence{width:180px;height:12px;background:#eaf6ff;border-radius:8px;overflow:hidden;border:1px solid rgba(10,30,60,0.04)}
-    .confidence > i{display:block;height:100%;background:linear-gradient(90deg,#39a1ff,var(--ocean-700));width:0%}
+/* ocean-controls: container is transparent; buttons carry the ocean style */
+.ocean-controls{
+  background: transparent; /* container transparent now */
+  border-radius:10px;
+  padding:8px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  max-width:520px;
+  flex-wrap:wrap;
+}
+
+/* individual buttons hold the ocean gradient and inner clickable area */
+.ocean-controls button{
+  border:0;
+  padding:10px 16px;
+  border-radius:8px;
+  font-weight:800;
+  color:#fff;
+  cursor:pointer;
+  min-width:160px;
+  box-shadow:0 8px 18px rgba(7,20,50,0.12);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+
+/* distinct styles per button (keeps them clearly clickable) */
+.ocean-controls button.start{
+  background: linear-gradient(90deg,#39a1ff,#0b74de);
+}
+.ocean-controls button.connect{
+  background: linear-gradient(90deg,#0b74de,#055fa8);
+}
+.ocean-controls button.csv{
+  background: linear-gradient(90deg,#2b9bde,#0b74de);
+}
+
+/* hover / press */
+.ocean-controls button:hover{ transform:translateY(-3px); box-shadow:0 14px 30px rgba(7,20,50,0.14); }
+.ocean-controls button:active{ transform:translateY(0); box-shadow:0 6px 12px rgba(7,20,50,0.08); }
+
+/* make status text more visible (higher contrast) */
+.status{
+  color:#002b45;        /* darker ocean color */
+  font-weight:700;
+  margin-top:8px;
+  background: rgba(255,255,255,0.9);
+  padding:6px 10px;
+  border-radius:8px;
+  box-shadow: 0 6px 14px rgba(6,20,40,0.04);
+  font-size:14px;
+  text-align:center;
+}
+
+/* label and confidence better contrast */
+.label{
+  flex:1;
+  font-weight:800;
+  color:var(--ocean-900);
+  background:#ffffff;
+  padding:8px 10px;
+  border-radius:8px;
+  text-align:center;
+  box-shadow: 0 6px 14px rgba(6,20,40,0.03);
+}
+.confidence{ width:180px; height:12px; background:#eaf6ff; border-radius:8px; overflow:hidden; border:1px solid rgba(10,30,60,0.04); }
+.confidence > i{ display:block; height:100%; background:linear-gradient(90deg,#39a1ff,var(--ocean-700)); width:0%; transition:width .18s ease; }
 
     /* Bottom gallery full width */
     .bottom-gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}
@@ -96,7 +155,8 @@
 
     <!-- hero poster top center -->
     <div class="hero">
-      <img src="assets/poster10.jpg" alt="Main poster" id="heroPoster">
+    <img src="assets/poster10.jpg" alt="Main poster" id="heroPoster">
+<img src="assets/poster10.jpg" alt="Main poster" id="heroPoster" onerror="this.style.display='none'">
     </div>
 
     <!-- main stage: left posters, camera center, right posters -->
