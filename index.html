@@ -143,5 +143,112 @@
   };
   btnConnect.onclick = async () => { await connectMicrobit(); };
   </script>
+  <!-- BEGIN: Robust camera+model loader (replace previous start code) -->
+<div id="errorBox" style="position:fixed;left:8px;right:8px;bottom:8px;padding:10px;background:#fff3cd;border:1px solid #f5c6cb;z-index:9999;font-family:Arial, sans-serif;display:none;">
+  <strong>Debug info:</strong>
+  <pre id="errorText" style="white-space:pre-wrap;margin:6px 0 0 0;font-size:13px"></pre>
+</div>
+
+<script>
+  function showError(msg){
+    const box = document.getElementById('errorBox');
+    const txt = document.getElementById('errorText');
+    txt.textContent = (msg && msg.stack) ? (msg.stack) : String(msg);
+    box.style.display = 'block';
+    console.error('User-visible error:', msg);
+  }
+
+  // Update these to match your repo/model path if different
+  const MODEL_URL = 'model/model.json';
+  const METADATA_URL = 'model/metadata.json';
+
+  // placeholder for the loaded model and webcam
+  let tmModel = null;
+  let webcamStream = null;
+  let videoEl = null;
+
+  async function initApp() {
+    try {
+      // check model files exist (fetch test)
+      const r = await fetch(MODEL_URL, { method: 'GET' });
+      if (!r.ok) throw new Error('Model file not found at ' + MODEL_URL + ' (HTTP ' + r.status + ')');
+
+      // load teachable machine image model
+      tmModel = await tmImage.load(MODEL_URL, METADATA_URL);
+      if (!tmModel) throw new Error('tmImage.load returned undefined (version mismatch?)');
+
+      // start camera
+      videoEl = document.querySelector('video') || document.createElement('video');
+      videoEl.setAttribute('autoplay','');
+      videoEl.setAttribute('playsinline',''); // for mobile
+      videoEl.style.width = '320px';
+      videoEl.style.height = '240px';
+      if (!document.querySelector('video')) document.body.insertBefore(videoEl, document.body.firstChild);
+
+      try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+        videoEl.srcObject = webcamStream;
+        await videoEl.play();
+      } catch(camErr) {
+        throw new Error('Camera start failed: ' + (camErr && camErr.message ? camErr.message : camErr));
+      }
+
+      // At this point model + camera are running
+      // Optionally start prediction loop
+      startPredictionLoop();
+
+    } catch (err) {
+      showError(err);
+    }
+  }
+
+  async function startPredictionLoop() {
+    try {
+      if (!tmModel) throw new Error('Model not loaded');
+      if (!videoEl || videoEl.readyState < 2) {
+        // wait for video to be ready
+        await new Promise(res => setTimeout(res, 500));
+      }
+      // do a single predict as a test
+      const prediction = await tmModel.predict(videoEl);
+      // prediction should be an array of objects if model loaded correctly
+      if (!Array.isArray(prediction)) throw new Error('Predict returned unexpected result: ' + JSON.stringify(prediction));
+      console.log('Single predict OK:', prediction);
+      // update any UI label if present
+      const labelEl = document.getElementById('label') || (function(){ let e=document.createElement('div'); e.id='label'; document.body.appendChild(e); return e; })();
+      labelEl.textContent = 'Label: ' + (prediction[0] && prediction[0].className ? prediction[0].className : '--');
+      // start continuous loop
+      requestAnimationFrame(predictLoop);
+    } catch(e) {
+      showError(e);
+    }
+  }
+
+  async function predictLoop() {
+    try {
+      const preds = await tmModel.predict(videoEl);
+      // handle the predictions as you already do
+      // example: display top label
+      preds.sort((a,b)=>b.probability - a.probability);
+      const top = preds[0];
+      const labelEl = document.getElementById('label');
+      if (labelEl) labelEl.textContent = 'Label: ' + top.className + ' (' + (top.probability*100).toFixed(1) + '%)';
+    } catch(loopErr) {
+      showError(loopErr);
+      return;
+    }
+    setTimeout(()=>requestAnimationFrame(predictLoop), 300); // ~3 FPS
+  }
+
+  // bind to the "Start Camera & Load Model" button if present
+  window.addEventListener('load', () => {
+    const btn = document.querySelector('button#startBtn') || document.querySelector('button');
+    if (btn) btn.addEventListener('click', initApp);
+    // Optionally auto-start:
+    // initApp();
+  });
+</script>
+<!-- END: Robust camera+model loader -->
+
 </body>
 </html>
