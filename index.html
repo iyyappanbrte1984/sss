@@ -245,6 +245,20 @@ h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
 
         <div class="labelbar" aria-live="polite">
           <div class="label" id="label">Label: --</div>
+          <!-- LIVE COUNTERS (web) -->
+<div style="margin-top:10px;text-align:center;">
+  <div style="display:inline-flex;gap:12px;align-items:center;">
+    <div style="background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 6px 16px rgba(6,20,40,0.04)">
+      Fish: <strong id="fishCountDisplay">0</strong>
+    </div>
+    <div style="background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 6px 16px rgba(6,20,40,0.04)">
+      Trash: <strong id="trashCountDisplay">0</strong>
+    </div>
+    <div style="background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 6px 16px rgba(6,20,40,0.04)">
+      Emerg: <strong id="emergCountDisplay">0</strong>
+    </div>
+  </div>
+</div>
           <div class="confidence" aria-hidden="true"><i id="confFill"></i></div>
         </div>
       </div>
@@ -313,27 +327,63 @@ h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
 
         isPredicting = true;
         // ---- CONFIG ----
-const SEND_CONFIDENCE_THRESHOLD = 0.60; // only count/send when confidence >= 60%
+// ---------------- CONFIG ----------------
+const SEND_CONFIDENCE_THRESHOLD = 0.60; // send only when confidence >= 0.60 (adjust if noisy)
+const MICROBIt_SEND_DEBOUNCE_MS = 700;  // avoid rapid repeated sends
 
-// helper to map label -> short code sent to micro:bit
+// web-side counters (displayed on page)
+let webFishCount = 0;
+let webTrashCount = 0;
+let webEmergCount = 0;
+
+// last micro:bit send timestamp to prevent flooding
+let _lastMicrobitSendAt = 0;
+
+// helper: map label text -> short single-letter code
 function labelToCode(label) {
   if (!label) return null;
-  const low = label.toLowerCase();
+  const low = label.toString().toLowerCase();
+  // adapt these checks to match your Teachable Machine class names exactly if needed
   if (low.includes('fish')) return 'F';
   if (low.includes('trash')) return 'T';
   if (low.includes('emerg') || low.includes('emergency')) return 'E';
-  // fallback: if you have class names exactly "Fish", "Trash", "Emergency" it still works.
   return null;
 }
 
-// Modified predict loop: sends the short code on every valid detection above threshold
+// update live counters UI
+function updateWebCountersUI(){
+  const f = document.getElementById('fishCountDisplay');
+  const t = document.getElementById('trashCountDisplay');
+  const e = document.getElementById('emergCountDisplay');
+  if(f) f.textContent = String(webFishCount);
+  if(t) t.textContent = String(webTrashCount);
+  if(e) e.textContent = String(webEmergCount);
+}
+
+// send a newline-terminated code to micro:bit (if connected) with simple debounce
+async function sendCodeToMicrobit(code){
+  if (!window._microbitTx) return;
+  if (!code) return;
+  const now = Date.now();
+  if (now - _lastMicrobitSendAt < MICROBIt_SEND_DEBOUNCE_MS) return; // debounce
+  _lastMicrobitSendAt = now;
+  try {
+    const enc = new TextEncoder();
+    await window._microbitTx.writeValue(enc.encode(code + '\n'));
+  } catch(err){
+    console.warn('microbit write failed', err);
+  }
+}
+
+// The main predict loop (call startCameraAndModel sets isPredicting true)
 async function predictLoop(){
   try {
     if (!tmModel) throw new Error('Model not loaded');
+    // model prediction
     const preds = await tmModel.predict(videoEl, false);
     if (!Array.isArray(preds)) throw new Error('Unexpected prediction returned');
 
-    // sort and pick top
+    // pick top prediction
     preds.sort((a,b)=>b.probability - a.probability);
     const top = preds[0] || {className:'--', probability:0};
     const pct = Math.round(top.probability * 100);
@@ -347,22 +397,27 @@ async function predictLoop(){
     // log for CSV
     predictionsLog.push({t: Date.now(), label: top.className, conf: top.probability});
 
-    // If prediction is confident enough, send a short code to micro:bit
-    if (top.probability >= SEND_CONFIDENCE_THRESHOLD && window._microbitTx) {
+    // if confident enough, update web counters and send letter to micro:bit
+    if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
       const code = labelToCode(top.className);
-      if (code) {
-        try {
-          const enc = new TextEncoder();
-          // send e.g. "F\n" so micro:bit receives newline-terminated frames
-          await window._microbitTx.writeValue(enc.encode(code + '\n'));
-          // optional: small delay is not required but avoids flooding
-        } catch (err) {
-          console.warn('micro:bit write failed:', err);
-        }
+      if (code === 'F'){
+        webFishCount += 1;
+        updateWebCountersUI();
+        // send to micro:bit
+        await sendCodeToMicrobit('F');
+      } else if (code === 'T'){
+        webTrashCount += 1;
+        updateWebCountersUI();
+        await sendCodeToMicrobit('T');
+      } else if (code === 'E'){
+        webEmergCount += 1;
+        updateWebCountersUI();
+        await sendCodeToMicrobit('E');
       }
+      // otherwise unknown class - ignore
     }
 
-    // continue loop ~3fps
+    // continue loop ~3 fps
     if (isPredicting) setTimeout(()=>requestAnimationFrame(predictLoop), 300);
   } catch(e){
     showError(e);
