@@ -312,30 +312,62 @@ h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
         showStatus('camera ready');
 
         isPredicting = true;
-        predictLoop();
-      } catch(err) {
-        showError(err);
+        // ---- CONFIG ----
+const SEND_CONFIDENCE_THRESHOLD = 0.60; // only count/send when confidence >= 60%
+
+// helper to map label -> short code sent to micro:bit
+function labelToCode(label) {
+  if (!label) return null;
+  const low = label.toLowerCase();
+  if (low.includes('fish')) return 'F';
+  if (low.includes('trash')) return 'T';
+  if (low.includes('emerg') || low.includes('emergency')) return 'E';
+  // fallback: if you have class names exactly "Fish", "Trash", "Emergency" it still works.
+  return null;
+}
+
+// Modified predict loop: sends the short code on every valid detection above threshold
+async function predictLoop(){
+  try {
+    if (!tmModel) throw new Error('Model not loaded');
+    const preds = await tmModel.predict(videoEl, false);
+    if (!Array.isArray(preds)) throw new Error('Unexpected prediction returned');
+
+    // sort and pick top
+    preds.sort((a,b)=>b.probability - a.probability);
+    const top = preds[0] || {className:'--', probability:0};
+    const pct = Math.round(top.probability * 100);
+
+    // update UI
+    document.getElementById('label').textContent = 'Label: ' + top.className;
+    document.getElementById('confFill').style.width = pct + '%';
+    document.getElementById('metaInfo').textContent = `Confidence: ${pct}% · Model: local`;
+    showStatus(`live · ${pct}%`);
+
+    // log for CSV
+    predictionsLog.push({t: Date.now(), label: top.className, conf: top.probability});
+
+    // If prediction is confident enough, send a short code to micro:bit
+    if (top.probability >= SEND_CONFIDENCE_THRESHOLD && window._microbitTx) {
+      const code = labelToCode(top.className);
+      if (code) {
+        try {
+          const enc = new TextEncoder();
+          // send e.g. "F\n" so micro:bit receives newline-terminated frames
+          await window._microbitTx.writeValue(enc.encode(code + '\n'));
+          // optional: small delay is not required but avoids flooding
+        } catch (err) {
+          console.warn('micro:bit write failed:', err);
+        }
       }
     }
 
-    async function predictLoop(){
-      try {
-        if (!tmModel) throw new Error('Model not loaded');
-        const preds = await tmModel.predict(videoEl, false);
-        if (!Array.isArray(preds)) throw new Error('Unexpected prediction returned');
-        preds.sort((a,b)=>b.probability - a.probability);
-        const top = preds[0] || {className:'--',probability:0};
-        document.getElementById('label').textContent = 'Label: ' + top.className;
-        const pct = Math.round(top.probability * 100);
-        document.getElementById('confFill').style.width = pct + '%';
-        showStatus('live · ' + pct + '%');
-
-        predictionsLog.push({t: Date.now(), label: top.className, conf: top.probability});
-        if (isPredicting) setTimeout(()=>requestAnimationFrame(predictLoop), 300);
-      } catch(e){
-        showError(e);
-      }
-    }
+    // continue loop ~3fps
+    if (isPredicting) setTimeout(()=>requestAnimationFrame(predictLoop), 300);
+  } catch(e){
+    showError(e);
+  }
+}
 
     function downloadCSV(){
       if (predictionsLog.length === 0){ alert('No predictions recorded yet'); return; }
