@@ -444,23 +444,47 @@ if (metaEl) metaEl.textContent = `Confidence: ${pct}% · Model: local`;
       setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 2000);
     }
 
-    async function connectMicrobit(){
-      if (!('bluetooth' in navigator)){ alert('Web Bluetooth not supported. Use Chrome on Android or desktop.'); return; }
-      try {
-        showStatus('requesting micro:bit...');
-        const device = await navigator.bluetooth.requestDevice({
-          filters: [{ namePrefix: 'BBC micro:bit' }],
-          optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
-        });
-        showStatus('connecting...');
-        const server = await device.gatt.connect();
-        const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
-        const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
-        window._microbitTx = tx;
-        showStatus('micro:bit connected');
-        alert('micro:bit connected. Page can send messages.');
-      } catch(err){ showError(err); }
+   async function connectMicrobit(){
+  if (!('bluetooth' in navigator)){ alert('Web Bluetooth not supported. Use Chrome on Android or desktop.'); return; }
+  try {
+    showStatus('requesting device...');
+    // allow picking the device explicitly; helps if name differs
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+    });
+
+    showStatus('connecting...');
+    const server = await device.gatt.connect();
+
+    // list all primary services for debugging
+    const services = await server.getPrimaryServices();
+    console.log('Device services:', services.map(s=>s.uuid));
+    showStatus('found ' + services.length + ' services');
+
+    // try to get the UART service by UUID
+    const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    try {
+      const service = await server.getPrimaryService(UART_SERVICE_UUID);
+      const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+      window._microbitTx = tx;
+      showStatus('micro:bit connected (UART ok)');
+      alert('micro:bit connected. Page can send messages.');
+      console.log('UART characteristic found:', tx);
+      return;
+    } catch (err) {
+      console.warn('UART service not found on this device:', err);
+      // If UART service missing, inform user and show available services
+      alert('Connected device does not expose micro:bit UART. Make sure micro:bit is flashed with the BLE UART program.');
+      showStatus('connected but no UART');
+      return;
     }
+  } catch(err){
+    console.error('connectMicrobit error', err);
+    showError(err);
+  }
+}
+
 
     // wire buttons
     document.getElementById('startBtn').addEventListener('click', startCameraAndModel);
