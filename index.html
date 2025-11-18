@@ -383,10 +383,17 @@ async function sendCodeToMicrobit(code){
 }
 
 // The main predict loop (call startCameraAndModel sets isPredicting true)
+// Throttled predict loop - safer for low-power devices
+const PREDICT_INTERVAL_MS = 600; // increase to 800 or 1000 if CPU is slow
+
 async function predictLoop(){
   try {
     if (!tmModel) throw new Error('Model not loaded');
-    // model prediction
+
+    // measure start
+    const start = performance.now();
+
+    // perform prediction (this can be slow)
     const preds = await tmModel.predict(videoEl, false);
     if (!Array.isArray(preds)) throw new Error('Unexpected prediction returned');
 
@@ -396,42 +403,38 @@ async function predictLoop(){
     const pct = Math.round(top.probability * 100);
 
     // update UI
-    document.getElementById('label').textContent = 'Label: ' + top.className;
-    document.getElementById('confFill').style.width = pct + '%';
+    const labelEl = document.getElementById('label');
+    if (labelEl) labelEl.textContent = 'Label: ' + top.className;
+    const confEl = document.getElementById('confFill');
+    if (confEl) confEl.style.width = pct + '%';
     const metaEl = document.getElementById('metaInfo');
-if (metaEl) metaEl.textContent = `Confidence: ${pct}% · Model: local`;
-
+    if (metaEl) metaEl.textContent = `Confidence: ${pct}% · Model: local`;
     showStatus(`live · ${pct}%`);
 
-    // log for CSV
+    // log and send as before
     predictionsLog.push({t: Date.now(), label: top.className, conf: top.probability});
-
-    // if confident enough, update web counters and send letter to micro:bit
     if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
       const code = labelToCode(top.className);
-      if (code === 'F'){
-        webFishCount += 1;
-        updateWebCountersUI();
-        // send to micro:bit
-        await sendCodeToMicrobit('F');
-      } else if (code === 'T'){
-        webTrashCount += 1;
-        updateWebCountersUI();
-        await sendCodeToMicrobit('T');
-      } else if (code === 'E'){
-        webEmergCount += 1;
-        updateWebCountersUI();
-        await sendCodeToMicrobit('E');
-      }
-      // otherwise unknown class - ignore
+      if (code === 'F'){ webFishCount++; updateWebCountersUI(); await sendCodeToMicrobit('F'); }
+      else if (code === 'T'){ webTrashCount++; updateWebCountersUI(); await sendCodeToMicrobit('T'); }
+      else if (code === 'E'){ webEmergCount++; updateWebCountersUI(); await sendCodeToMicrobit('E'); }
     }
 
-    // continue loop ~3 fps
-    if (isPredicting) setTimeout(()=>requestAnimationFrame(predictLoop), 300);
+    // measure end & log long frames (optional)
+    const elapsed = Math.round(performance.now() - start);
+    if (elapsed > PREDICT_INTERVAL_MS) {
+      console.warn('Prediction took long:', elapsed, 'ms');
+    }
+
+    // schedule next prediction with a safe delay
+    if (isPredicting) {
+      setTimeout(()=> { try { requestAnimationFrame(predictLoop); } catch(e){ predictLoop(); } }, PREDICT_INTERVAL_MS);
+    }
   } catch(e){
     showError(e);
   }
 }
+
 
     function downloadCSV(){
       if (predictionsLog.length === 0){ alert('No predictions recorded yet'); return; }
