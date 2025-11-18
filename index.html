@@ -364,7 +364,7 @@ function updateWebCountersUI(){
   if(t) t.textContent = String(webTrashCount);
   if(e) e.textContent = String(webEmergCount);
 }
-
+      }
 // send a newline-terminated code to micro:bit (if connected) with simple debounce
 async function sendCodeToMicrobit(code){
   if (!window._microbitTx) return;
@@ -492,6 +492,7 @@ if (metaEl) metaEl.textContent = `Confidence: ${pct}% · Model: local`;
         showStatus('camera stopped (page hidden)');
       }
     });
+    }
   </script>
 </body>
 </html>
