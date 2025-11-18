@@ -325,7 +325,14 @@ h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
         if (!tmModel) throw new Error('Failed to load model');
 
         showStatus('starting camera...');
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({
+  video: {
+    facingMode: 'environment',
+    width: { ideal: 640 },   // try 640 for speed
+    height: { ideal: 480 }
+  },
+  audio: false
+});
         videoEl.srcObject = stream;
         await videoEl.play();
         showStatus('camera ready');
