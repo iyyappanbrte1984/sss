@@ -328,10 +328,11 @@ h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
         videoEl.srcObject = stream;
         await videoEl.play();
         showStatus('camera ready');
-
         isPredicting = true;
-      
-        // ---- CONFIG ----
+          } catch(err) {
+        showError(err);
+      }
+    }     
 // ---------------- CONFIG ----------------
 const SEND_CONFIDENCE_THRESHOLD = 0.60; // send only when confidence >= 0.60 (adjust if noisy)
 const MICROBIt_SEND_DEBOUNCE_MS = 700;  // avoid rapid repeated sends
@@ -364,7 +365,6 @@ function updateWebCountersUI(){
   if(t) t.textContent = String(webTrashCount);
   if(e) e.textContent = String(webEmergCount);
 }
-      }
 // send a newline-terminated code to micro:bit (if connected) with simple debounce
 async function sendCodeToMicrobit(code){
   if (!window._microbitTx) return;
@@ -492,7 +492,6 @@ if (metaEl) metaEl.textContent = `Confidence: ${pct}% · Model: local`;
         showStatus('camera stopped (page hidden)');
       }
     });
-    }
   </script>
 </body>
 </html>
