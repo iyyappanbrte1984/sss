@@ -314,8 +314,9 @@ h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
     }
 
     async function startCameraAndModel(){
-      showStatus('starting...');
-      try {
+  if (isPredicting) return;   // ← VALID ONLY HERE
+  showStatus('starting...');
+  try {
         const r = await fetch(MODEL_URL);
         if (!r.ok) throw new Error('Model not found at ' + MODEL_URL + ' (HTTP ' + r.status + ')');
 
