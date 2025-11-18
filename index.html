@@ -244,7 +244,11 @@ h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
         <div class="status" id="statusText">Status: idle</div>
 
         <div class="labelbar" aria-live="polite">
-          <div class="label" id="label">Label: --</div>
+  <div class="label" id="label">Label: --</div>
+...
+<div class="confidence" aria-hidden="true"><i id="confFill"></i></div>
+<div id="metaInfo" class="subtitle" style="margin-top:6px;color:var(--muted);">Model: —</div>
+
           <!-- LIVE COUNTERS (web) -->
 <div style="margin-top:10px;text-align:center;">
   <div style="display:inline-flex;gap:12px;align-items:center;">
@@ -326,6 +330,7 @@ h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
         showStatus('camera ready');
 
         isPredicting = true;
+      
         // ---- CONFIG ----
 // ---------------- CONFIG ----------------
 const SEND_CONFIDENCE_THRESHOLD = 0.60; // send only when confidence >= 0.60 (adjust if noisy)
@@ -391,7 +396,9 @@ async function predictLoop(){
     // update UI
     document.getElementById('label').textContent = 'Label: ' + top.className;
     document.getElementById('confFill').style.width = pct + '%';
-    document.getElementById('metaInfo').textContent = `Confidence: ${pct}% · Model: local`;
+    const metaEl = document.getElementById('metaInfo');
+if (metaEl) metaEl.textContent = `Confidence: ${pct}% · Model: local`;
+
     showStatus(`live · ${pct}%`);
 
     // log for CSV
