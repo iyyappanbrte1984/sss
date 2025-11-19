@@ -20,7 +20,8 @@
     .badge{display:inline-block;margin:0 auto 6px;background:var(--ocean-700);color:#fff;padding:8px 14px;border-radius:12px;font-weight:800;font-size:13px}
     h1{font-size:24px;margin:6px 0 4px}
     .hero{display:flex;justify-content:center;margin:10px 0 12px;border-radius:12px;overflow:hidden;box-shadow:0 16px 40px rgba(6,20,40,0.06);max-width:1536px}
-    .hero img{width:600%;height:600px;object-fit:cover;display:block}
+    /* hero image: responsive for phone, no strict fixed height */
+    .hero img{width:100%;height:auto;max-height:600px;object-fit:cover;display:block}
     .stage{display:grid;grid-template-columns:120px 1fr 120px;gap:12px;align-items:start;margin-top:12px}
     .side-stack{display:flex;flex-direction:column;gap:12px;align-items:center}
     .side-stack img{width:100%;height:120px;object-fit:cover;border-radius:10px;box-shadow:0 6px 18px rgba(6,20,40,0.06);}
@@ -221,61 +222,64 @@
     }
 
     /* ---------- WEB BLUETOOTH / micro:bit ---------- */
-   async function connectMicrobit() {
-  // origin check
-  if (!(location.protocol === 'https:' || location.hostname === 'localhost')) {
-    alert('Web Bluetooth requires HTTPS or http://localhost. Serve this page from http://localhost or via HTTPS.');
-    return;
-  }
 
-  if (!('bluetooth' in navigator)) {
-    alert('Web Bluetooth API not available. Use Chrome (desktop or Android).');
-    return;
-  }
+    // Nordic UART Service UUIDs used by micro:bit (our "custom GATT")
+    const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    const UART_TX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write
+    const UART_RX_CHAR_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify
 
-  try {
-    showStatus('Requesting micro:bit...');
-    // use acceptAllDevices to avoid name mismatch; optionalServices requests UART
-    const device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
-    });
+    async function connectMicrobit() {
+      // origin check
+      if (!(location.protocol === 'https:' || location.hostname === 'localhost')) {
+        alert('Web Bluetooth requires HTTPS or http://localhost. Serve this page from http://localhost or via HTTPS.');
+        return;
+      }
 
-    console.log('Selected device object:', device);
-    showStatus('Connecting to GATT server...');
+      if (!('bluetooth' in navigator)) {
+        alert('Web Bluetooth API not available. Use Chrome (desktop or Android).');
+        return;
+      }
 
-    // watch for disconnects
-    device.addEventListener('gattserverdisconnected', (ev) => {
-      console.warn('micro:bit disconnected', ev);
-      showStatus('micro:bit disconnected');
-      // optionally try reconnect logic here
-    });
+      try {
+        showStatus('Requesting micro:bit...');
+        // Filter for BBC micro:bit and request UART service
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: 'BBC micro:bit' }],
+          optionalServices: [UART_SERVICE_UUID]
+        });
 
-    // connect
-    const server = await device.gatt.connect();
+        console.log('Selected device object:', device);
+        showStatus('Connecting to GATT server...');
 
-    // get UART service and characteristics
-    const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
-    const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e'); // write
-    const rx = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e'); // notify
+        // watch for disconnects
+        device.addEventListener('gattserverdisconnected', (ev) => {
+          console.warn('micro:bit disconnected', ev);
+          showStatus('micro:bit disconnected');
+        });
 
-    window._microbitTx = tx;
-    window._microbitRx = rx;
+        // connect
+        const server = await device.gatt.connect();
 
-    await rx.startNotifications();
-    rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
+        // get UART service and characteristics
+        const service = await server.getPrimaryService(UART_SERVICE_UUID);
+        const tx = await service.getCharacteristic(UART_TX_CHAR_UUID); // write
+        const rx = await service.getCharacteristic(UART_RX_CHAR_UUID); // notify
 
-    showStatus('micro:bit connected: ' + (device.name || device.id));
-    console.log('Connected to micro:bit:', device);
-  } catch (err) {
-    // catch & display error clearly
-    console.error('connectMicrobit error:', err);
-    showStatus('micro:bit connection failed');
-    // show the full error to the user for diagnostics
-    alert('Connection error: ' + (err && err.message ? err.message : String(err)) +
-          '\n\nCheck DevTools console for stack trace. If the stack shows a chrome-extension:// URL, disable that extension and retry.');
-  }
-}
+        window._microbitTx = tx;
+        window._microbitRx = rx;
+
+        await rx.startNotifications();
+        rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
+
+        showStatus('micro:bit connected: ' + (device.name || device.id));
+        console.log('Connected to micro:bit:', device);
+      } catch (err) {
+        console.error('connectMicrobit error:', err);
+        showStatus('micro:bit connection failed');
+        alert('Connection error: ' + (err && err.message ? err.message : String(err)) +
+              '\n\nMake sure:\n• micro:bit is flashed with Bluetooth UART program\n• Bluetooth is ON\n• You select "BBC micro:bit" in the device picker.');
+      }
+    }
 
     async function handleIncomingFromMicrobit(ev){
       try {
