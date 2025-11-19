@@ -3,611 +3,273 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SMART VISION FOR A CLEANER OCEAN — Vanavil Mandram 2025</title>
+  <title>SMART VISION — Vanavil Mandram 2025</title>
 
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap" rel="stylesheet">
-
-  <!-- TFJS + Teachable Machine (compatible versions) -->
+  <!-- TensorFlow + Teachable Machine -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js"></script>
 
   <style>
     :root{
-      --ocean-900:#032735;
-      --ocean-700:#0b74de;
-      --ocean-500:#39a1ff;
-      --muted:#6f8396;
-      --card:#ffffff;
-      --bg:#f7fbff;
-      --ocean-box: linear-gradient(90deg, rgba(11,116,222,0.95), rgba(6,92,179,0.95));
-      --glass: rgba(255,255,255,0.92);
-      --radius:14px;
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff; --muted:#6f8396;
+      --card:#ffffff; --bg:#f7fbff; --radius:14px;
     }
-
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;}
     body{background:linear-gradient(180deg,#eaf6ff 0%, #f7fbff 100%); color:var(--ocean-900); -webkit-font-smoothing:antialiased;}
-
-    /* Page wrapper spacing so bottom gallery isn't clipped */
-/* ---------- Header & wrapper (center everything) ---------- */
-.wrap {
-  max-width:1100px;
-  margin: 18px auto;         /* centered container */
-  padding: 24px 12px;
-  box-sizing: border-box;
-  text-align: center;        /* ensure children default to centered text */
-}
-
-/* keep header content centered explicitly */
-header {
-  text-align: center !important;
-  display: block;
-}
-
-/* make badge/title slightly larger but centered */
-.badge {
-  display: inline-block;
-  margin: 0 auto 6px;
-  background: var(--ocean-700);
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 12px;
-  font-weight: 800;
-  font-size: 13px;
-  box-shadow: 0 8px 20px rgba(11,20,40,0.06);
-}
-
-/* Title & meta centered and constrained */
-h1 { font-size: 24px; margin: 6px 0 4px; text-align:center; }
-.subtitle, .meta, .motto { text-align:center; margin: 2px 0; color: var(--muted); }
-
-/* ---------- Hero and stage remain centered ---------- */
-.hero { display:flex; justify-content:center; margin: 10px 0 12px; }
-.center-card { margin: 0 auto; } /* ensure card centers */
-
-/* ---------- Bottom gallery: center and prevent clipping ---------- */
-.bottom-gallery {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;   /* CENTER the whole gallery row */
-  gap:12px;
-  margin: 22px 0 48px;      /* add bottom margin so nothing clips */
-  padding: 6px 8px;
-  box-sizing: border-box;
-}
-
-/* make each thumbnail a fixed max-width but responsive */
-.bottom-gallery img {
-  width: calc(20% - 12px);   /* 5 across on wide screens */
-  max-width: 180px;
-  min-width: 110px;
-  height: 110px;             /* comfortable thumbnail height */
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(6,20,40,0.06);
-  background: #fff;
-}
-
-/* small screens: 2 or 3 columns and smaller thumbnails */
-@media (max-width:960px){
-  .bottom-gallery img { width: calc(33.333% - 12px); height:100px; min-width:120px; }
-}
-@media (max-width:600px){
-  .bottom-gallery img { width: calc(50% - 12px); height:92px; min-width:100px; }
-}
-
-/* ---------- Small safety: keep left/right side stacks from shifting layout ---------- */
-.side-stack { display:flex; flex-direction:column; gap:12px; align-items:center; justify-content:flex-start; }
-
-/* ensure stage grid stays centered on small screens */
-@media (max-width:720px){
-  .stage { grid-template-columns: 1fr; row-gap: 14px; padding: 0 6px; }
-  .side-stack { flex-direction:row; gap:10px; justify-content:center; }
-}
-
-
-    /* Main stage: left posters, center camera, right posters */
+    .wrap{max-width:1100px;margin:18px auto;padding:24px 12px;text-align:center}
+    .badge{display:inline-block;margin:0 auto 6px;background:var(--ocean-700);color:#fff;padding:8px 14px;border-radius:12px;font-weight:800;font-size:13px}
+    h1{font-size:24px;margin:6px 0 4px}
+    .hero{display:flex;justify-content:center;margin:10px 0 12px;border-radius:12px;overflow:hidden;box-shadow:0 16px 40px rgba(6,20,40,0.06);max-width:1024px}
+    .hero img{width:100%;height:600px;object-fit:cover;display:block}
     .stage{display:grid;grid-template-columns:120px 1fr 120px;gap:12px;align-items:start;margin-top:12px}
     .side-stack{display:flex;flex-direction:column;gap:12px;align-items:center}
     .side-stack img{width:100%;height:120px;object-fit:cover;border-radius:10px;box-shadow:0 6px 18px rgba(6,20,40,0.06);}
-
     .center-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 10px 30px rgba(6,20,40,0.06);display:flex;flex-direction:column;align-items:center;gap:10px}
     video#webcam{width:100%;max-width:520px;border-radius:10px;background:#000;aspect-ratio:4/3;object-fit:cover;box-shadow:0 8px 30px rgba(6,20,40,0.06)}
-    /* ------- Replace old ocean-controls + status styles with this ------- */
-
-/* ocean-controls: container transparent; buttons have gradient */
-.ocean-controls{
-  background: transparent;
-  border-radius:10px;
-  padding:8px;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  justify-content:center;
-  width:100%;
-  max-width:520px;
-  flex-wrap:wrap;
-}
-
-/* button base */
-.ocean-controls button{
-  border:0;
-  padding:10px 16px;
-  border-radius:8px;
-  font-weight:800;
-  color:#fff;
-  cursor:pointer;
-  min-width:160px;
-  box-shadow:0 8px 18px rgba(7,20,50,0.12);
-  transition:transform .12s ease, box-shadow .12s ease, opacity .12s;
-}
-
-/* per-button gradients */
-.ocean-controls button.start{
-  background: linear-gradient(90deg,#39a1ff,#0b74de);
-}
-.ocean-controls button.connect{
-  background: linear-gradient(90deg,#0b74de,#055fa8);
-}
-.ocean-controls button.csv{
-  background: linear-gradient(90deg,#2b9bde,#0b74de);
-}
-
-/* hover / active */
-.ocean-controls button:hover{ transform:translateY(-3px); box-shadow:0 14px 30px rgba(7,20,50,0.14); }
-.ocean-controls button:active{ transform:translateY(0); box-shadow:0 6px 12px rgba(7,20,50,0.08); }
-
-/* status: higher contrast, visible */
-.status{
-  color:#02283a;            /* darker for readability */
-  font-weight:700;
-  margin-top:8px;
-  background: rgba(255,255,255,0.95);
-  padding:8px 12px;
-  border-radius:8px;
-  box-shadow: 0 6px 14px rgba(6,20,40,0.04);
-  font-size:14px;
-  text-align:center;
-  display:inline-block;
-}
-
-/* label and confidence improved contrast */
-.label{
-  flex:1;
-  font-weight:800;
-  color:var(--ocean-900);
-  background:#ffffff;
-  padding:8px 10px;
-  border-radius:8px;
-  text-align:center;
-  box-shadow: 0 6px 14px rgba(6,20,40,0.03);
-}
-.confidence{ width:180px; height:12px; background:#eaf6ff; border-radius:8px; overflow:hidden; border:1px solid rgba(10,30,60,0.04); }
-.confidence > i{ display:block; height:100%; background:linear-gradient(90deg,#39a1ff,var(--ocean-700)); width:0%; transition:width .18s ease; }
-
-    /* Bottom gallery full width */
+    .ocean-controls{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .ocean-controls button{border:0;padding:10px 16px;border-radius:8px;font-weight:800;color:#fff;cursor:pointer;min-width:150px}
+    .ocean-controls .start{background:linear-gradient(90deg,#39a1ff,#0b74de)}
+    .ocean-controls .stop{background:linear-gradient(90deg,#ff6b6b,#ff3b3b)}
+    .ocean-controls .connect{background:linear-gradient(90deg,#0b74de,#055fa8)}
+    .ocean-controls .csv{background:linear-gradient(90deg,#2b9bde,#0b74de)}
+    .status{color:#02283a;font-weight:700;margin-top:8px;background: rgba(255,255,255,0.95);padding:8px 12px;border-radius:8px;display:inline-block}
     .bottom-gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}
     .bottom-gallery img{width:100%;height:140px;object-fit:cover;border-radius:8px;box-shadow:0 8px 24px rgba(6,20,40,0.05)}
-
+    .counters{display:inline-flex;gap:12px;margin-top:8px}
+    .counter{background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 6px 14px rgba(6,20,40,0.04);font-weight:800}
     footer{text-align:center;margin-top:18px;color:var(--muted);font-size:13px}
-
-    /* Responsive tweaks */
-    @media (max-width:960px){
-      .stage{grid-template-columns:80px 1fr 80px}
-      .side-stack img{height:100px}
-      .bottom-gallery{grid-template-columns:repeat(2,1fr)}
-    }
-    @media (max-width:600px){
-      .stage{grid-template-columns:1fr;row-gap:12px}
-      .side-stack{flex-direction:row;justify-content:center}
-      .side-stack img{width:44%;height:100px}
-      .bottom-gallery{grid-template-columns:repeat(2,1fr)}
-      .hero img{max-width:340px}
-    }
-
+    #errorBox{display:none;position:fixed;left:12px;right:12px;bottom:12px;padding:10px;background:#fff3cd;border:1px solid #f5c6cb;border-radius:8px;z-index:9999}
+    @media (max-width:960px){ .stage{grid-template-columns:80px 1fr 80px} .side-stack img{height:100px} .bottom-gallery{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:600px){ .stage{grid-template-columns:1fr;row-gap:12px} .side-stack{flex-direction:row} .side-stack img{width:44%;height:100px} .hero img{max-width:340px} .bottom-gallery img{height:92px} }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="badge">VANAVIL MANDRAM — 2025</div>
-      <div class="meta">Focal Theme: <strong>Local Solutions for Global Challenges</strong></div>
-      <div class="meta">Sub-theme: <strong>Scientific Solutions to Environmental Challenges – Plastic Pollution</strong></div>
       <h1>🌊 SMART VISION FOR A CLEANER OCEAN</h1>
-      <div class="subtitle">“See. Sense. Save — Using Smart Vision to Keep Our Oceans Blue.”</div>
-      <div class="motto">Motto: “A clean ocean begins with a clear vision.”</div>
+      <div class="subtitle" style="color:var(--muted);margin-bottom:6px;">See · Sense · Save — Local solutions for global problems</div>
     </header>
 
-    <!-- hero poster top center -->
-    <div class="hero">
-    <img src="assets/poster10.png" alt="Main poster" id="heroPoster" onerror="this.style.display='none'">
+    <!-- HERO: poster10 (1024x600) from your GitHub assets -->
+    <div class="hero" aria-hidden="false">
+      <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster10.png"
+           alt="Main poster (hero) 1024x600" width="1024" height="600"
+           onerror="this.onerror=null;this.src='https://via.placeholder.com/1024x600.png?text=Hero+Image'">
     </div>
 
-    <!-- main stage: left posters, camera center, right posters -->
+    <!-- MAIN STAGE (left posters, center camera, right posters) -->
     <div class="stage" role="region" aria-label="Main demo stage">
-      <!-- left stacked posters: poster6, poster8 -->
+      <!-- left posters -->
       <div class="side-stack" aria-hidden="false">
-        <img src="assets/poster6.jpg" alt="poster6">
-        <img src="assets/poster8.jpg" alt="poster8">
+        <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster6.jpg" alt="poster6">
+        <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster8.jpg" alt="poster8">
       </div>
 
-      <!-- center camera card -->
+      <!-- center card -->
       <div class="center-card">
         <video id="webcam" playsinline muted></video>
 
         <div class="ocean-controls" role="toolbar" aria-label="controls">
           <button id="startBtn" class="start">Start Camera & Load Model</button>
+          <button id="stopBtn" class="stop">Stop Camera</button>
           <button id="connectBtn" class="connect">Connect micro:bit</button>
           <button id="downloadCsv" class="csv">Download CSV</button>
         </div>
 
         <div class="status" id="statusText">Status: idle</div>
 
-        <div class="labelbar" aria-live="polite">
-  <div class="label" id="label">Label: --</div>
-...
-<div class="confidence" aria-hidden="true"><i id="confFill"></i></div>
-<div id="metaInfo" class="subtitle" style="margin-top:6px;color:var(--muted);">Model: —</div>
-
-          <!-- LIVE COUNTERS (web) -->
-<div style="margin-top:10px;text-align:center;">
-  <div style="display:inline-flex;gap:12px;align-items:center;">
-    <div style="background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 6px 16px rgba(6,20,40,0.04)">
-      Fish: <strong id="fishCountDisplay">0</strong>
-    </div>
-    <div style="background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 6px 16px rgba(6,20,40,0.04)">
-      Trash: <strong id="trashCountDisplay">0</strong>
-    </div>
-    <div style="background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 6px 16px rgba(6,20,40,0.04)">
-      Emerg: <strong id="emergCountDisplay">0</strong>
-    </div>
-  </div>
-</div>
-          <div class="confidence" aria-hidden="true"><i id="confFill"></i></div>
+        <div class="counters" aria-live="polite">
+          <div class="counter">Fish: <span id="fishCountDisplay">0</span></div>
+          <div class="counter">Trash: <span id="trashCountDisplay">0</span></div>
+          <div class="counter">Emerg: <span id="emergCountDisplay">0</span></div>
         </div>
       </div>
 
-      <!-- right stacked posters: poster7, poster9 -->
+      <!-- right posters -->
       <div class="side-stack">
-        <img src="assets/poster7.jpg" alt="poster7">
-        <img src="assets/poster9.jpg" alt="poster9">
+        <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster7.jpg" alt="poster7">
+        <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster9.jpg" alt="poster9">
       </div>
     </div>
 
-    <!-- bottom gallery with poster1..poster5 -->
+    <!-- bottom gallery (poster1..poster5) -->
     <div class="bottom-gallery" aria-label="Poster gallery">
-      <img src="assets/poster1.jpg" alt="poster1">
-      <img src="assets/poster2.jpg" alt="poster2">
-      <img src="assets/poster3.jpg" alt="poster3">
-      <img src="assets/poster4.jpg" alt="poster4">
-      <img src="assets/poster5.jpg" alt="poster5">
+      <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster1.jpg" alt="poster1">
+      <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster2.jpg" alt="poster2">
+      <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster3.jpg" alt="poster3">
+      <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster4.jpg" alt="poster4">
+      <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster5.jpg" alt="poster5">
     </div>
 
-    <footer>© Vanavil Mandram • SMART VISION FOR A CLEANER OCEAN — Showcase 2025</footer>
+    <footer>© Vanavil Mandram • SMART VISION FOR A CLEANER OCEAN — 2025</footer>
   </div>
 
-  <!-- Debug box -->
-  <div id="errorBox" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;padding:10px;background:#fff3cd;border:1px solid #f5c6cb;border-radius:8px;z-index:9999;font-family:Inter,Arial;">
-    <strong>Debug:</strong>
-    <pre id="errorText" style="white-space:pre-wrap"></pre>
-  </div>
+  <div id="errorBox"><strong>Debug:</strong><pre id="errorText" style="white-space:pre-wrap"></pre></div>
 
   <script>
-    // update if your model path differs
+    /* ---------- CONFIG ---------- */
     const MODEL_URL = 'model/model.json';
     const METADATA_URL = 'model/metadata.json';
+    const SEND_CONFIDENCE_THRESHOLD = 0.60;
+    const PREDICT_INTERVAL_MS = 600;
+    const MICROBIt_SEND_DEBOUNCE_MS = 700;
 
+    /* ---------- STATE ---------- */
     let tmModel = null;
     let videoEl = document.getElementById('webcam');
     let stream = null;
     let isPredicting = false;
     let predictionsLog = [];
 
+    let webFishCount = 0, webTrashCount = 0, webEmergCount = 0;
+    window._microbitTx = null; // write
+    window._microbitRx = null; // notify
+    let _lastMicrobitSendAt = 0;
+
+    /* ---------- UI helpers ---------- */
     function showStatus(text){ document.getElementById('statusText').textContent = 'Status: ' + text; }
     function showError(e){
-      const box = document.getElementById('errorBox');
-      const txt = document.getElementById('errorText');
+      const box = document.getElementById('errorBox'), txt = document.getElementById('errorText');
       txt.textContent = (e && e.stack) ? e.stack : String(e);
       box.style.display = 'block';
       showStatus('error: ' + (e && e.message ? e.message : e));
       console.error(e);
     }
+    function updateWebCountersUI(){
+      document.getElementById('fishCountDisplay').textContent = String(webFishCount);
+      document.getElementById('trashCountDisplay').textContent = String(webTrashCount);
+      document.getElementById('emergCountDisplay').textContent = String(webEmergCount);
+    }
 
+    /* ---------- micro:bit send (debounced) ---------- */
+    async function sendCodeToMicrobit(code){
+      if (!window._microbitTx || !code) return;
+      const now = Date.now();
+      if (now - _lastMicrobitSendAt < MICROBIt_SEND_DEBOUNCE_MS) return;
+      _lastMicrobitSendAt = now;
+      try {
+        const enc = new TextEncoder();
+        await window._microbitTx.writeValue(enc.encode(code + '\n'));
+        console.log('Sent to micro:bit ->', code);
+      } catch(err){ console.warn('microbit write failed', err); }
+    }
+
+    /* ---------- CAMERA & MODEL ---------- */
     async function startCameraAndModel(){
-  if (isPredicting) return;   // ← VALID ONLY HERE
-  showStatus('starting...');
-  try {
-        const r = await fetch(MODEL_URL);
-        if (!r.ok) throw new Error('Model not found at ' + MODEL_URL + ' (HTTP ' + r.status + ')');
-
-        showStatus('loading model...');
-        tmModel = await tmImage.load(MODEL_URL, METADATA_URL);
-        if (!tmModel) throw new Error('Failed to load model');
-
-        showStatus('starting camera...');
-        stream = await navigator.mediaDevices.getUserMedia({
-  video: {
-    facingMode: 'environment',
-    width: { ideal: 640 },   // try 640 for speed
-    height: { ideal: 480 }
-  },
-  audio: false
-});
-        videoEl.srcObject = stream;
-        await videoEl.play();
-        showStatus('camera ready');
+      if (isPredicting) return;
+      showStatus('starting camera & model...');
+      try {
+        if (!tmModel) tmModel = await tmImage.load(MODEL_URL, METADATA_URL);
+        stream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}, audio:false });
+        videoEl.srcObject = stream; await videoEl.play();
         isPredicting = true;
+        document.getElementById('startBtn').textContent = 'Camera running';
+        showStatus('camera running, model active');
         predictLoop();
-          } catch(err) {
-        showError(err);
-      }
-    }     
-// ---------------- CONFIG ----------------
-const SEND_CONFIDENCE_THRESHOLD = 0.60; // send only when confidence >= 0.60 (adjust if noisy)
-const MICROBIt_SEND_DEBOUNCE_MS = 700;  // avoid rapid repeated sends
-
-// web-side counters (displayed on page)
-let webFishCount = 0;
-let webTrashCount = 0;
-let webEmergCount = 0;
-
-// last micro:bit send timestamp to prevent flooding
-let _lastMicrobitSendAt = 0;
-
-// helper: map label text -> short single-letter code
-function labelToCode(label) {
-  if (!label) return null;
-  const low = label.toString().toLowerCase();
-  // adapt these checks to match your Teachable Machine class names exactly if needed
-  if (low.includes('fish')) return 'F';
-  if (low.includes('trash')) return 'T';
-  if (low.includes('emerg') || low.includes('emergency')) return 'E';
-  return null;
-}
-
-// update live counters UI
-function updateWebCountersUI(){
-  const f = document.getElementById('fishCountDisplay');
-  const t = document.getElementById('trashCountDisplay');
-  const e = document.getElementById('emergCountDisplay');
-  if(f) f.textContent = String(webFishCount);
-  if(t) t.textContent = String(webTrashCount);
-  if(e) e.textContent = String(webEmergCount);
-}
-// send a newline-terminated code to micro:bit (if connected) with simple debounce
-async function sendCodeToMicrobit(code){
-  if (!window._microbitTx) return;
-  if (!code) return;
-  const now = Date.now();
-  if (now - _lastMicrobitSendAt < MICROBIt_SEND_DEBOUNCE_MS) return; // debounce
-  _lastMicrobitSendAt = now;
-  try {
-    const enc = new TextEncoder();
-    await window._microbitTx.writeValue(enc.encode(code + '\n'));
-  } catch(err){
-    console.warn('microbit write failed', err);
-  }
-}
-
-// The main predict loop (call startCameraAndModel sets isPredicting true)
-// Throttled predict loop - safer for low-power devices
-const PREDICT_INTERVAL_MS = 600; // increase to 800 or 1000 if CPU is slow
-
-async function predictLoop(){
-  try {
-    if (!tmModel) throw new Error('Model not loaded');
-
-    // measure start
-    const start = performance.now();
-
-    // perform prediction (this can be slow)
-    const preds = await tmModel.predict(videoEl, false);
-    if (!Array.isArray(preds)) throw new Error('Unexpected prediction returned');
-
-    // pick top prediction
-    preds.sort((a,b)=>b.probability - a.probability);
-    const top = preds[0] || {className:'--', probability:0};
-    const pct = Math.round(top.probability * 100);
-
-    // update UI
-    const labelEl = document.getElementById('label');
-    if (labelEl) labelEl.textContent = 'Label: ' + top.className;
-    const confEl = document.getElementById('confFill');
-    if (confEl) confEl.style.width = pct + '%';
-    const metaEl = document.getElementById('metaInfo');
-    if (metaEl) metaEl.textContent = `Confidence: ${pct}% · Model: local`;
-    showStatus(`live · ${pct}%`);
-
-    // log and send as before
-    predictionsLog.push({t: Date.now(), label: top.className, conf: top.probability});
-    if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
-      const code = labelToCode(top.className);
-      if (code === 'F'){ webFishCount++; updateWebCountersUI(); await sendCodeToMicrobit('F'); }
-      else if (code === 'T'){ webTrashCount++; updateWebCountersUI(); await sendCodeToMicrobit('T'); }
-      else if (code === 'E'){ webEmergCount++; updateWebCountersUI(); await sendCodeToMicrobit('E'); }
-      else if (code === 'E'){ 
-    webEmergCount++; 
-    updateWebCountersUI(); 
-    await sendCodeToMicrobit('E'); 
-
-    // 🔔 ALARM TRIGGER WHEN EMERGENCY COUNT > 5
-    if (webEmergCount > 5) {
-        await sendCodeToMicrobit('ALARM');   // micro:bit siren
-    }
-}
-
+      } catch(err){ showError(err); }
     }
 
-    // measure end & log long frames (optional)
-    const elapsed = Math.round(performance.now() - start);
-    if (elapsed > PREDICT_INTERVAL_MS) {
-      console.warn('Prediction took long:', elapsed, 'ms');
+    function stopCamera(){
+      if (stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+      isPredicting = false;
+      document.getElementById('startBtn').textContent = 'Start Camera & Load Model';
+      showStatus('camera stopped');
     }
 
-    // schedule next prediction with a safe delay
-    if (isPredicting) {
-      setTimeout(()=> { try { requestAnimationFrame(predictLoop); } catch(e){ predictLoop(); } }, PREDICT_INTERVAL_MS);
+    function labelToCode(label){
+      if (!label) return null;
+      const low = String(label).toLowerCase();
+      if (low.includes('fish')) return 'F';
+      if (low.includes('trash')) return 'T';
+      if (low.includes('emerg') || low.includes('emergency')) return 'E';
+      return null;
     }
-  } catch(e){
-    showError(e);
-  }
-}
 
+    async function predictLoop(){
+      try {
+        if (!tmModel) throw new Error('Model not loaded');
+        const preds = await tmModel.predict(videoEl, false);
+        preds.sort((a,b)=>b.probability - a.probability);
+        const top = preds[0] || {className:'--', probability:0};
+        const pct = Math.round(top.probability * 100);
+        showStatus(`live · ${pct}% · ${top.className || '--'}`);
+        predictionsLog.push({t:Date.now(), label: top.className, conf: top.probability});
+
+        if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
+          const code = labelToCode(top.className);
+          if (code === 'F'){ webFishCount++; updateWebCountersUI(); await sendCodeToMicrobit('F'); }
+          else if (code === 'T'){ webTrashCount++; updateWebCountersUI(); await sendCodeToMicrobit('T'); }
+          else if (code === 'E'){
+            webEmergCount++; updateWebCountersUI(); await sendCodeToMicrobit('E');
+            if (webEmergCount > 5) { await sendCodeToMicrobit('ALARM'); }
+          }
+        }
+
+        if (isPredicting) setTimeout(()=> requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
+      } catch(e){ showError(e); }
+    }
 
     function downloadCSV(){
       if (predictionsLog.length === 0){ alert('No predictions recorded yet'); return; }
-      const header = ['timestamp','label','confidence'];
+      const header=['timestamp','label','confidence'];
       const rows = predictionsLog.map(r=>[new Date(r.t).toISOString(), r.label, r.conf]);
       const csv = [header, ...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-      const url = URL.createObjectURL(blob);
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'predictions.csv'; document.body.appendChild(a); a.click();
       setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 2000);
     }
-// ---------- Add this handler function somewhere in your script ----------
-async function handleIncomingFromMicrobit(event){
-  // event.target.value is a DataView / ArrayBuffer
-  try {
-    const value = event.target.value;
-    // decode UTF-8 text (micro:bit will send newline terminated strings)
-    const dec = new TextDecoder('utf-8');
-    const raw = dec.decode(value);
-    const text = raw.replace(/\r/g,'').replace(/\n/g,'').trim();
-    if (!text) return;
-    console.log('Received from micro:bit ->', JSON.stringify(text));
 
-    // Expected messages sent by micro:bit: LOGO_TOGGLE, BTN_A, BTN_B, BTN_AB
-    if (text === 'LOGO_TOGGLE') {
-      // Toggle camera on/off
-      if (isPredicting) {
-        // stop camera
-        if (stream){
-          stream.getTracks().forEach(t=>t.stop());
-          stream = null;
+    /* ---------- WEB BLUETOOTH / micro:bit ---------- */
+    async function connectMicrobit(){
+      if (!('bluetooth' in navigator)){ alert('Web Bluetooth not supported. Use Chrome'); return; }
+      try {
+        showStatus('requesting micro:bit...');
+        const device = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] });
+        showStatus('connecting...'); const server = await device.gatt.connect();
+        const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+        const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+        const rx = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
+        window._microbitTx = tx; window._microbitRx = rx;
+        await rx.startNotifications(); rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
+        showStatus('micro:bit connected (UART)');
+        alert('micro:bit connected. Logo/button presses will be received by the page.');
+      } catch(err){ showError(err); }
+    }
+
+    async function handleIncomingFromMicrobit(ev){
+      try {
+        const value = ev.target.value;
+        const raw = new TextDecoder('utf-8').decode(value).replace(/\r/g,'').replace(/\n/g,'').trim();
+        if (!raw) return;
+        console.log('From micro:bit ->', raw);
+
+        if (raw === 'LOGO_TOGGLE'){
+          if (isPredicting) stopCamera(); else await startCameraAndModel();
+          return;
         }
-        isPredicting = false;
-        showStatus('camera stopped (by micro:bit logo)');
-      } else {
-        // start camera & model
-        startCameraAndModel();
-      }
-      return;
+
+        if (raw === 'BTN_A' || raw === 'BTN_B' || raw === 'BTN_AB'){
+          if (!isPredicting){
+            const out = `COUNT:F:${webFishCount},T:${webTrashCount},E:${webEmergCount}`;
+            await sendCodeToMicrobit(out);
+          } else {
+            await sendCodeToMicrobit('ERROR:CAMERA_ON');
+          }
+          return;
+        }
+      } catch(e){ console.error('handleIncomingFromMicrobit error', e); }
     }
 
-    if (text === 'BTN_A' || text === 'BTN_B' || text === 'BTN_AB') {
-      // micro:bit asked to "show count" when camera is off by logo button
-      // Only respond if camera is currently off (as you requested)
-      if (!isPredicting) {
-        // prepare counts summary
-        const counts = {
-          F: webFishCount || 0,
-          T: webTrashCount || 0,
-          E: webEmergCount || 0
-        };
-        // send back a simple string micro:bit can parse: e.g. "COUNT:F:2,T:5,E:0"
-        const out = `COUNT:F:${counts.F},T:${counts.T},E:${counts.E}`;
-        await sendCodeToMicrobit(out);
-        console.log('Sent counts to micro:bit ->', out);
-      } else {
-        // optional: notify micro:bit that camera is still on
-        await sendCodeToMicrobit('ERROR:CAMERA_ON');
-      }
-      return;
-    }
-
-    // handle other incoming commands (if any)
-    if (text.startsWith('INFO:')) {
-      // handle custom info from micro:bit if needed
-      console.log('micro:bit info:', text.slice(5));
-    }
-  } catch (err){
-    console.error('Error handling incoming micro:bit message', err);
-  }
-}
-
-// ---------- Replace your connectMicrobit() with this improved function ----------
-async function connectMicrobit(){
-  if (!('bluetooth' in navigator)){ alert('Web Bluetooth not supported. Use Chrome on Android or desktop.'); return; }
-  try {
-    showStatus('requesting device...');
-    const device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] // Nordic UART service (micro:bit uart)
-    });
-
-    showStatus('connecting...');
-    const server = await device.gatt.connect();
-
-    // UART service (micro:bit / many UART examples)
-    const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-    const TX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write (web -> micro:bit)
-    const RX_CHAR_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify (micro:bit -> web)
-
-    try {
-      const service = await server.getPrimaryService(UART_SERVICE_UUID);
-
-      const tx = await service.getCharacteristic(TX_CHAR_UUID);
-      const rx = await service.getCharacteristic(RX_CHAR_UUID);
-
-      // store globally so other functions can write
-      window._microbitTx = tx;
-      window._microbitRx = rx;
-
-      // start notifications (so web receives messages)
-      await rx.startNotifications();
-      rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
-
-      showStatus('micro:bit connected (UART OK)');
-      alert('micro:bit connected. Page can now receive messages.');
-      console.log('UART TX (write) and RX (notify) ready:', tx, rx);
-      return;
-    } catch (err) {
-      console.warn('UART service/characteristic error:', err);
-      alert('Connected device does not expose micro:bit UART characteristics. Make sure micro:bit is running a BLE UART program.');
-      showStatus('connected but no UART');
-      return;
-    }
-  } catch(err){
-    console.error('connectMicrobit error', err);
-    showError(err);
-  }
-}
-
-   
-
-
-    // wire buttons
+    /* ---------- WIRES ---------- */
     document.getElementById('startBtn').addEventListener('click', startCameraAndModel);
+    document.getElementById('stopBtn').addEventListener('click', stopCamera);
     document.getElementById('downloadCsv').addEventListener('click', downloadCSV);
     document.getElementById('connectBtn').addEventListener('click', connectMicrobit);
 
-    // optional micro:bit notifier: sends label text when it changes
-    (function microbitNotifierLoop(){
-      let lastLabel = null;
-      setInterval(async ()=>{
-        if (!tmModel || !window._microbitTx) return;
-        if (predictionsLog.length === 0) return;
-        const last = predictionsLog[predictionsLog.length - 1];
-        if (!last) return;
-        if (last.label !== lastLabel){
-          lastLabel = last.label;
-          try {
-            const payload = (last.label + '\n');
-            const enc = new TextEncoder();
-            await window._microbitTx.writeValue(enc.encode(payload));
-          } catch(e){ console.warn('microbit send failed', e); }
-        }
-      }, 1200);
-    })();
+    document.addEventListener('visibilitychange', ()=>{ if (document.hidden && stream){ stopCamera(); showStatus('camera stopped (page hidden)'); } });
 
-    // stop camera on page hidden to save battery
-    document.addEventListener('visibilitychange', ()=>{
-      if (document.hidden && stream){
-        stream.getTracks().forEach(t=>t.stop());
-        stream = null;
-        showStatus('camera stopped (page hidden)');
-      }
-    });
+    console.log('Images loaded from GitHub raw URLs (assets). Reference: uploaded file contents.'); // debug
   </script>
 </body>
 </html>
