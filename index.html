@@ -74,7 +74,7 @@
         <div class="ocean-controls" role="toolbar" aria-label="controls">
           <button id="startBtn" class="start">Start Camera & Load Model</button>
           <button id="stopBtn" class="stop">Stop Camera</button>
-          <button id="connectBtn" class="connect">Connect micro:bit</button>
+          <button id="connectBtn" class="connect">Connect micro:bit (USB)</button>
           <button id="downloadCsv" class="csv">Download CSV</button>
         </div>
 
@@ -124,8 +124,10 @@
     let predictionsLog = [];
 
     let webFishCount = 0, webTrashCount = 0, webEmergCount = 0;
-    window._microbitTx = null; // write
-    window._microbitRx = null; // notify
+
+    // Web Serial state
+    let serialPort = null;
+    let serialWriter = null;
     let _lastMicrobitSendAt = 0;
 
     /* ---------- UI helpers ---------- */
@@ -143,15 +145,14 @@
       document.getElementById('emergCountDisplay').textContent = String(webEmergCount);
     }
 
-    /* ---------- micro:bit send (debounced) ---------- */
+    /* ---------- micro:bit send over USB (debounced) ---------- */
     async function sendCodeToMicrobit(code){
-      if (!window._microbitTx || !code) return;
+      if (!serialWriter || !code) return;
       const now = Date.now();
       if (now - _lastMicrobitSendAt < MICROBIt_SEND_DEBOUNCE_MS) return;
       _lastMicrobitSendAt = now;
       try {
-        const enc = new TextEncoder();
-        await window._microbitTx.writeValue(enc.encode(code + '\n'));
+        await serialWriter.write(code + '\n');
         console.log('Sent to micro:bit ->', code);
       } catch(err){ console.warn('microbit write failed', err); }
     }
@@ -162,11 +163,18 @@
       showStatus('starting camera & model...');
       try {
         if (!tmModel) tmModel = await tmImage.load(MODEL_URL, METADATA_URL);
-        stream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}, audio:false });
-        videoEl.srcObject = stream; await videoEl.play();
+        stream = await navigator.mediaDevices.getUserMedia({
+          video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}, audio:false
+        });
+        videoEl.srcObject = stream;
+        await videoEl.play();
         isPredicting = true;
         document.getElementById('startBtn').textContent = 'Camera running';
         showStatus('camera running, model active');
+
+        // Notify micro:bit that camera is on
+        await sendCodeToMicrobit('YES');
+
         predictLoop();
       } catch(err){ showError(err); }
     }
@@ -199,9 +207,11 @@
 
         if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
           const code = labelToCode(top.className);
-          if (code === 'F'){ webFishCount++; updateWebCountersUI(); await sendCodeToMicrobit('F'); }
-          else if (code === 'T'){ webTrashCount++; updateWebCountersUI(); await sendCodeToMicrobit('T'); }
-          else if (code === 'E'){
+          if (code === 'F'){
+            webFishCount++; updateWebCountersUI(); await sendCodeToMicrobit('F');
+          } else if (code === 'T'){
+            webTrashCount++; updateWebCountersUI(); await sendCodeToMicrobit('T');
+          } else if (code === 'E'){
             webEmergCount++; updateWebCountersUI(); await sendCodeToMicrobit('E');
             if (webEmergCount > 5) { await sendCodeToMicrobit('ALARM'); }
           }
@@ -216,93 +226,91 @@
       const header=['timestamp','label','confidence'];
       const rows = predictionsLog.map(r=>[new Date(r.t).toISOString(), r.label, r.conf]);
       const csv = [header, ...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'predictions.csv'; document.body.appendChild(a); a.click();
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'predictions.csv';
+      document.body.appendChild(a); a.click();
       setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 2000);
     }
 
-    /* ---------- WEB BLUETOOTH / micro:bit ---------- */
-
-    // Nordic UART Service UUIDs used by micro:bit (our "custom GATT")
-    const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-    const UART_TX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write
-    const UART_RX_CHAR_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify
+    /* ---------- WEB SERIAL / micro:bit over USB ---------- */
 
     async function connectMicrobit() {
-      // origin check
+      // secure origin check (GitHub Pages is HTTPS so ok)
       if (!(location.protocol === 'https:' || location.hostname === 'localhost')) {
-        alert('Web Bluetooth requires HTTPS or http://localhost. Serve this page from http://localhost or via HTTPS.');
+        alert('Web Serial requires HTTPS or http://localhost. Open this page over HTTPS.');
         return;
       }
 
-      if (!('bluetooth' in navigator)) {
-        alert('Web Bluetooth API not available. Use Chrome (desktop or Android).');
+      if (!('serial' in navigator)) {
+        alert('Web Serial API not available. Use recent Chrome / Edge on desktop.');
         return;
       }
 
       try {
-        showStatus('Requesting micro:bit...');
-        // Filter for BBC micro:bit and request UART service
-        const device = await navigator.bluetooth.requestDevice({
-          filters: [{ namePrefix: 'BBC micro:bit' }],
-          optionalServices: [UART_SERVICE_UUID]
-        });
+        showStatus('Requesting USB micro:bit...');
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate: 115200 });
 
-        console.log('Selected device object:', device);
-        showStatus('Connecting to GATT server...');
+        // Writer (web -> micro:bit)
+        const textEncoder = new TextEncoderStream();
+        textEncoder.readable.pipeTo(serialPort.writable);
+        serialWriter = textEncoder.writable.getWriter();
 
-        // watch for disconnects
-        device.addEventListener('gattserverdisconnected', (ev) => {
-          console.warn('micro:bit disconnected', ev);
-          showStatus('micro:bit disconnected');
-        });
+        // Reader (micro:bit -> web)
+        const textDecoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(textDecoder.writable);
+        const reader = textDecoder.readable.getReader();
 
-        // connect
-        const server = await device.gatt.connect();
+        showStatus('micro:bit USB connected');
 
-        // get UART service and characteristics
-        const service = await server.getPrimaryService(UART_SERVICE_UUID);
-        const tx = await service.getCharacteristic(UART_TX_CHAR_UUID); // write
-        const rx = await service.getCharacteristic(UART_RX_CHAR_UUID); // notify
+        (async function readLoop() {
+          try {
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) break;
+              if (value) {
+                // value may contain multiple lines; split
+                const lines = value.replace(/\r/g,'').split('\n');
+                for (const line of lines) {
+                  const trimmed = line.trim();
+                  if (trimmed) handleIncomingFromMicrobit(trimmed);
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Serial read error', e);
+            showStatus('micro:bit USB disconnected');
+          }
+        })();
 
-        window._microbitTx = tx;
-        window._microbitRx = rx;
-
-        await rx.startNotifications();
-        rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
-
-        showStatus('micro:bit connected: ' + (device.name || device.id));
-        console.log('Connected to micro:bit:', device);
       } catch (err) {
         console.error('connectMicrobit error:', err);
-        showStatus('micro:bit connection failed');
-        alert('Connection error: ' + (err && err.message ? err.message : String(err)) +
-              '\n\nMake sure:\n• micro:bit is flashed with Bluetooth UART program\n• Bluetooth is ON\n• You select "BBC micro:bit" in the device picker.');
+        showStatus('micro:bit USB connection failed');
+        alert('USB connection error: ' + (err && err.message ? err.message : String(err)) +
+              '\n\nCheck:\n• micro:bit is connected by USB\n• You select the micro:bit device in the dialog\n• No other program is using the serial port.');
       }
     }
 
-    async function handleIncomingFromMicrobit(ev){
-      try {
-        const value = ev.target.value;
-        const raw = new TextDecoder('utf-8').decode(value).replace(/\r/g,'').replace(/\n/g,'').trim();
-        if (!raw) return;
-        console.log('From micro:bit ->', raw);
+    function handleIncomingFromMicrobit(raw){
+      console.log('From micro:bit ->', raw);
 
-        if (raw === 'LOGO_TOGGLE'){
-          if (isPredicting) stopCamera(); else await startCameraAndModel();
-          return;
-        }
+      // You can design messages later; for now just handle same logic as before
+      if (raw === 'LOGO_TOGGLE'){
+        if (isPredicting) stopCamera(); else startCameraAndModel();
+        return;
+      }
 
-        if (raw === 'BTN_A' || raw === 'BTN_B' || raw === 'BTN_AB'){
-          if (!isPredicting){
-            const out = `COUNT:F:${webFishCount},T:${webTrashCount},E:${webEmergCount}`;
-            await sendCodeToMicrobit(out);
-          } else {
-            await sendCodeToMicrobit('ERROR:CAMERA_ON');
-          }
-          return;
+      if (raw === 'BTN_A' || raw === 'BTN_B' || raw === 'BTN_AB'){
+        if (!isPredicting){
+          const out = `COUNT:F:${webFishCount},T:${webTrashCount},E:${webEmergCount}`;
+          sendCodeToMicrobit(out);
+        } else {
+          sendCodeToMicrobit('ERROR:CAMERA_ON');
         }
-      } catch(e){ console.error('handleIncomingFromMicrobit error', e); }
+        return;
+      }
     }
 
     /* ---------- WIRES ---------- */
@@ -311,9 +319,14 @@
     document.getElementById('downloadCsv').addEventListener('click', downloadCSV);
     document.getElementById('connectBtn').addEventListener('click', connectMicrobit);
 
-    document.addEventListener('visibilitychange', ()=>{ if (document.hidden && stream){ stopCamera(); showStatus('camera stopped (page hidden)'); } });
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.hidden && stream){
+        stopCamera();
+        showStatus('camera stopped (page hidden)');
+      }
+    });
 
-    console.log('Images loaded from GitHub raw URLs (assets). Reference: uploaded file contents.'); // debug
+    console.log('SMART VISION page loaded with Web Serial micro:bit support.');
   </script>
 </body>
 </html>
