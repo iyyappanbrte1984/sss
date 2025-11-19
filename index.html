@@ -222,21 +222,60 @@
 
     /* ---------- WEB BLUETOOTH / micro:bit ---------- */
     async function connectMicrobit(){
-      if (!('bluetooth' in navigator)){ alert('Web Bluetooth not supported. Use Chrome'); return; }
-      try {
-        showStatus('requesting micro:bit...');
-        const device = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] });
-        showStatus('connecting...'); const server = await device.gatt.connect();
-        const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
-        const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
-        const rx = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
-        window._microbitTx = tx; window._microbitRx = rx;
-        await rx.startNotifications(); rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
-        showStatus('micro:bit connected (UART)');
-        alert('micro:bit connected. Logo/button presses will be received by the page.');
-      } catch(err){ showError(err); }
-    }
+  // origin check: Web Bluetooth requires https OR localhost
+  if (!(location.protocol === 'https:' || location.hostname === 'localhost')) {
+    alert('Web Bluetooth requires HTTPS or http://localhost. Serve this page from http://localhost or via HTTPS.');
+    console.warn('Insecure origin for Web Bluetooth:', location.href);
+    return;
+  }
 
+  if (!('bluetooth' in navigator)) {
+    alert('Web Bluetooth API not available in this browser. Use Google Chrome (desktop or Android).');
+    console.warn('navigator.bluetooth not found');
+    return;
+  }
+
+  try {
+    showStatus('Requesting micro:bit (BLE)...');
+
+    const device = await navigator.bluetooth.requestDevice({
+      // filter for micro:bit devices to reduce noise in picker
+      filters: [{ namePrefix: 'micro:bit' }],
+      // request the Nordic UART service (needed by micro:bit UART MakeCode)
+      optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+    });
+
+    showStatus('Connecting to GATT server...');
+    const server = await device.gatt.connect();
+
+    const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+    const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e'); // write
+    const rx = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e'); // notify
+
+    window._microbitTx = tx;
+    window._microbitRx = rx;
+
+    await rx.startNotifications();
+    rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
+
+    showStatus('micro:bit connected (UART ready)');
+    console.log('Connected to micro:bit:', device.name || device.id);
+    alert('micro:bit connected successfully.');
+  } catch (err) {
+    console.error('connectMicrobit error', err);
+
+    // Better diagnostic messages
+    if (err && err.name === 'NotFoundError') {
+      alert('No device chosen. Try again and select your micro:bit in the picker.');
+    } else if (err && err.name === 'NotSupportedError') {
+      alert('GATT not supported: check browser/device Bluetooth support or origin (must be HTTPS or localhost).');
+    } else if (String(err).includes('GATT') || String(err).includes('Not supported')) {
+      alert('GATT error: ' + err + '\nPossible causes: micro:bit not running UART code, Bluetooth adapter problem, or micro:bit already connected to another device.');
+    } else {
+      alert('Connection failed: ' + err);
+    }
+  }
+}
     async function handleIncomingFromMicrobit(ev){
       try {
         const value = ev.target.value;
