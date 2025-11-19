@@ -453,39 +453,106 @@ async function predictLoop(){
       const a = document.createElement('a'); a.href = url; a.download = 'predictions.csv'; document.body.appendChild(a); a.click();
       setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 2000);
     }
+// ---------- Add this handler function somewhere in your script ----------
+async function handleIncomingFromMicrobit(event){
+  // event.target.value is a DataView / ArrayBuffer
+  try {
+    const value = event.target.value;
+    // decode UTF-8 text (micro:bit will send newline terminated strings)
+    const dec = new TextDecoder('utf-8');
+    const raw = dec.decode(value);
+    const text = raw.replace(/\r/g,'').replace(/\n/g,'').trim();
+    if (!text) return;
+    console.log('Received from micro:bit ->', JSON.stringify(text));
 
-   async function connectMicrobit(){
+    // Expected messages sent by micro:bit: LOGO_TOGGLE, BTN_A, BTN_B, BTN_AB
+    if (text === 'LOGO_TOGGLE') {
+      // Toggle camera on/off
+      if (isPredicting) {
+        // stop camera
+        if (stream){
+          stream.getTracks().forEach(t=>t.stop());
+          stream = null;
+        }
+        isPredicting = false;
+        showStatus('camera stopped (by micro:bit logo)');
+      } else {
+        // start camera & model
+        startCameraAndModel();
+      }
+      return;
+    }
+
+    if (text === 'BTN_A' || text === 'BTN_B' || text === 'BTN_AB') {
+      // micro:bit asked to "show count" when camera is off by logo button
+      // Only respond if camera is currently off (as you requested)
+      if (!isPredicting) {
+        // prepare counts summary
+        const counts = {
+          F: webFishCount || 0,
+          T: webTrashCount || 0,
+          E: webEmergCount || 0
+        };
+        // send back a simple string micro:bit can parse: e.g. "COUNT:F:2,T:5,E:0"
+        const out = `COUNT:F:${counts.F},T:${counts.T},E:${counts.E}`;
+        await sendCodeToMicrobit(out);
+        console.log('Sent counts to micro:bit ->', out);
+      } else {
+        // optional: notify micro:bit that camera is still on
+        await sendCodeToMicrobit('ERROR:CAMERA_ON');
+      }
+      return;
+    }
+
+    // handle other incoming commands (if any)
+    if (text.startsWith('INFO:')) {
+      // handle custom info from micro:bit if needed
+      console.log('micro:bit info:', text.slice(5));
+    }
+  } catch (err){
+    console.error('Error handling incoming micro:bit message', err);
+  }
+}
+
+// ---------- Replace your connectMicrobit() with this improved function ----------
+async function connectMicrobit(){
   if (!('bluetooth' in navigator)){ alert('Web Bluetooth not supported. Use Chrome on Android or desktop.'); return; }
   try {
     showStatus('requesting device...');
-    // allow picking the device explicitly; helps if name differs
     const device = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
-      optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+      optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] // Nordic UART service (micro:bit uart)
     });
 
     showStatus('connecting...');
     const server = await device.gatt.connect();
 
-    // list all primary services for debugging
-    const services = await server.getPrimaryServices();
-    console.log('Device services:', services.map(s=>s.uuid));
-    showStatus('found ' + services.length + ' services');
-
-    // try to get the UART service by UUID
+    // UART service (micro:bit / many UART examples)
     const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    const TX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write (web -> micro:bit)
+    const RX_CHAR_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify (micro:bit -> web)
+
     try {
       const service = await server.getPrimaryService(UART_SERVICE_UUID);
-      const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+
+      const tx = await service.getCharacteristic(TX_CHAR_UUID);
+      const rx = await service.getCharacteristic(RX_CHAR_UUID);
+
+      // store globally so other functions can write
       window._microbitTx = tx;
-      showStatus('micro:bit connected (UART ok)');
-      alert('micro:bit connected. Page can send messages.');
-      console.log('UART characteristic found:', tx);
+      window._microbitRx = rx;
+
+      // start notifications (so web receives messages)
+      await rx.startNotifications();
+      rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
+
+      showStatus('micro:bit connected (UART OK)');
+      alert('micro:bit connected. Page can now receive messages.');
+      console.log('UART TX (write) and RX (notify) ready:', tx, rx);
       return;
     } catch (err) {
-      console.warn('UART service not found on this device:', err);
-      // If UART service missing, inform user and show available services
-      alert('Connected device does not expose micro:bit UART. Make sure micro:bit is flashed with the BLE UART program.');
+      console.warn('UART service/characteristic error:', err);
+      alert('Connected device does not expose micro:bit UART characteristics. Make sure micro:bit is running a BLE UART program.');
       showStatus('connected but no UART');
       return;
     }
@@ -494,6 +561,8 @@ async function predictLoop(){
     showError(err);
   }
 }
+
+   
 
 
     // wire buttons
