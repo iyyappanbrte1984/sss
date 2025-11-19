@@ -425,6 +425,17 @@ async function predictLoop(){
       if (code === 'F'){ webFishCount++; updateWebCountersUI(); await sendCodeToMicrobit('F'); }
       else if (code === 'T'){ webTrashCount++; updateWebCountersUI(); await sendCodeToMicrobit('T'); }
       else if (code === 'E'){ webEmergCount++; updateWebCountersUI(); await sendCodeToMicrobit('E'); }
+      else if (code === 'E'){ 
+    webEmergCount++; 
+    updateWebCountersUI(); 
+    await sendCodeToMicrobit('E'); 
+
+    // 🔔 ALARM TRIGGER WHEN EMERGENCY COUNT > 5
+    if (webEmergCount > 5) {
+        await sendCodeToMicrobit('ALARM');   // micro:bit siren
+    }
+}
+
     }
 
     // measure end & log long frames (optional)
