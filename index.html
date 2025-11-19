@@ -221,29 +221,59 @@
     }
 
     /* ---------- WEB BLUETOOTH / micro:bit ---------- */
-    async function connectMicrobit() {
+   async function connectMicrobit() {
+  // origin check
+  if (!(location.protocol === 'https:' || location.hostname === 'localhost')) {
+    alert('Web Bluetooth requires HTTPS or http://localhost. Serve this page from http://localhost or via HTTPS.');
+    return;
+  }
+
+  if (!('bluetooth' in navigator)) {
+    alert('Web Bluetooth API not available. Use Chrome (desktop or Android).');
+    return;
+  }
+
   try {
-    statusEl.innerText = 'Status: requesting device...';
-    // Use the same namePrefix that worked previously
+    showStatus('Requesting micro:bit...');
+    // use acceptAllDevices to avoid name mismatch; optionalServices requests UART
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: 'BBC micro:bit' }],
+      acceptAllDevices: true,
       optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
     });
 
-    statusEl.innerText = 'Status: connecting...';
-    console.log('Selected device:', device);
+    console.log('Selected device object:', device);
+    showStatus('Connecting to GATT server...');
+
+    // watch for disconnects
+    device.addEventListener('gattserverdisconnected', (ev) => {
+      console.warn('micro:bit disconnected', ev);
+      showStatus('micro:bit disconnected');
+      // optionally try reconnect logic here
+    });
+
+    // connect
     const server = await device.gatt.connect();
 
+    // get UART service and characteristics
     const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
-    // This example keeps the same behavior as your working code: open the TX/write char
-    uartTxChar = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+    const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e'); // write
+    const rx = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e'); // notify
 
-    statusEl.innerText = 'Status: connected to ' + (device.name || device.id);
-    console.log('Connected to micro:bit', device.name || device.id);
+    window._microbitTx = tx;
+    window._microbitRx = rx;
+
+    await rx.startNotifications();
+    rx.addEventListener('characteristicvaluechanged', handleIncomingFromMicrobit);
+
+    showStatus('micro:bit connected: ' + (device.name || device.id));
+    console.log('Connected to micro:bit:', device);
   } catch (err) {
-    console.error('connectMicrobit error', err);
-    statusEl.innerText = 'Status: Bluetooth failed';
-    alert('Bluetooth/connection failed: ' + err + '\n\nTry: unpair micro:bit from OS Bluetooth settings, use Chrome, and serve page via localhost or HTTPS.');
+    // catch & display error clearly
+    console.error('connectMicrobit error:', err);
+    showStatus('micro:bit connection failed');
+    // show the full error to the user for diagnostics
+    alert('Connection error: ' + (err && err.message ? err.message : String(err)) +
+          '\n\nCheck DevTools console for stack trace. If the stack shows a chrome-extension:// URL, disable that extension and retry.');
   }
 }
 
