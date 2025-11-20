@@ -212,10 +212,15 @@
           } else if (code === 'T'){
             webTrashCount++; updateWebCountersUI(); await sendCodeToMicrobit('T');
           } else if (code === 'E'){
-            webEmergCount++; updateWebCountersUI(); await sendCodeToMicrobit('E');
-            if (webEmergCount > 5) { await sendCodeToMicrobit('ALARM'); }
-          }
-        }
+  webEmergCount++;
+  updateWebCountersUI();
+  await sendCodeToMicrobit('E');
+
+  if (webEmergCount >= 5) {
+    await sendCodeToMicrobit('ALARM');
+    showStatus('ALARM sent to micro:bit');
+  }
+}
 
         if (isPredicting) setTimeout(()=> requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
       } catch(e){ showError(e); }
@@ -294,24 +299,22 @@
     }
 
     function handleIncomingFromMicrobit(raw){
-      console.log('From micro:bit ->', raw);
+  console.log('From micro:bit ->', raw);
 
-      // You can design messages later; for now just handle same logic as before
-      if (raw === 'LOGO_TOGGLE'){
-        if (isPredicting) stopCamera(); else startCameraAndModel();
-        return;
-      }
+  if (raw === 'LOGO_TOGGLE'){
+    if (isPredicting) stopCamera(); else startCameraAndModel();
+    return;
+  }
 
-      if (raw === 'BTN_A' || raw === 'BTN_B' || raw === 'BTN_AB'){
-        if (!isPredicting){
-          const out = `COUNT:F:${webFishCount},T:${webTrashCount},E:${webEmergCount}`;
-          sendCodeToMicrobit(out);
-        } else {
-          sendCodeToMicrobit('ERROR:CAMERA_ON');
-        }
-        return;
-      }
-    }
+  if (raw === 'BTN_A' || raw === 'BTN_B' || raw === 'BTN_AB'){
+    // Always send current counts, even while camera is running
+    const out = `COUNT:F:${webFishCount},T:${webTrashCount},E:${webEmergCount}`;
+    sendCodeToMicrobit(out);
+    showStatus('Sent counts to micro:bit');
+    return;
+  }
+}
+
 
     /* ---------- WIRES ---------- */
     document.getElementById('startBtn').addEventListener('click', startCameraAndModel);
