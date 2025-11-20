@@ -195,7 +195,7 @@
       return null;
     }
 
-    async function predictLoop(){
+       async function predictLoop(){
       try {
         if (!tmModel) throw new Error('Model not loaded');
         const preds = await tmModel.predict(videoEl, false);
@@ -207,23 +207,35 @@
 
         if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
           const code = labelToCode(top.className);
+
           if (code === 'F'){
-            webFishCount++; updateWebCountersUI(); await sendCodeToMicrobit('F');
+            webFishCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('F');
+
           } else if (code === 'T'){
-            webTrashCount++; updateWebCountersUI(); await sendCodeToMicrobit('T');
+            webTrashCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('T');
+
           } else if (code === 'E'){
-  webEmergCount++;
-  updateWebCountersUI();
-  await sendCodeToMicrobit('E');
+            webEmergCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('E');
 
-  if (webEmergCount >= 5) {
-    await sendCodeToMicrobit('ALARM');
-    showStatus('ALARM sent to micro:bit');
-  }
-}
+            if (webEmergCount >= 5) {
+              await sendCodeToMicrobit('ALARM');
+              showStatus('ALARM sent to micro:bit');
+            }
+          }
+        }
 
-        if (isPredicting) setTimeout(()=> requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
-      } catch(e){ showError(e); }
+        if (isPredicting) {
+          setTimeout(() => requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
+        }
+      } catch(e){
+        showError(e);
+      }
     }
 
     function downloadCSV(){
