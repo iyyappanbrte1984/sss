@@ -310,19 +310,50 @@
       }
     }
 
-    function handleIncomingFromMicrobit(raw){
+   function handleIncomingFromMicrobit(raw){
   console.log('From micro:bit ->', raw);
 
+  // Logo = toggle camera
   if (raw === 'LOGO_TOGGLE'){
-    if (isPredicting) stopCamera(); else startCameraAndModel();
+    if (isPredicting) {
+      stopCamera();
+    } else {
+      startCameraAndModel();
+    }
     return;
   }
 
-  if (raw === 'BTN_A' || raw === 'BTN_B' || raw === 'BTN_AB'){
-    // Always send current counts, even while camera is running
+  // Button A: send ALL counts
+  if (raw === 'BTN_A'){
     const out = `COUNT:F:${webFishCount},T:${webTrashCount},E:${webEmergCount}`;
     sendCodeToMicrobit(out);
-    showStatus('Sent counts to micro:bit');
+    showStatus('Sent all counts to micro:bit (A)');
+    return;
+  }
+
+  // Button B: send ONLY emergency count
+  if (raw === 'BTN_B'){
+    const out = `EMERG:${webEmergCount}`;
+    sendCodeToMicrobit(out);
+    showStatus('Sent emergency count to micro:bit (B)');
+    return;
+  }
+
+  // Button A+B: reset all counters and confirm
+  if (raw === 'BTN_AB'){
+    webFishCount = 0;
+    webTrashCount = 0;
+    webEmergCount = 0;
+    updateWebCountersUI();
+    sendCodeToMicrobit('RESET_OK');
+    showStatus('Counters reset from micro:bit (A+B)');
+    return;
+  }
+
+  // Shake gesture: just a fun interaction
+  if (raw === 'SHAKE'){
+    showStatus('Shake detected from micro:bit');
+    sendCodeToMicrobit('WAVE');
     return;
   }
 }
