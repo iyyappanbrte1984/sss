@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Marine AI Dashboard — SMART VISION</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for simple graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
+      --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
+      --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
+    }
+    *{box-sizing:border-box;}
+    html,body{margin:0;font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,Arial;}
+    body{background:var(--bg);color:var(--ocean-900);-webkit-font-smoothing:antialiased;}
+
+    /* NAVBAR */
+    nav{
+      position:sticky;top:0;z-index:1000;
+      display:flex;justify-content:center;gap:24px;
+      padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+    }
+    nav a{
+      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
+      padding:6px 18px;border-radius:999px;
+    }
+    nav a:hover{background:rgba(255,255,255,0.22);}
+
+    /* HERO */
+    .hero-header{
+      padding:26px 16px 18px;
+      text-align:center;
+      background:linear-gradient(120deg,#005fa3,#00a8e8);
+      color:#fff;
+      box-shadow:0 8px 24px rgba(0,0,0,0.15);
+    }
+    .hero-header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:0.04em;}
+    .hero-header p{margin:6px 0 0;font-size:14px;opacity:0.9;}
+
+    .wrap{max-width:1150px;margin:24px auto 32px;padding:0 16px;}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:18px;
+      margin-top:20px;
+    }
+    .card{
+      background:var(--card);border-radius:16px;padding:16px 18px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+    }
+    .card h3{margin:0 0 4px;font-size:18px;}
+    .metric-value{font-size:26px;font-weight:800;}
+    .metric-unit{font-size:13px;color:var(--muted);}
+    .chip{
+      display:inline-block;margin-top:8px;padding:6px 12px;border-radius:999px;
+      font-size:12px;font-weight:600;color:#fff;
+    }
+    .chip.ok{background:var(--ok);}
+    .chip.warn{background:var(--warn);}
+    .chip.bad{background:var(--bad);}
+
+    /* chart + AI row */
+    .row-2{
+      display:grid;
+      grid-template-columns: minmax(0,2fr) minmax(0,1.5fr);
+      gap:18px;
+      margin-top:22px;
+    }
+    @media (max-width:900px){
+      .row-2{grid-template-columns:1fr;}
+    }
+
+    canvas{width:100%;max-height:260px;}
+
+    #aiBox{min-height:180px;display:flex;flex-direction:column;}
+    #aiText{
+      flex:1;
+      border-radius:10px;
+      border:1px solid #dde7f3;
+      padding:10px;
+      font-size:13px;
+      resize:vertical;
+      background:#f9fbff;
+      white-space:pre-wrap;
+    }
+
+    .btn{
+      display:inline-block;margin-top:10px;
+      padding:9px 15px;border-radius:999px;border:none;
+      background:linear-gradient(90deg,#39a1ff,#0b74de);
+      color:#fff;font-weight:700;font-size:13px;
+      cursor:pointer;
+    }
+    .btn:disabled{opacity:0.6;cursor:not-allowed;}
+
+    table{
+      width:100%;border-collapse:collapse;margin-top:14px;font-size:13px;
+    }
+    th,td{padding:6px 8px;border-bottom:1px solid #dde7f3;text-align:left;}
+    th{background:#edf4ff;}
+
+    .note{margin-top:18px;font-size:12px;color:var(--muted);}
+    footer{margin:22px 0 10px;text-align:center;font-size:13px;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+  </nav>
+
+  <header class="hero-header">
+    <h1>MARINE AI DASHBOARD</h1>
+    <p>Live-like ocean parameters + AI health summary (demo).</p>
+  </header>
+
+  <main class="wrap">
+    <!-- metric cards -->
+    <section class="grid" id="metricCards"></section>
+
+    <!-- chart + AI section -->
+    <section class="row-2">
+      <article class="card">
+        <h3>Temperature trend (last 7 samples)</h3>
+        <canvas id="tempChart"></canvas>
+      </article>
+
+      <article class="card" id="aiBox">
+        <h3>AI Health Insight</h3>
+        <textarea id="aiText" readonly>Loading local prediction…</textarea>
+        <button class="btn" id="btnLocalAI">Run local rule-based AI</button>
+        <button class="btn" id="btnServerAI" style="margin-left:6px;background:linear-gradient(90deg,#05c46b,#0b7c3e);">
+          Ask external AI (requires API)
+        </button>
+      </article>
+    </section>
+
+    <!-- table -->
+    <section class="card" style="margin-top:22px;">
+      <h3>Raw parameter table</h3>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Sample #</th>
+            <th>pH</th>
+            <th>Temperature (°C)</th>
+            <th>Salinity (PSU)</th>
+            <th>DO (mg/L)</th>
+            <th>Turbidity (NTU)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="note">
+        Currently using demo data from JavaScript. Later you can replace this with:
+        (a) real sensor values from micro:bit / serial, or (b) an online marine API.
+      </p>
+    </section>
+
+    <footer>Prototype dashboard – tune thresholds and connect real data for your project.</footer>
+  </main>
+
+  <script>
+    /* ---------- 1. DEMO MARINE DATA (7 samples) ---------- */
+    const samples = [
+      { id:1, ph:7.85, temperature:27.4, salinity:34.2, dissolvedOxygen:6.1, turbidity:3.3 },
+      { id:2, ph:7.92, temperature:27.9, salinity:34.0, dissolvedOxygen:6.0, turbidity:3.5 },
+      { id:3, ph:7.88, temperature:28.2, salinity:34.1, dissolvedOxygen:5.8, turbidity:3.8 },
+      { id:4, ph:7.75, temperature:28.9, salinity:33.9, dissolvedOxygen:5.6, turbidity:4.2 },
+      { id:5, ph:7.70, temperature:29.3, salinity:33.7, dissolvedOxygen:5.3, turbidity:4.9 },
+      { id:6, ph:7.65, temperature:29.8, salinity:33.5, dissolvedOxygen:5.0, turbidity:5.6 },
+      { id:7, ph:7.60, temperature:30.2, salinity:33.3, dissolvedOxygen:4.7, turbidity:6.1 },
+    ];
+    const latest = samples[samples.length-1];
+
+    const idealRanges = {
+      ph: "7.8 – 8.3",
+      temperature: "24 – 30",
+      salinity: "33 – 36",
+      dissolvedOxygen: "> 5",
+      turbidity: "< 5"
+    };
+
+    /* ---------- 2. SIMPLE LOCAL "AI" PREDICTION ---------- */
+    function getLocalPrediction(d){
+      let score = 0;
+
+      if (d.ph >= 7.6 && d.ph <= 8.4) score += 2;
+      else if (d.ph >= 7.2 && d.ph <= 8.8) score += 1;
+
+      if (d.temperature >= 24 && d.temperature <= 30) score += 2;
+      else if (d.temperature >= 22 && d.temperature <= 32) score += 1;
+
+      if (d.salinity >= 33 && d.salinity <= 36) score += 2;
+      else if (d.salinity >= 30 && d.salinity <= 37.5) score += 1;
+
+      if (d.dissolvedOxygen >= 5.5) score += 2;
+      else if (d.dissolvedOxygen >= 4) score += 1;
+
+      if (d.turbidity <= 5) score += 2;
+      else if (d.turbidity <= 8) score += 1;
+
+      let label, level, text;
+      if (score >= 8){
+        label = "Healthy"; level = "ok";
+        text = "Overall water quality is GOOD for most marine life. Maintain monitoring and keep plastic & nutrient pollution low.";
+      }else if (score >= 5){
+        label = "Watch"; level = "warn";
+        text = "Some parameters are slightly stressed (for example rising temperature or turbidity). Investigate local pollution sources and monitor weekly.";
+      }else{
+        label = "Alert"; level = "bad";
+        text = "Multiple parameters are outside ideal range. There is a RISK for fish and plankton. Immediate action and more detailed sampling are recommended.";
+      }
+      return {score, label, level, text};
+    }
+
+    /* ---------- 3. RENDER METRIC CARDS ---------- */
+    function renderCards(){
+      const container = document.getElementById("metricCards");
+      container.innerHTML = "";
+
+      const pred = getLocalPrediction(latest);
+
+      const cardData = [
+        { title:"Overall status", value:pred.label, unit:"score "+pred.score+"/10", level:pred.level },
+        { title:"pH", value:latest.ph.toFixed(2), unit:`Ideal ${idealRanges.ph}`, level: (latest.ph>=7.6 && latest.ph<=8.4) ? "ok" : (latest.ph>=7.2 && latest.ph<=8.8 ? "warn":"bad") },
+        { title:"Temperature (°C)", value:latest.temperature.toFixed(1), unit:`Ideal ${idealRanges.temperature}`, level: (latest.temperature>=24 && latest.temperature<=30) ? "ok" : (latest.temperature>=22 && latest.temperature<=32 ? "warn":"bad") },
+        { title:"Salinity (PSU)", value:latest.salinity.toFixed(1), unit:`Ideal ${idealRanges.salinity}`, level: (latest.salinity>=33 && latest.salinity<=36) ? "ok" : (latest.salinity>=30 && latest.salinity<=37.5 ? "warn":"bad") },
+        { title:"Dissolved O₂ (mg/L)", value:latest.dissolvedOxygen.toFixed(1), unit:`Ideal ${idealRanges.dissolvedOxygen}`, level: latest.dissolvedOxygen>=5.5 ? "ok" : (latest.dissolvedOxygen>=4 ? "warn":"bad") },
+        { title:"Turbidity (NTU)", value:latest.turbidity.toFixed(1), unit:`Ideal ${idealRanges.turbidity}`, level: latest.turbidity<=5 ? "ok" : (latest.turbidity<=8 ? "warn":"bad") },
+      ];
+
+      cardData.forEach(c=>{
+        const el = document.createElement("article");
+        el.className = "card";
+        el.innerHTML = `
+          <h3>${c.title}</h3>
+          <div class="metric-value">${c.value}</div>
+          <div class="metric-unit">${c.unit}</div>
+          <span class="chip ${c.level}">
+            ${c.level === "ok" ? "OK" : c.level === "warn" ? "Watch" : "Alert"}
+          </span>
+        `;
+        container.appendChild(el);
+      });
+
+      // put local AI text initially
+      const p = getLocalPrediction(latest);
+      document.getElementById("aiText").value =
+        `Local rule-based status: ${p.label} (score ${p.score}/10)\n\n${p.text}`;
+    }
+
+    /* ---------- 4. CHART + TABLE ---------- */
+    function renderChart(){
+      const ctx = document.getElementById("tempChart");
+      const labels = samples.map(s=>"S"+s.id);
+      const temps  = samples.map(s=>s.temperature);
+
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets:[{
+            label:"Temperature (°C)",
+            data:temps,
+            tension:0.3,
+            fill:false
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{display:false}},
+          scales:{
+            y:{title:{display:true,text:"°C"}},
+            x:{title:{display:true,text:"Sample"}}
+          }
+        }
+      });
+    }
+
+    function renderTable(){
+      const tbody = document.querySelector("#dataTable tbody");
+      tbody.innerHTML = "";
+      samples.forEach(s=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${s.id}</td>
+          <td>${s.ph.toFixed(2)}</td>
+          <td>${s.temperature.toFixed(1)}</td>
+          <td>${s.salinity.toFixed(1)}</td>
+          <td>${s.dissolvedOxygen.toFixed(1)}</td>
+          <td>${s.turbidity.toFixed(1)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* ---------- 5. BUTTON ACTIONS ---------- */
+
+    // Local AI just re-runs rule-based engine
+    document.getElementById("btnLocalAI").addEventListener("click", ()=>{
+      const p = getLocalPrediction(latest);
+      document.getElementById("aiText").value =
+        `Local rule-based status: ${p.label} (score ${p.score}/10)\n\n${p.text}`;
+    });
+
+    // External AI (ChatGPT / Perplexity) – this calls YOUR server API later
+    document.getElementById("btnServerAI").addEventListener("click", async ()=>{
+      const btn = document.getElementById("btnServerAI");
+      btn.disabled = true;
+      const box = document.getElementById("aiText");
+      box.value = "Contacting external AI service… (configure /api/marine-ai on your server)";
+
+      try{
+        const res = await fetch("/api/marine-ai", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({ latestSample: latest, allSamples: samples })
+        });
+        if(!res.ok) throw new Error("HTTP "+res.status);
+        const data = await res.json();
+        box.value = data.message || JSON.stringify(data,null,2);
+      }catch(err){
+        console.error(err);
+        box.value = "Could not reach external AI API.\n\nOnce you create an API endpoint at /api/marine-ai (for ChatGPT or Perplexity), this button will show the explanation it returns.";
+      }finally{
+        btn.disabled = false;
+      }
+    });
+
+    /* ---------- 6. INIT ---------- */
+    renderCards();
+    renderChart();
+    renderTable();
+  </script>
+</body>
+</html>
