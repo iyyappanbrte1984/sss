@@ -1,4 +1,3 @@
-<!-- marine-dashboard.html (fixed: proper Supabase client init + fetchLatestSamples function) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,111 +5,133 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Marine AI Dashboard — SMART VISION</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700,900&display=swap" rel="stylesheet">
-
-  <!-- Chart.js for graphs -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-  <!-- SUPABASE JS (for realtime subscribe) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 
   <style>
-    /* (styles preserved from your original file) */
     :root{
       --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
       --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
       --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
     }
-    *{box-sizing:border-box;}
-    html,body{margin:0;font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,Arial;}
-    body{background:var(--bg);color:var(--ocean-900);-webkit-font-smoothing:antialiased;}
+    *{box-sizing:border-box; margin:0; padding:0;}
+    html,body{font-family:"Poppins",sans-serif; background:var(--bg); color:var(--ocean-900);}
 
     nav{
-      position:sticky;top:0;z-index:1000;
-      display:flex;justify-content:center;gap:24px;
-      padding:12px 24px;
+      position:sticky; top:0; z-index:1000;
+      display:flex; justify-content:center; gap:24px; padding:12px 24px;
       background:linear-gradient(90deg,#0077be,#00a8e8);
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
     }
     nav a{
-      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
-      padding:6px 18px;border-radius:999px;
+      color:#fff; text-decoration:none; font-weight:700; font-size:16px;
+      padding:8px 20px; border-radius:999px; transition:all 0.3s;
     }
-    nav a:hover{background:rgba(255,255,255,0.22);}
+    nav a:hover{background:rgba(255,255,255,0.2); transform:translateY(-2px);}
 
     .hero-header{
-      padding:26px 16px 18px;
-      text-align:center;
-      background:linear-gradient(120deg,#005fa3,#00a8e8);
-      color:#fff;
-      box-shadow:0 8px 24px rgba(0,0,0,0.15);
+      padding:32px 16px 24px; text-align:center;
+      background:linear-gradient(135deg,#005fa3,#00a8e8,#39a1ff);
+      color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.15);
     }
-    .hero-header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:0.04em;}
-    .hero-header p{margin:6px 0 0;font-size:14px;opacity:0.9;}
+    .hero-header h1{font-size:32px; font-weight:900; letter-spacing:0.05em; margin-bottom:8px;}
+    .hero-header p{font-size:15px; opacity:0.95;}
 
-    .wrap{max-width:1150px;margin:24px auto 32px;padding:0 16px;}
+    .wrap{max-width:1200px; margin:30px auto; padding:0 20px;}
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-      gap:18px;
-      margin-top:20px;
+    .metrics-grid{
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:20px; margin-bottom:30px;
     }
-    .card{
-      background:var(--card);border-radius:16px;padding:16px 18px;
+    .metric-card{
+      background:linear-gradient(135deg,#fff,#f8fcff);
+      border-radius:16px; padding:24px;
+      box-shadow:0 10px 30px rgba(0,119,190,0.08);
+      border:1px solid rgba(0,119,190,0.1);
+      transition:all 0.3s ease;
+      position:relative; overflow:hidden;
+    }
+    .metric-card::before{
+      content:''; position:absolute; top:0; left:0; right:0; height:4px;
+      background:linear-gradient(90deg,var(--ocean-700),var(--ocean-500));
+    }
+    .metric-card:hover{transform:translateY(-4px); box-shadow:0 15px 40px rgba(0,119,190,0.15);}
+    .metric-label{font-size:13px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;}
+    .metric-value{
+      font-size:36px; font-weight:900; color:var(--ocean-900); margin:12px 0 8px;
+      animation:countUp 0.8s ease-out;
+    }
+    .metric-unit{font-size:13px; color:var(--muted); font-weight:500;}
+    .metric-status{
+      display:inline-block; margin-top:10px; padding:6px 14px; border-radius:20px;
+      font-size:12px; font-weight:700; color:#fff;
+    }
+    .status-ok{background:var(--ok);}
+    .status-warn{background:var(--warn);}
+    .status-bad{background:var(--bad);}
+
+    @keyframes countUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+    .dashboard-row{
+      display:grid; grid-template-columns:2fr 1.2fr; gap:20px; margin-bottom:30px;
+    }
+    @media (max-width:900px){.dashboard-row{grid-template-columns:1fr;}}
+
+    .chart-card, .ai-card{
+      background:#fff; border-radius:16px; padding:24px;
       box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
     }
-    .card h3{margin:0 0 4px;font-size:18px;}
-    .metric-value{font-size:26px;font-weight:800;}
-    .metric-unit{font-size:13px;color:var(--muted);}
-    .chip{
-      display:inline-block;margin-top:8px;padding:6px 12px;border-radius:999px;
-      font-size:12px;font-weight:600;color:#fff;
-    }
-    .chip.ok{background:var(--ok);}
-    .chip.warn{background:var(--warn);}
-    .chip.bad{background:var(--bad);}
+    .chart-card h3, .ai-card h3{margin-bottom:20px; font-size:18px; color:var(--ocean-900);}
+    canvas{width:100%; max-height:280px;}
 
-    .row-2{
-      display:grid;
-      grid-template-columns: minmax(0,2fr) minmax(0,1.5fr);
-      gap:18px;
-      margin-top:22px;
-    }
-    @media (max-width:900px){
-      .row-2{grid-template-columns:1fr;}
-    }
-
-    canvas{width:100%;max-height:260px;}
-
-    #aiBox{min-height:180px;display:flex;flex-direction:column;}
     #aiText{
-      flex:1;
-      border-radius:10px;
-      border:1px solid #dde7f3;
-      padding:10px;
-      font-size:13px;
-      resize:vertical;
-      background:#f9fbff;
-      white-space:pre-wrap;
+      width:100%; min-height:200px; border-radius:10px;
+      border:1px solid #e5f0f8; padding:14px; font-size:13px; line-height:1.6;
+      resize:vertical; background:#f9fbff; font-family:inherit;
     }
-
+    .btn-group{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
     .btn{
-      display:inline-block;margin-top:10px;
-      padding:9px 15px;border-radius:999px;border:none;
-      background:linear-gradient(90deg,#39a1ff,#0b74de);
-      color:#fff;font-weight:700;font-size:13px;
-      cursor:pointer;
+      padding:11px 20px; border-radius:10px; border:none; font-weight:700; font-size:13px;
+      cursor:pointer; transition:all 0.3s; flex:1; min-width:140px;
     }
-    .btn:disabled{opacity:0.6;cursor:not-allowed;}
+    .btn-primary{background:linear-gradient(135deg,#39a1ff,#0b74de); color:#fff;}
+    .btn-primary:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(11,116,222,0.3);}
+    .btn-success{background:linear-gradient(135deg,#1eae60,#0b7c3e); color:#fff;}
+    .btn-success:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(30,174,96,0.3);}
+    .btn:disabled{opacity:0.6; cursor:not-allowed; transform:none;}
 
-    table{
-      width:100%;border-collapse:collapse;margin-top:14px;font-size:13px;
+    .table-card{
+      background:#fff; border-radius:16px; padding:24px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06); margin-top:20px;
+      border:1px solid rgba(0,119,190,0.08);
     }
-    th,td{padding:6px 8px;border-bottom:1px solid #dde7f3;text-align:left;}
-    th{background:#edf4ff;}
+    .table-card h3{margin-bottom:18px; font-size:18px;}
+    table{width:100%; border-collapse:collapse; font-size:13px;}
+    th,td{padding:12px 10px; text-align:left; border-bottom:1px solid #e5f0f8;}
+    th{background:linear-gradient(135deg,#f0f7fc,#e5f0f8); font-weight:700; color:var(--ocean-900);}
+    tbody tr{transition:background 0.2s;}
+    tbody tr:hover{background:#f9fbff;}
+    .note{margin-top:16px; font-size:12px; color:var(--muted); text-align:center;}
 
-    .note{margin-top:18px;font-size:12px;color:var(--muted);}
-    footer{margin:22px 0 10px;text-align:center;font-size:13px;color:var(--muted);}
+    .loading{
+      display:inline-block; width:20px; height:20px;
+      border:3px solid rgba(11,116,222,0.2);
+      border-top-color:#0b74de; border-radius:50%;
+      animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin{ to{transform:rotate(360deg);} }
+
+    footer{margin:30px 0 20px; text-align:center; font-size:13px; color:var(--muted);}
+
+    .refresh-indicator{
+      position:fixed; bottom:20px; right:20px;
+      background:#fff; padding:10px 16px; border-radius:30px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1); font-size:12px;
+      display:flex; align-items:center; gap:8px; z-index:1000;
+      opacity:0; transition:opacity 0.3s;
+    }
   </style>
 </head>
 <body>
@@ -122,215 +143,250 @@
 
   <header class="hero-header">
     <h1>MARINE AI DASHBOARD</h1>
-    <p>Live-like ocean parameters + AI health summary (real data if connected).</p>
+    <p>Real-time ocean parameters + AI health analysis</p>
   </header>
 
   <main class="wrap">
-    <!-- metric cards -->
-    <section class="grid" id="metricCards"></section>
+    <section class="metrics-grid" id="metricsGrid"></section>
 
-    <!-- chart + AI section -->
-    <section class="row-2">
-      <article class="card">
-        <h3>Temperature trend (recent)</h3>
+    <section class="dashboard-row">
+      <div class="chart-card">
+        <h3>Temperature Trend (Recent 20 Samples)</h3>
         <canvas id="tempChart"></canvas>
-      </article>
+      </div>
 
-      <article class="card" id="aiBox">
+      <div class="ai-card">
         <h3>AI Health Insight</h3>
-        <textarea id="aiText" readonly>Loading local prediction…</textarea>
-        <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button class="btn" id="btnLocalAI">Run local rule-based AI</button>
-          <button class="btn" id="btnServerAI" style="background:linear-gradient(90deg,#05c46b,#0b7c3e);">Ask external AI</button>
+        <textarea id="aiText" readonly placeholder="Click a button below to get AI analysis..."></textarea>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btnLocalAI">Local Rules AI</button>
+          <button class="btn btn-success" id="btnServerAI">Perplexity AI</button>
         </div>
-      </article>
+      </div>
     </section>
 
-    <!-- table -->
-    <section class="card" style="margin-top:22px;">
-      <h3>Raw parameter table</h3>
+    <section class="table-card">
+      <h3>Recent Water Quality Samples</h3>
       <table id="dataTable">
         <thead>
           <tr>
-            <th>Sample #</th>
+            <th>#</th>
+            <th>Location</th>
             <th>Time</th>
             <th>pH</th>
-            <th>Temperature (°C)</th>
-            <th>Salinity (PSU)</th>
+            <th>Temp (°C)</th>
+            <th>Salinity</th>
             <th>DO (mg/L)</th>
-            <th>Turbidity (NTU)</th>
+            <th>Turbidity</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-      <p class="note">
-        This view now reads real entries from your backend (Netlify functions + Supabase). Use Live Demo to add data.
-      </p>
+      <p class="note">Data refreshes automatically every 30 seconds. Add samples via Live Demo page.</p>
     </section>
 
-    <footer>Prototype dashboard – tune thresholds and connect real data for your project.</footer>
+    <footer>
+      Dashboard powered by Vercel + Supabase + Perplexity AI
+    </footer>
   </main>
 
+  <div class="refresh-indicator" id="refreshIndicator">
+    <div class="loading"></div>
+    <span>Loading data...</span>
+  </div>
+
   <script>
-    /* ==========
-       CONFIG — Your Supabase credentials
-       ========== */
     const SUPABASE_URL = "https://gkomibcozmgpjqwymjtn.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrb21pYmNvem1ncGpxd3ltanRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNDIxNjUsImV4cCI6MjA3OTkxODE2NX0.KOOCWn6ZtF_xkeDV7rbxn9zz-TYfttUp_es5MwFbx30";
-   const API_BASE = "/api";
+    const API_BASE = "/api";
 
-    // init supabase client for realtime (anon key is ok in client)
     const supabase = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // small helpers
-    function number(v){ return (v === null || v === undefined) ? "—" : Number(v).toFixed(2); }
-    function setAIText(t){ document.getElementById('aiText').value = t; }
+    let tempChart = null;
+    let currentSamples = [];
 
-    // local rule-based AI
+    function num(v){ return (v == null) ? "—" : Number(v).toFixed(2); }
+    function setAIText(t){ document.getElementById('aiText').value = t; }
+    function showRefresh(msg){ 
+      const el = document.getElementById('refreshIndicator');
+      el.querySelector('span').textContent = msg;
+      el.style.opacity = '1';
+      setTimeout(() => el.style.opacity = '0', 2000);
+    }
+
     function getLocalPrediction(d){
-      if (!d) return {score:0,label:'No data',text:'No sample'};
+      if (!d) return {score:0, label:'No data', text:'No sample', status:'status-bad'};
       let score = 0;
       if (d.ph >= 7.6 && d.ph <= 8.4) score += 2; else if (d.ph >= 7.2 && d.ph <= 8.8) score += 1;
       if (d.temperature >= 24 && d.temperature <= 30) score += 2; else if (d.temperature >= 22 && d.temperature <= 32) score += 1;
       if (d.salinity >= 33 && d.salinity <= 36) score += 2; else if (d.salinity >= 30 && d.salinity <= 37.5) score += 1;
-      if ((d.dissolvedOxygen ?? d.dissolved_oxygen) >= 5.5) score += 2; else if ((d.dissolvedOxygen ?? d.dissolved_oxygen) >= 4) score += 1;
-      if ((d.turbidity ?? d.turbidity) <= 5) score += 2; else if ((d.turbidity ?? d.turbidity) <= 8) score += 1;
-      let label, text;
-      if (score >= 8) { label = "Healthy"; text = "Overall water quality is GOOD. Keep monitoring."; }
-      else if (score >= 5) { label = "Watch"; text = "Some parameters slightly stressed. Investigate local causes."; }
-      else { label = "Alert"; text = "Several parameters outside ideal. Action needed."; }
-      return {score, label, text};
+      if ((d.dissolved_oxygen ?? d.dissolvedOxygen) >= 5.5) score += 2; else if ((d.dissolved_oxygen ?? d.dissolvedOxygen) >= 4) score += 1;
+      if ((d.turbidity) <= 5) score += 2; else if ((d.turbidity) <= 8) score += 1;
+      let label, text, status;
+      if (score >= 8) { label = "Healthy"; text = "Overall water quality is GOOD. Keep monitoring."; status = 'status-ok'; }
+      else if (score >= 5) { label = "Watch"; text = "Some parameters slightly stressed. Investigate causes."; status = 'status-warn'; }
+      else { label = "Alert"; text = "Several parameters outside ideal. Action needed."; status = 'status-bad'; }
+      return {score, label, text, status};
     }
 
-    // FIXED: fetch latest samples from Netlify function
-    async function fetchLatestSamples(limit = 20) {
+    async function fetchSamples(limit = 20) {
       try {
-        const r = await fetch(`${API_BASE}/latest-samples?limit=${encodeURIComponent(limit)}`);
-        if (!r.ok) {
-          console.error('Failed to load latest samples', await r.text());
-          return [];
-        }
+        const r = await fetch(`${API_BASE}/latest-samples?limit=${limit}`);
+        if (!r.ok) throw new Error('Failed to fetch');
         return await r.json();
       } catch (err) {
-        console.error('fetchLatestSamples error', err);
+        console.error('fetchSamples error:', err);
         return [];
       }
     }
 
-    // render metrics/cards/table/chart using fetched rows
-    let tempChart = null;
-    async function renderFromServer() {
-      const rows = await fetchLatestSamples(20);
+    async function renderDashboard() {
+      showRefresh('Fetching data...');
+      const samples = await fetchSamples(20);
+      currentSamples = samples;
 
-      // metric cards
-      const metricContainer = document.getElementById('metricCards');
-      metricContainer.innerHTML = '';
+      if (samples.length === 0) {
+        showRefresh('No data yet');
+        document.getElementById('metricsGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No samples yet. Add data via Live Demo page.</p>';
+        return;
+      }
 
-      const latest = rows[0] || null;
-      const cards = [
-        { title: "Overall status", value: latest ? getLocalPrediction(latest).label : "No data", unit: latest ? new Date(latest.recorded_at).toLocaleString() : "" },
-        { title: "pH (latest)", value: latest ? number(latest.ph) : "—", unit: "ideal 7.8–8.3" },
-        { title: "Temperature (°C)", value: latest ? number(latest.temperature) : "—", unit: "ideal 24–30" },
-        { title: "Salinity (PSU)", value: latest ? number(latest.salinity) : "—", unit: "ideal 33–36" }
-      ];
-      cards.forEach(c => {
-        const el = document.createElement('article');
-        el.className = 'card';
-        el.innerHTML = `<h3>${c.title}</h3><div class="metric-value">${c.value}</div><div class="metric-unit">${c.unit}</div>`;
-        metricContainer.appendChild(el);
-      });
+      const latest = samples[0];
+      const pred = getLocalPrediction(latest);
 
-      // table
-      const tbody = document.querySelector('#dataTable tbody');
-      tbody.innerHTML = '';
-      rows.forEach((r, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${idx+1}</td><td>${new Date(r.recorded_at).toLocaleString()}</td><td>${number(r.ph)}</td><td>${number(r.temperature)}</td><td>${number(r.salinity)}</td><td>${number(r.dissolved_oxygen ?? r.dissolvedOxygen)}</td><td>${number(r.turbidity)}</td>`;
-        tbody.appendChild(tr);
-      });
+      // Render metric cards
+      const metricsGrid = document.getElementById('metricsGrid');
+      metricsGrid.innerHTML = `
+        <div class="metric-card">
+          <div class="metric-label">Overall Status</div>
+          <div class="metric-value">${pred.label}</div>
+          <div class="metric-unit">${new Date(latest.recorded_at).toLocaleString()}</div>
+          <span class="metric-status ${pred.status}">Score: ${pred.score}/10</span>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">pH Level</div>
+          <div class="metric-value">${num(latest.ph)}</div>
+          <div class="metric-unit">Ideal: 7.8–8.3</div>
+          <span class="metric-status ${latest.ph >= 7.6 && latest.ph <= 8.4 ? 'status-ok' : 'status-warn'}">Current</span>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Temperature</div>
+          <div class="metric-value">${num(latest.temperature)}</div>
+          <div class="metric-unit">°C (Ideal: 24–30)</div>
+          <span class="metric-status ${latest.temperature >= 24 && latest.temperature <= 30 ? 'status-ok' : 'status-warn'}">Current</span>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Salinity</div>
+          <div class="metric-value">${num(latest.salinity)}</div>
+          <div class="metric-unit">PSU (Ideal: 33–36)</div>
+          <span class="metric-status ${latest.salinity >= 33 && latest.salinity <= 36 ? 'status-ok' : 'status-warn'}">Current</span>
+        </div>
+      `;
 
-      // chart (temperatures)
-      const labels = rows.map(s => new Date(s.recorded_at).toLocaleTimeString());
-      const temps = rows.map(s => Number(s.temperature || 0));
+      // Render chart
+      const labels = samples.map(s => new Date(s.recorded_at).toLocaleTimeString());
+      const temps = samples.map(s => Number(s.temperature || 0));
       const ctx = document.getElementById('tempChart').getContext('2d');
       if (tempChart) tempChart.destroy();
       tempChart = new Chart(ctx, {
         type: 'line',
-        data: { labels, datasets: [{ label:'Temperature (°C)', data: temps, tension:0.3, fill:false }] },
-        options: { responsive:true, plugins:{legend:{display:false}} }
+        data: {
+          labels: labels.reverse(),
+          datasets: [{
+            label: 'Temperature (°C)',
+            data: temps.reverse(),
+            borderColor: '#0b74de',
+            backgroundColor: 'rgba(11,116,222,0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: false, grid: { color: '#f0f7fc' } },
+            x: { grid: { display: false } }
+          }
+        }
       });
 
-      // set initial AI text with local rule for latest
-      if (latest) {
-        const p = getLocalPrediction(latest);
-        setAIText(`Local rule-based status: ${p.label} (score ${p.score}/10)\n\n${p.text}`);
-      } else {
-        setAIText('No sample data available yet.');
-      }
+      // Render table
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = samples.map((s, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${s.location || 'Unknown'}</td>
+          <td>${new Date(s.recorded_at).toLocaleString()}</td>
+          <td>${num(s.ph)}</td>
+          <td>${num(s.temperature)}</td>
+          <td>${num(s.salinity)}</td>
+          <td>${num(s.dissolved_oxygen)}</td>
+          <td>${num(s.turbidity)}</td>
+        </tr>
+      `).join('');
+
+      // Set initial AI text
+      setAIText(`Local Rule-Based Analysis:\n\nStatus: ${pred.label} (${pred.score}/10)\n\n${pred.text}`);
+      showRefresh('Data loaded ✓');
     }
 
-    // subscribe to Supabase realtime for new samples & predictions
+    // Real-time updates
     function setupRealtime() {
-      supabase.channel('public:samples')
+      supabase.channel('samples_updates')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'samples' }, payload => {
-          console.log('New sample inserted', payload.new);
-          renderFromServer();
-        })
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'predictions' }, payload => {
-          console.log('New prediction inserted', payload.new);
-          if (payload.new && payload.new.summary) {
-            setAIText(String(payload.new.summary).slice(0, 10000));
-          }
+          console.log('New sample detected:', payload.new);
+          renderDashboard();
         })
         .subscribe();
     }
 
-    // Ask server AI (calls Netlify function /marine-ai which uses Perplexity server-side)
-    async function askServerAI() {
-      try {
-        const rows = await fetchLatestSamples(1);
-        const latest = (rows && rows[0]) ? rows[0] : null;
-        if (!latest) { alert('No sample available to analyze.'); return; }
+    // AI buttons
+    document.getElementById('btnLocalAI').addEventListener('click', () => {
+      if (currentSamples.length === 0) { alert('No data available'); return; }
+      const pred = getLocalPrediction(currentSamples[0]);
+      setAIText(`Local Rule-Based Analysis:\n\nStatus: ${pred.label} (Score: ${pred.score}/10)\n\n${pred.text}\n\nThis is a simple rule-based assessment. For detailed AI analysis, click "Perplexity AI".`);
+    });
 
+    document.getElementById('btnServerAI').addEventListener('click', async () => {
+      if (currentSamples.length === 0) { alert('No data available'); return; }
+      try {
         document.getElementById('btnServerAI').disabled = true;
-        document.getElementById('btnServerAI').textContent = 'Asking AI...';
+        document.getElementById('btnServerAI').textContent = 'Analyzing...';
+        showRefresh('Requesting AI...');
 
         const resp = await fetch(`${API_BASE}/marine-ai`, {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ latestSample: latest })
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ latestSample: currentSamples[0] })
         });
 
         const json = await resp.json();
-        console.log('marine-ai result', json);
         if (json.ai_text) {
-          setAIText(String(json.ai_text).slice(0,10000));
-        } else if (json.stored && json.stored.summary) {
-          setAIText(String(json.stored.summary).slice(0,10000));
+          setAIText(json.ai_text);
+          showRefresh('AI analysis complete ✓');
         } else {
-          setAIText('AI returned unexpected response: ' + JSON.stringify(json));
+          setAIText('AI Error: ' + JSON.stringify(json));
         }
       } catch (err) {
-        console.error('askServerAI error', err);
-        alert('AI call failed. Check Netlify function logs and that PERPLEXITY_KEY is configured.');
+        console.error('AI error:', err);
+        alert('AI call failed. Check console.');
       } finally {
         document.getElementById('btnServerAI').disabled = false;
-        document.getElementById('btnServerAI').textContent = 'Ask external AI';
+        document.getElementById('btnServerAI').textContent = 'Perplexity AI';
       }
-    }
-
-    // local button behavior
-    document.getElementById('btnLocalAI').addEventListener('click', async () => {
-      const rows = await fetchLatestSamples(1);
-      const latest = (rows && rows[0]) ? rows[0] : null;
-      const p = getLocalPrediction(latest);
-      setAIText(`Local rule-based status: ${p.label} (score ${p.score}/10)\n\n${p.text}`);
     });
-    document.getElementById('btnServerAI').addEventListener('click', askServerAI);
 
-    // init on load
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+      renderDashboard();
+    }, 30000);
+
+    // Initial load
     (async function init() {
-      await renderFromServer();
+      await renderDashboard();
       setupRealtime();
     })();
   </script>
