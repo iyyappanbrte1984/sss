@@ -1,6 +1,5 @@
 // netlify/functions/latest-samples.js
 // Returns latest samples (used by dashboard and live-demo)
-
 export async function handler(event) {
   if (event.httpMethod !== "GET") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
