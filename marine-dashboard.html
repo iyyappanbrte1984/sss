@@ -245,14 +245,20 @@
       const samples = await fetchSamples(20);
       currentSamples = samples;
 
-      if (samples.length === 0) {
-        showRefresh('No data yet');
-        document.getElementById('metricsGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No samples yet. Add data via Live Demo page.</p>';
-        return;
-      }
+    const samples = await fetchSamples(20);
+currentSamples = samples;
 
-      const latest = samples[0];
-      const pred = getLocalPrediction(latest);
+if (samples.length === 0) {
+  showRefresh('No data yet');
+  document.getElementById('metricsGrid').innerHTML =
+    '<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No samples yet. Add data via Live Demo page.</p>';
+  return;
+}
+
+// use the most recent sample (assumes API returns newest first)
+const latest = samples[0];
+const pred = getLocalPrediction(latest);
+
 
       // Render metric cards
       const metricsGrid = document.getElementById('metricsGrid');
