@@ -207,19 +207,22 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       return {score, label, text};
     }
 
-    // fetch latest samples from Netlify function
-    async function fetchLatestSamples(limit=20) {
-      try {
-        const res = await fetch(`${API_BASE}/latest-samples?limit=${limit}`);
-        if (!res.ok) throw new Error('latest-samples failed: ' + res.status);
-        const data = await res.json();
-        return data;
-      } catch (err) {
-        console.error(err);
-        return [];
-      }
-    }
+   // replace supabase read with fetch to your server function:
+async function loadLatestSamples(limit = 20) {
+  const r = await fetch('/.netlify/functions/latest-samples?limit=' + encodeURIComponent(limit));
+  if (!r.ok) {
+    console.error('Failed to load latest samples', await r.text());
+    return [];
+  }
+  return await r.json();
+}
 
+// usage example:
+loadLatestSamples(20).then(samples => {
+  // samples is array of rows; render chart/table
+  console.log('latest samples', samples);
+  renderTable(samples); // your existing renderer function - call it with samples
+});
     // render metrics/cards/table/chart using fetched rows
     let tempChart = null;
     async function renderFromServer() {
