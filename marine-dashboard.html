@@ -245,20 +245,14 @@
       const samples = await fetchSamples(20);
       currentSamples = samples;
 
-    const samples = await fetchSamples(20);
-currentSamples = samples;
+      if (samples.length === 0) {
+        showRefresh('No data yet');
+        document.getElementById('metricsGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No samples yet. Add data via Live Demo page.</p>';
+        return;
+      }
 
-if (samples.length === 0) {
-  showRefresh('No data yet');
-  document.getElementById('metricsGrid').innerHTML =
-    '<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No samples yet. Add data via Live Demo page.</p>';
-  return;
-}
-
-// use the most recent sample (assumes API returns newest first)
-const latest = samples[0];
-const pred = getLocalPrediction(latest);
-
+      const latest = samples[0];
+      const pred = getLocalPrediction(latest);
 
       // Render metric cards
       const metricsGrid = document.getElementById('metricsGrid');
@@ -366,7 +360,7 @@ const pred = getLocalPrediction(latest);
         const resp = await fetch(`${API_BASE}/marine-ai`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-     body: JSON.stringify({ latestSample: currentSamples[0] })
+          body: JSON.stringify({ latestSample: currentSamples[0] })
         });
 
         const json = await resp.json();
