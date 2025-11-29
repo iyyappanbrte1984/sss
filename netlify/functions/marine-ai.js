@@ -7,13 +7,13 @@ export async function handler(event) {
   }
 
   try {
-    const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
+   const perplexityKey = process.env.PERPLEXITY_KEY;
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
     const QUOTA_PER_DAY = Number(process.env.AI_QUOTA_PER_DAY || "10");
 
-    if (!PERPLEXITY_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      return { statusCode: 500, body: JSON.stringify({ error: "Missing env vars (PERPLEXITY_API_KEY / SUPABASE_URL / SUPABASE_SERVICE_KEY)" }) };
+    if (!PERPLEXITY_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      return { statusCode: 500, body: JSON.stringify({ error: "Missing env vars (PERPLEXITY_KEY / SUPABASE_URL / SUPABASE_SERVICE_KEY)" }) };
     }
 
     const body = JSON.parse(event.body || "{}");
@@ -79,7 +79,7 @@ Provide a short, clear assessment (2-5 sentences) and recommended actions if any
     const perRes = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
+        Authorization: `Bearer ${PERPLEXITY_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
