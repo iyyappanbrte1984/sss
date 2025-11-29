@@ -1,25 +1,30 @@
-// marine-ai.js
+// marine-ai.js  (PERPLEXITY VERSION)
 import fetch from "node-fetch";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const OPENAI_KEY = process.env.OPENAI_KEY;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 
 function buildPrompt(latest) {
   return `
-You are an expert ocean-science assistant. Given the latest sensor reading, return a short JSON with keys:
-- summary (one-line status: Healthy / Watch / Alert)
-- concerns (array of up to 2 strings)
-- actions (array of 1-3 practical steps for students / community)
-Keep the answer concise, plain text, no markdown, under 120 words.
+You are an expert ocean water quality scientist.
 
-Latest sample:
+Analyse this marine sensor reading:
+
 pH: ${latest.ph}
 Temperature: ${latest.temperature} °C
 Salinity: ${latest.salinity} PSU
-Dissolved O2: ${latest.dissolved_oxygen ?? latest.dissolvedOxygen} mg/L
+Dissolved Oxygen: ${latest.dissolved_oxygen ?? latest.dissolvedOxygen} mg/L
 Turbidity: ${latest.turbidity} NTU
+
+Return a JSON with:
+{
+  "summary": "Healthy / Watch / Alert",
+  "concerns": ["point 1", "point 2"],
+  "actions": ["action 1", "action 2"]
+}
+
+Keep under 120 words.
 `;
 }
 
@@ -31,41 +36,45 @@ export async function handler(event) {
   try {
     const payload = JSON.parse(event.body || "{}");
     const latest = payload.latestSample;
-    if (!latest) return { statusCode: 400, body: JSON.stringify({ error: "latestSample required" }) };
 
-    // Compose prompt
+    if (!latest) {
+      return { statusCode: 400, body: JSON.stringify({ error: "latestSample required" }) };
+    }
+
     const prompt = buildPrompt(latest);
 
-    // Call OpenAI Responses API
-    const openaiResp = await fetch("https://api.openai.com/v1/responses", {
+    // -------------------------------
+    // 💡 CALL PERPLEXITY AI COMPLETIONS API
+    // -------------------------------
+    const perplexityResp = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_KEY}`
+        "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: OPENAI_MODEL,
-        input: prompt,
-        max_output_tokens: 400
+        model: "sonar-medium-chat",   // recommended fast/cheap model
+        messages: [
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 300
       })
     });
 
-    if (!openaiResp.ok) {
-      const t = await openaiResp.text();
-      console.error("OpenAI error", openaiResp.status, t);
-      return { statusCode: 502, body: JSON.stringify({ error: "OpenAI call failed", details: t }) };
+    if (!perplexityResp.ok) {
+      const txt = await perplexityResp.text();
+      console.error("Perplexity API error:", txt);
+      return { statusCode: 500, body: JSON.stringify({ error: "Perplexity API failed", details: txt }) };
     }
 
-    const openaiJson = await openaiResp.json();
-    // Try to extract text robustly:
-    let message = "";
-    try {
-      message = openaiJson.output?.[0]?.content?.[0]?.text ?? JSON.stringify(openaiJson);
-    } catch(e) {
-      message = JSON.stringify(openaiJson);
-    }
+    const data = await perplexityResp.json();
 
-    // Store prediction in Supabase predictions table (service role)
+    // Extract text
+    const message = data.choices?.[0]?.message?.content || JSON.stringify(data);
+
+    // -------------------------------
+    // SAVE PREDICTION TO SUPABASE
+    // -------------------------------
     const insertResp = await fetch(`${SUPABASE_URL}/rest/v1/predictions`, {
       method: "POST",
       headers: {
@@ -76,21 +85,23 @@ export async function handler(event) {
       },
       body: JSON.stringify([{
         sample_id: latest.id || null,
-        provider: "openai",
-        model: OPENAI_MODEL,
-        summary: String(message).slice(0, 10000),
-        details: { raw: openaiJson }
+        provider: "perplexity",
+        model: "sonar-medium-chat",
+        summary: message.substring(0, 10000),
+        details: data
       }])
     });
 
-    if (!insertResp.ok) {
-      const t = await insertResp.text();
-      console.error("Supabase insert prediction failed", insertResp.status, t);
-      return { statusCode: 502, body: JSON.stringify({ error: "Saving prediction failed", details: t }) };
-    }
-
     const inserted = await insertResp.json();
-    return { statusCode: 200, body: JSON.stringify({ ai_text: message, stored: inserted[0] }) };
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        ai_text: message,
+        stored: inserted[0]
+      })
+    };
+
   } catch (err) {
     console.error("marine-ai error", err);
     return { statusCode: 500, body: JSON.stringify({ error: String(err) }) };
