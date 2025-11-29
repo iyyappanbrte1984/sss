@@ -366,7 +366,7 @@ const pred = getLocalPrediction(latest);
         const resp = await fetch(`${API_BASE}/marine-ai`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ latestSample: currentSamples[0] })
+     body: JSON.stringify({ latestSample: currentSamples[0] })
         });
 
         const json = await resp.json();
