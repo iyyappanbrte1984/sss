@@ -1,10 +1,5 @@
-// log-sample.js
-import fetch from "node-fetch";
-
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-
-function safeNumber(v){ return v === undefined || v === null ? null : Number(v); }
+// netlify/functions/log-sample.js
+// Inserts a water sample into Supabase (server-side using service_role key)
 
 export async function handler(event) {
   if (event.httpMethod !== "POST") {
@@ -12,47 +7,47 @@ export async function handler(event) {
   }
 
   try {
-    const body = JSON.parse(event.body || "{}");
-
-    // Basic validation - require at least one reading
-    if (!body || (body.ph === undefined && body.temperature === undefined && body.salinity === undefined)) {
-      return { statusCode: 400, body: JSON.stringify({ error: "Missing sensor data (ph / temperature / salinity expected)" }) };
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      return { statusCode: 500, body: JSON.stringify({ error: "Missing Supabase env vars" }) };
     }
 
-    // Normalize payload to DB column names
-    const row = {
-      location: body.location || null,
-      recorded_at: body.recorded_at || new Date().toISOString(),
-      ph: safeNumber(body.ph),
-      temperature: safeNumber(body.temperature),
-      salinity: safeNumber(body.salinity),
-      dissolved_oxygen: safeNumber(body.dissolvedOxygen ?? body.dissolved_oxygen),
-      turbidity: safeNumber(body.turbidity),
-      meta: body.meta || {}
+    const payload = JSON.parse(event.body || "{}");
+    // sanitize basic shape
+    const sample = {
+      location: payload.location || payload.loc || "unknown",
+      ph: payload.ph ?? null,
+      temperature: payload.temperature ?? null,
+      salinity: payload.salinity ?? null,
+      dissolved_oxygen: payload.dissolved_oxygen ?? payload.dissolvedOxygen ?? null,
+      turbidity: payload.turbidity ?? null,
+      meta: payload.meta ?? {}
     };
 
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/samples`, {
+    // use Supabase REST to insert
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/samples`, {
       method: "POST",
       headers: {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
         "Content-Type": "application/json",
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
-        "Prefer": "return=representation"
+        Prefer: "return=representation"
       },
-      body: JSON.stringify([row])
+      body: JSON.stringify([sample])
     });
 
-    if (!resp.ok) {
-      const t = await resp.text();
-      console.error("Supabase insert error", resp.status, t);
-      return { statusCode: 502, body: JSON.stringify({ error: "Supabase insert failed", details: t }) };
+    const text = await res.text();
+    if (!res.ok) {
+      return { statusCode: 500, body: JSON.stringify({ error: "Supabase insert failed", details: text }) };
     }
 
-    const inserted = await resp.json();
-    // inserted is an array because we posted an array
-    return { statusCode: 200, body: JSON.stringify({ inserted: inserted[0] }) };
+    // returned representation (array) — parse JSON
+    const inserted = JSON.parse(text || "[]");
+    return { statusCode: 200, body: JSON.stringify({ success: true, inserted }) };
+
   } catch (err) {
-    console.error("log-sample error", err);
+    console.error(err);
     return { statusCode: 500, body: JSON.stringify({ error: String(err) }) };
   }
 }
