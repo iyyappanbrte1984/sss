@@ -1,32 +1,42 @@
-// latest-samples.js
-import fetch from "node-fetch";
-
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+// netlify/functions/latest-samples.js
+// Returns latest samples (used by dashboard and live-demo)
 
 export async function handler(event) {
-  try {
-    const q = (event.queryStringParameters && Number(event.queryStringParameters.limit)) || 20;
+  if (event.httpMethod !== "GET") {
+    return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
+  }
 
-    // fetch latest samples (with a limit)
-    const url = `${SUPABASE_URL}/rest/v1/samples?select=*&order=recorded_at.desc&limit=${q}`;
-    const resp = await fetch(url, {
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      return { statusCode: 500, body: JSON.stringify({ error: "Missing Supabase env vars" }) };
+    }
+
+    const url = new URL(`${SUPABASE_URL}/rest/v1/samples`);
+    const params = event.queryStringParameters || {};
+    const limit = params.limit || 20;
+    // request all columns, ordered by recorded_at desc
+    url.searchParams.set("select", "*");
+    url.searchParams.set("order", "recorded_at.desc");
+    url.searchParams.set("limit", String(limit));
+
+    const res = await fetch(url.toString(), {
+      method: "GET",
       headers: {
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`
       }
     });
 
-    if (!resp.ok) {
-      const t = await resp.text();
-      console.error("Supabase fetch error", resp.status, t);
-      return { statusCode: 502, body: JSON.stringify({ error: "Supabase query failed", details: t }) };
+    const data = await res.text();
+    if (!res.ok) {
+      return { statusCode: 500, body: JSON.stringify({ error: "Failed fetching samples", details: data }) };
     }
 
-    const rows = await resp.json();
-    return { statusCode: 200, body: JSON.stringify(rows) };
+    return { statusCode: 200, body: data };
   } catch (err) {
-    console.error("latest-samples error", err);
+    console.error(err);
     return { statusCode: 500, body: JSON.stringify({ error: String(err) }) };
   }
 }
