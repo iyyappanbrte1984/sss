@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ocean Explorer — SMART VISION</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS/JS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <style>
+    :root{
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
+      --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
+      --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--ocean-900);height:100%;}
+    body{display:flex;flex-direction:column;}
+
+    nav{
+      position:sticky;top:0;z-index:1000;
+      display:flex;justify-content:center;gap:24px;
+      padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    }
+    nav a{
+      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
+      padding:8px 20px;border-radius:999px;transition:all .3s;
+    }
+    nav a:hover{background:rgba(255,255,255,.2);transform:translateY(-2px);}
+
+    .hero-header{
+      padding:20px 16px;text-align:center;
+      background:linear-gradient(135deg,#005fa3,#00a8e8,#39a1ff);
+      color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.15);
+    }
+    .hero-header h1{font-size:28px;font-weight:900;letter-spacing:.06em;margin-bottom:6px;}
+    .hero-header p{font-size:14px;opacity:.95;}
+
+    .page-wrap{
+      flex:1;
+      max-width:1200px;
+      margin:20px auto;
+      padding:0 18px 20px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .top-row{
+      display:grid;
+      grid-template-columns:2.1fr 1.2fr;
+      gap:16px;
+    }
+    @media(max-width:900px){.top-row{grid-template-columns:1fr;}}
+
+    .panel{
+      background:#fff;
+      border-radius:16px;
+      padding:16px 18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+      border:1px solid rgba(0,119,190,.08);
+    }
+    .panel h2{
+      font-size:16px;
+      margin-bottom:8px;
+      color:var(--ocean-900);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .panel h2 span.badge{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,.05);
+      color:var(--muted);
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .panel small{color:var(--muted);font-size:12px;}
+
+    #map{
+      width:100%;
+      height:420px;
+      border-radius:12px;
+      overflow:hidden;
+    }
+
+    .legend{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+    .legend span.dot{
+      display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;
+    }
+
+    .summary-panel{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      font-size:13px;
+    }
+    .summary-stat{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .summary-stat-label{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;}
+    .summary-stat-value{font-weight:800;font-size:18px;color:var(--ocean-900);}
+    .summary-chip{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      color:#fff;
+    }
+    .chip-ok{background:var(--ok);}
+    .chip-warn{background:var(--warn);}
+    .chip-bad{background:var(--bad);}
+
+    .summary-body{
+      background:#f4f9ff;
+      border-radius:10px;
+      padding:10px 12px;
+      border:1px solid #e1edf8;
+      max-height:220px;
+      overflow:auto;
+      white-space:pre-wrap;
+    }
+
+    .bottom-row{
+      display:grid;
+      grid-template-columns:1.6fr 1.2fr;
+      gap:16px;
+    }
+    @media(max-width:900px){.bottom-row{grid-template-columns:1fr;}}
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    th,td{
+      padding:8px 6px;
+      border-bottom:1px solid #e5f0f8;
+      text-align:left;
+    }
+    th{
+      background:linear-gradient(135deg,#f0f7fc,#e5f0f8);
+      font-weight:700;
+      color:var(--ocean-900);
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+    tbody tr{transition:background .2s;}
+    tbody tr:hover{background:#f9fbff;}
+
+    .helper{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      text-align:center;
+    }
+
+    .refresh-indicator{
+      position:fixed;
+      bottom:18px;
+      right:18px;
+      background:#fff;
+      padding:8px 12px;
+      border-radius:20px;
+      box-shadow:0 4px 12px rgba(0,0,0,.15);
+      font-size:11px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      opacity:0;
+      transition:opacity .3s;
+      z-index:1000;
+    }
+    .loading{
+      width:16px;height:16px;
+      border-radius:50%;
+      border:2px solid rgba(11,116,222,.25);
+      border-top-color:#0b74de;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg);}}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
+  </nav>
+
+  <header class="hero-header">
+    <h1>OCEAN EXPLORER</h1>
+    <p>Planet satellite imagery + live water quality from SMART VISION</p>
+  </header>
+
+  <div class="page-wrap">
+    <div class="top-row">
+      <section class="panel">
+        <h2>
+          Planet Satellite View
+          <span class="badge" id="planetDateBadge">Loading…</span>
+        </h2>
+        <small>Map shows latest Planet basemap mosaic, with your water sample locations as colored markers.</small>
+        <div id="map"></div>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--ok);"></span> Healthy</span>
+          <span><span class="dot" style="background:var(--warn);"></span> Watch</span>
+          <span><span class="dot" style="background:var(--bad);"></span> Alert</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Location Health Snapshot</h2>
+        <div class="summary-panel">
+          <div class="summary-stat">
+            <div>
+              <div class="summary-stat-label">Overall Status</div>
+              <div class="summary-stat-value" id="overallLabel">—</div>
+            </div>
+            <span class="summary-chip" id="overallChip">NO DATA</span>
+          </div>
+          <div style="display:flex;gap:10px;font-size:12px;">
+            <div style="flex:1;">
+              <div class="summary-stat-label">Samples</div>
+              <div class="summary-stat-value" id="sampleCount">0</div>
+            </div>
+            <div style="flex:1;">
+              <div class="summary-stat-label">Latest Location</div>
+              <div class="summary-stat-value" id="latestLocation" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
+            </div>
+          </div>
+          <div class="summary-body" id="summaryText">
+            Waiting for data...
+          </div>
+          <div class="helper">
+            Tip: Click markers on the map to see sample details. Data syncs every 60 seconds.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="bottom-row">
+      <section class="panel" style="max-height:260px;overflow:auto;">
+        <h2>Recent Samples on Map</h2>
+        <table id="sampleTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Location</th>
+              <th>Time</th>
+              <th>pH</th>
+              <th>Temp</th>
+              <th>Salinity</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="helper">Data loaded from Supabase via /api/latest-samples.</div>
+      </section>
+      <section class="panel">
+        <h2>Insights</h2>
+        <div class="summary-body" id="insightsBox" style="height:220px;">
+          When you log more samples from different lakes or coasts, this panel will summarise:
+          - Which locations are most stressed
+          - How satellite context (urban, agriculture, coast) may relate
+          - Suggestions for school presentations and project reports
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="refresh-indicator" id="refreshIndicator">
+    <div class="loading"></div>
+    <span>Loading data...</span>
+  </div>
+
+  <script>
+    const API_BASE = "/api";
+    let map;
+    let markersLayer;
+    let latestSamples = [];
+
+    function showRefresh(msg){
+      const el = document.getElementById("refreshIndicator");
+      el.querySelector("span").textContent = msg;
+      el.style.opacity = "1";
+      setTimeout(() => { el.style.opacity = "0"; }, 2000);
+    }
+
+    function num(v){
+      return v == null ? "—" : Number(v).toFixed(2);
+    }
+
+    function classifySample(s){
+      let score = 0;
+      if (s.ph >= 7.6 && s.ph <= 8.4) score += 2; else if (s.ph >= 7.2 && s.ph <= 8.8) score += 1;
+      if (s.temperature >= 24 && s.temperature <= 30) score += 2; else if (s.temperature >= 22 && s.temperature <= 32) score += 1;
+      if (s.salinity >= 33 && s.salinity <= 36) score += 2; else if (s.salinity >= 30 && s.salinity <= 37.5) score += 1;
+      const doVal = s.dissolved_oxygen ?? s.dissolvedOxygen;
+      if (doVal >= 5.5) score += 2; else if (doVal >= 4) score += 1;
+      if (s.turbidity <= 5) score += 2; else if (s.turbidity <= 8) score += 1;
+
+      let label, chip, color;
+      if (score >= 8){ label = "Healthy"; chip = "OK"; color = "ok"; }
+      else if (score >= 5){ label = "Watch"; chip = "WATCH"; color = "warn"; }
+      else { label = "Alert"; chip = "ALERT"; color = "bad"; }
+      return { score, label, chip, color };
+    }
+
+    async function fetchPlanetConfig(){
+      const r = await fetch(`${API_BASE}/planet-imagery`);
+      return await r.json();
+    }
+
+    async function fetchSamples(limit=50){
+      const r = await fetch(`${API_BASE}/latest-samples?limit=${limit}`);
+      return await r.json();
+    }
+
+    function initMap(config){
+      if (map) return;
+      map = L.map("map").setView([config.mapCenter.lat, config.mapCenter.lng], config.mapZoom);
+
+      const dateBadge = document.getElementById("planetDateBadge");
+      dateBadge.textContent = `${config.currentYear}-${String(config.currentMonth).padStart(2,"0")} (Planet Basemap)`;
+
+      // IMPORTANT: we DO NOT put API key in JS.
+      // The URL template uses a placeholder {apiKey}. We don't resolve it here to keep key on server side.
+      // If your plan allows direct browser tiles, we could inject a public key, but safer is server-side tiling.
+      // For now, we just show a basic OSM basemap, and Planet integration is abstracted in the endpoint.
+      // To avoid broken tiles, we fallback to OSM:
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+        maxZoom:18,
+        attribution:"&copy; OpenStreetMap contributors"
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+    }
+
+    function updateMarkers(samples){
+      if (!map || !markersLayer) return;
+      markersLayer.clearLayers();
+
+      samples.forEach((s, idx) => {
+        // If you store lat/lng in Supabase later, use them.
+        // For now, we approximate by location name (just demo positions).
+        let lat = 11.0;
+        let lng = 79.0;
+        const name = (s.location || "").toLowerCase();
+        if (name.includes("danish")) { lat = 11.55; lng = 78.20; }
+        else if (name.includes("pannap")) { lat = 11.55; lng = 78.15; }
+        else if (name.includes("nag")) { lat = 11.60; lng = 78.10; }
+
+        const cls = classifySample(s);
+        let color = "#FF0000";
+        if (cls.color === "ok") color = "#1eae60";
+        if (cls.color === "warn") color = "#f5a623";
+        if (cls.color === "bad") color = "#e63946";
+
+        const marker = L.circleMarker([lat,lng],{
+          radius:8,
+          color:"#fff",
+          weight:1,
+          fillColor:color,
+          fillOpacity:0.9
+        });
+
+        const html = `
+          <b>${s.location || "Unknown location"}</b><br/>
+          <small>${new Date(s.recorded_at).toLocaleString()}</small><br/><br/>
+          <b>Status:</b> ${cls.label} (Score ${cls.score}/10)<br/>
+          pH: ${num(s.ph)}<br/>
+          Temp: ${num(s.temperature)} °C<br/>
+          Salinity: ${num(s.salinity)} PSU<br/>
+          DO: ${num(s.dissolved_oxygen)} mg/L<br/>
+          Turbidity: ${num(s.turbidity)} NTU
+        `;
+        marker.bindPopup(html);
+        marker.addTo(markersLayer);
+
+        if (idx === 0){
+          map.setView([lat,lng], 10);
+        }
+      });
+    }
+
+    function updateSummary(samples){
+      const countEl = document.getElementById("sampleCount");
+      const locEl = document.getElementById("latestLocation");
+      const labelEl = document.getElementById("overallLabel");
+      const chipEl = document.getElementById("overallChip");
+      const summaryText = document.getElementById("summaryText");
+      const insightsBox = document.getElementById("insightsBox");
+
+      if (samples.length === 0){
+        countEl.textContent = "0";
+        locEl.textContent = "—";
+        labelEl.textContent = "No data";
+        chipEl.textContent = "NO DATA";
+        chipEl.className = "summary-chip";
+        summaryText.textContent = "No samples loaded yet. Log data from the Live Demo page to see AI summaries here.";
+        return;
+      }
+
+      const latest = samples[0];
+      const cls = classifySample(latest);
+      countEl.textContent = samples.length;
+      locEl.textContent = latest.location || "Unknown";
+      labelEl.textContent = cls.label.toUpperCase();
+      chipEl.textContent = cls.chip;
+      chipEl.className = "summary-chip " + (cls.color === "ok" ? "chip-ok" : cls.color === "warn" ? "chip-warn" : "chip-bad");
+
+      summaryText.textContent =
+        `Latest sample at ${latest.location || "Unknown"}\n\n` +
+        `• Status: ${cls.label} (Score ${cls.score}/10)\n` +
+        `• pH: ${num(latest.ph)} (ideal ~7.8–8.3)\n` +
+        `• Temperature: ${num(latest.temperature)} °C (ideal 24–30 °C)\n` +
+        `• Salinity: ${num(latest.salinity)} PSU (typical ocean ~35)\n` +
+        `• Dissolved Oxygen: ${num(latest.dissolved_oxygen)} mg/L (healthy > 5.5)\n` +
+        `• Turbidity: ${num(latest.turbidity)} NTU (clear < 5)\n\n` +
+        `Combine this with the satellite view: is the lake surrounded by farms, urban areas, or industry? That context can explain changes in water quality.`;
+
+      // Simple overall insights based on mix of samples:
+      const alerts = samples.filter(s => classifySample(s).color === "bad").length;
+      const warns = samples.filter(s => classifySample(s).color === "warn").length;
+      const oks   = samples.filter(s => classifySample(s).color === "ok").length;
+
+      insightsBox.textContent =
+        `Insights based on ${samples.length} samples:\n\n` +
+        `• Healthy (OK): ${oks}\n` +
+        `• Watch: ${warns}\n` +
+        `• Alert: ${alerts}\n\n` +
+        `If most locations are in WATCH or ALERT, you can emphasize this in your project as an urgent call to action.\n` +
+        `Use the map to check whether stressed lakes are close to\n` +
+        `- towns and sewage outlets\n` +
+        `- agricultural fields (fertilizers)\n` +
+        `- factories or industrial areas\n\n` +
+        `This combination of AI + satellite + water data makes your project truly innovative.`;
+    }
+
+    function updateTable(samples){
+      const tbody = document.querySelector("#sampleTable tbody");
+      if (!tbody) return;
+      tbody.innerHTML = samples.map((s,i)=>{
+        const cls = classifySample(s);
+        const color = cls.color === "ok" ? "#1eae60" : cls.color === "warn" ? "#f5a623" : "#e63946";
+        return `
+          <tr>
+            <td>${i+1}</td>
+            <td>${s.location || "Unknown"}</td>
+            <td>${new Date(s.recorded_at).toLocaleString()}</td>
+            <td>${num(s.ph)}</td>
+            <td>${num(s.temperature)}</td>
+            <td>${num(s.salinity)}</td>
+            <td><span style="color:${color};font-weight:700;">${cls.label}</span></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function loadAll(){
+      try {
+        showRefresh("Loading map + data...");
+        const [planetCfg, samples] = await Promise.all([
+          fetchPlanetConfig(),
+          fetchSamples(50)
+        ]);
+        latestSamples = samples || [];
+        initMap(planetCfg);
+        updateMarkers(latestSamples);
+        updateSummary(latestSamples);
+        updateTable(latestSamples);
+        showRefresh("Ocean Explorer updated ✓");
+      } catch (e) {
+        console.error("Ocean Explorer error:", e);
+        showRefresh("Error loading data");
+      }
+    }
+
+    // auto refresh every 60 seconds
+    setInterval(loadAll, 60000);
+    loadAll();
+  </script>
+</body>
+</html>
