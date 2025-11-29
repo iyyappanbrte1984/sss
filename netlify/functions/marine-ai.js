@@ -1,26 +1,81 @@
-// marine-ai-debug.js — temporary debug version
-import fetch from "node-fetch"; // keep or use global fetch if available
+// netlify/functions/marine-ai.js
+import fetch from "node-fetch";
 
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
+// Helper function: Insert prediction into Supabase
+async function storePrediction(predictionText, latestSample) {
+  const timestamp = new Date().toISOString();
+
+  const payload = {
+    created_at: timestamp,
+    prediction: predictionText,
+    ph: latestSample.ph,
+    temperature: latestSample.temperature,
+    salinity: latestSample.salinity,
+    dissolved_oxygen: latestSample.dissolved_oxygen ?? latestSample.dissolvedOxygen,
+    turbidity: latestSample.turbidity
+  };
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/predictions`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Supabase insert failed: ${errorText}`);
+  }
+
+  return true;
+}
+
 export async function handler(event) {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
   }
+
   try {
-    const payload = JSON.parse(event.body || "{}");
-    const latest = payload.latestSample;
-    if (!latest) return { statusCode: 400, body: JSON.stringify({ error: "latestSample required" }) };
+    const body = JSON.parse(event.body || "{}");
+    const latest = body.latestSample;
 
-    const prompt = `Analyze sample: pH ${latest.ph}, temp ${latest.temperature}, salinity ${latest.salinity}, DO ${latest.dissolved_oxygen || latest.dissolvedOxygen}, turbidity ${latest.turbidity}`;
+    if (!latest) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing latestSample in request" })
+      };
+    }
 
-    // Call Perplexity and capture full response
-    const resp = await fetch("https://api.perplexity.ai/chat/completions", {
+    if (!PERPLEXITY_API_KEY) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Missing PERPLEXITY_API_KEY" })
+      };
+    }
+
+    // Create prompt for Perplexity
+    const prompt = `Analyze ocean water health using these parameters:
+pH: ${latest.ph}
+Temperature: ${latest.temperature}°C
+Salinity: ${latest.salinity} PSU
+Dissolved Oxygen: ${latest.dissolved_oxygen ?? latest.dissolvedOxygen} mg/L
+Turbidity: ${latest.turbidity} NTU
+
+Provide a short, clear assessment of water quality and possible marine impacts.`;
+
+    // Call Perplexity API
+    const aiResponse = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+        Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -30,20 +85,41 @@ export async function handler(event) {
       })
     });
 
-    const status = resp.status;
-    const text = await resp.text(); // read as text so we can display HTML errors too
+    const status = aiResponse.status;
+    const text = await aiResponse.text();
 
-    // return the raw Perplexity response for debugging
+    // Handle Perplexity errors
+    if (status !== 200) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: "Perplexity API failed",
+          status: status,
+          details: text
+        })
+      };
+    }
+
+    const json = JSON.parse(text);
+    const aiText = json?.choices?.[0]?.message?.content || "No AI response received";
+
+    // Store prediction into Supabase
+    await storePrediction(aiText, latest);
+
     return {
       statusCode: 200,
       body: JSON.stringify({
-        note: "DEBUG: Perplexity raw response (do not keep this deployed long).",
-        perplexity_status: status,
-        perplexity_body: text.slice(0, 20000) // limit length
+        success: true,
+        ai_text: aiText,
+        stored: true
       })
     };
+
   } catch (err) {
-    console.error(err);
-    return { statusCode: 500, body: JSON.stringify({ error: String(err) }) };
+    console.error("SERVER ERROR:", err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: String(err) })
+    };
   }
 }
