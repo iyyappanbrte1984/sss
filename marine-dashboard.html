@@ -1,4 +1,4 @@
-<!-- marine-dashboard.html (enhanced: uses latest-samples + Supabase realtime + calls server AI) -->
+<!-- marine-dashboard.html (fixed: proper Supabase client init + fetchLatestSamples function) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,7 +10,7 @@
 
   <!-- Chart.js for graphs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   <!-- SUPABASE JS (for realtime subscribe) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 
@@ -173,16 +173,11 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   <script>
     /* ==========
-       CONFIG — REPLACE with YOUR values from Supabase Settings → API
-       ==========
-       Example:
-       const SUPABASE_URL = "https://abcd1234.supabase.co";
-       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI...";
-    */
-    const SUPABASE_URL = "https://gkomibcozmgpjqwymjtn.supabase.co"; // <<-- REPLACE
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrb21pYmNvem1ncGpxd3ltanRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNDIxNjUsImV4cCI6MjA3OTkxODE2NX0.KOOCWn6ZtF_xkeDV7rbxn9zz-TYfttUp_es5MwFbx30";      // <<-- REPLACE
-
-    const API_BASE = "/.netlify/functions"; // Netlify functions base
+       CONFIG — Your Supabase credentials
+       ========== */
+    const SUPABASE_URL = "https://gkomibcozmgpjqwymjtn.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrb21pYmNvem1ncGpxd3ltanRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNDIxNjUsImV4cCI6MjA3OTkxODE2NX0.KOOCWn6ZtF_xkeDV7rbxn9zz-TYfttUp_es5MwFbx30";
+    const API_BASE = "/.netlify/functions";
 
     // init supabase client for realtime (anon key is ok in client)
     const supabase = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -191,7 +186,7 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     function number(v){ return (v === null || v === undefined) ? "—" : Number(v).toFixed(2); }
     function setAIText(t){ document.getElementById('aiText').value = t; }
 
-    // local rule-based AI (same logic as before, preserved)
+    // local rule-based AI
     function getLocalPrediction(d){
       if (!d) return {score:0,label:'No data',text:'No sample'};
       let score = 0;
@@ -207,22 +202,21 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       return {score, label, text};
     }
 
-   // replace supabase read with fetch to your server function:
-async function loadLatestSamples(limit = 20) {
-  const r = await fetch('/.netlify/functions/latest-samples?limit=' + encodeURIComponent(limit));
-  if (!r.ok) {
-    console.error('Failed to load latest samples', await r.text());
-    return [];
-  }
-  return await r.json();
-}
+    // FIXED: fetch latest samples from Netlify function
+    async function fetchLatestSamples(limit = 20) {
+      try {
+        const r = await fetch(`${API_BASE}/latest-samples?limit=${encodeURIComponent(limit)}`);
+        if (!r.ok) {
+          console.error('Failed to load latest samples', await r.text());
+          return [];
+        }
+        return await r.json();
+      } catch (err) {
+        console.error('fetchLatestSamples error', err);
+        return [];
+      }
+    }
 
-// usage example:
-loadLatestSamples(20).then(samples => {
-  // samples is array of rows; render chart/table
-  console.log('latest samples', samples);
-  renderTable(samples); // your existing renderer function - call it with samples
-});
     // render metrics/cards/table/chart using fetched rows
     let tempChart = null;
     async function renderFromServer() {
@@ -277,11 +271,9 @@ loadLatestSamples(20).then(samples => {
 
     // subscribe to Supabase realtime for new samples & predictions
     function setupRealtime() {
-      // listen to inserts on samples and predictions
       supabase.channel('public:samples')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'samples' }, payload => {
           console.log('New sample inserted', payload.new);
-          // re-render from server (easy, simple)
           renderFromServer();
         })
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'predictions' }, payload => {
@@ -296,7 +288,6 @@ loadLatestSamples(20).then(samples => {
     // Ask server AI (calls Netlify function /marine-ai which uses Perplexity server-side)
     async function askServerAI() {
       try {
-        // get latest sample
         const rows = await fetchLatestSamples(1);
         const latest = (rows && rows[0]) ? rows[0] : null;
         if (!latest) { alert('No sample available to analyze.'); return; }
@@ -321,7 +312,7 @@ loadLatestSamples(20).then(samples => {
         }
       } catch (err) {
         console.error('askServerAI error', err);
-        alert('AI call failed. Check Netlify function logs and that PERPLEXITY_API_KEY is configured.');
+        alert('AI call failed. Check Netlify function logs and that PERPLEXITY_KEY is configured.');
       } finally {
         document.getElementById('btnServerAI').disabled = false;
         document.getElementById('btnServerAI').textContent = 'Ask external AI';
