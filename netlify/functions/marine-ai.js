@@ -1,5 +1,5 @@
 // netlify/functions/marine-ai.js
-// Calls Perplexity (server-side) with quota enforcement and stores result to predictions table
+// Calls Perplexity, enforces daily quota, stores prediction in Supabase predictions table.
 
 export async function handler(event) {
   if (event.httpMethod !== "POST") {
@@ -7,7 +7,7 @@ export async function handler(event) {
   }
 
   try {
-   const perplexityKey = process.env.PERPLEXITY_KEY;
+    const PERPLEXITY_KEY = process.env.PERPLEXITY_KEY; // matches your Netlify var name
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
     const QUOTA_PER_DAY = Number(process.env.AI_QUOTA_PER_DAY || "10");
@@ -16,10 +16,10 @@ export async function handler(event) {
       return { statusCode: 500, body: JSON.stringify({ error: "Missing env vars (PERPLEXITY_KEY / SUPABASE_URL / SUPABASE_SERVICE_KEY)" }) };
     }
 
+    // parse incoming body: may include latestSample; if not, we fetch latest sample from DB
     const body = JSON.parse(event.body || "{}");
-    let latest = body.latestSample || null;
+    let latest = body.latestSample ?? null;
 
-    // If no latestSample provided, fetch the most recent sample from DB
     if (!latest) {
       // fetch 1 latest sample
       const sampleRes = await fetch(`${SUPABASE_URL}/rest/v1/samples?select=*&order=recorded_at.desc&limit=1`, {
@@ -37,18 +37,16 @@ export async function handler(event) {
       }
     }
 
-    // --- Quota check: count predictions for today ---
-    // determine today's start timestamp in UTC (YYYY-MM-DDT00:00:00Z)
+    // QUOTA check: count predictions by provider=perplexity since UTC midnight
     const todayStart = new Date();
     todayStart.setUTCHours(0,0,0,0);
     const isoStart = todayStart.toISOString();
 
-    // Query predictions since isoStart where provider=perplexity
     const qUrl = new URL(`${SUPABASE_URL}/rest/v1/predictions`);
     qUrl.searchParams.set("select", "id");
     qUrl.searchParams.set("created_at", `gte.${isoStart}`);
     qUrl.searchParams.set("provider", `eq.perplexity`);
-    qUrl.searchParams.set("limit", "1000"); // safe cap
+    qUrl.searchParams.set("limit", "1000");
 
     const qRes = await fetch(qUrl.toString(), {
       method: "GET",
@@ -65,17 +63,17 @@ export async function handler(event) {
       return { statusCode: 429, body: JSON.stringify({ error: "Quota exceeded", todayCount, quota: QUOTA_PER_DAY }) };
     }
 
-    // --- Build prompt for Perplexity ---
-    const prompt = `Analyze ocean water health using the following parameters:
+    // Build prompt
+    const prompt = `Analyze ocean water health using these parameters:
 pH: ${latest.ph}
 Temperature: ${latest.temperature} °C
 Salinity: ${latest.salinity}
 Dissolved Oxygen: ${latest.dissolved_oxygen ?? latest.dissolvedOxygen}
 Turbidity: ${latest.turbidity}
 
-Provide a short, clear assessment (2-5 sentences) and recommended actions if any.`;
+Provide a short (2-4 sentence) assessment and suggested actions if needed.`;
 
-    // Call Perplexity Chat Completions
+    // Call Perplexity
     const perRes = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
@@ -93,18 +91,16 @@ Provide a short, clear assessment (2-5 sentences) and recommended actions if any
     const text = await perRes.text();
 
     if (status !== 200) {
-      // return details from Perplexity for debugging (don't log secret)
+      // return status + body for debugging
       return { statusCode: 500, body: JSON.stringify({ error: "Perplexity API failed", status, details: text }) };
     }
 
-    // parse JSON response
     let perJson;
     try { perJson = JSON.parse(text); } catch (e) { perJson = null; }
 
-    // lift out AI message text - try expected location, fallback to raw text
     const aiText = perJson?.choices?.[0]?.message?.content ?? perJson?.choices?.[0]?.text ?? (typeof text === "string" ? text : JSON.stringify(perJson));
 
-    // store prediction in Supabase
+    // Store prediction in Supabase
     const storePayload = {
       sample_id: latest.id ?? null,
       provider: "perplexity",
@@ -130,14 +126,13 @@ Provide a short, clear assessment (2-5 sentences) and recommended actions if any
       return { statusCode: 500, body: JSON.stringify({ error: "Failed storing prediction", details: insertText }) };
     }
 
-    // return AI text and store info
     let stored = null;
-    try { stored = JSON.parse(insertText); } catch(e) { stored = insertText; }
+    try { stored = JSON.parse(insertText); } catch (e) { stored = insertText; }
 
     return { statusCode: 200, body: JSON.stringify({ success: true, ai_text: aiText, stored }) };
 
   } catch (err) {
-    console.error(err);
+    console.error("marine-ai error:", err);
     return { statusCode: 500, body: JSON.stringify({ error: String(err) }) };
   }
 }
