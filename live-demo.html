@@ -1,181 +1,530 @@
+<!-- live-demo.html (enhanced: connects to Netlify functions + shows AI result) -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Live Demo — SMART VISION</title>
+  <title>Live Demo — SMART VISION Ocean Clean</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700,900&display=swap" rel="stylesheet">
+
+  <!-- TensorFlow + Teachable Machine -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js"></script>
+
   <style>
-    :root{--accent:#06a6ff;--bg:#f6fbff;--muted:#6f8396}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:linear-gradient(180deg,var(--bg),#fff);color:#032735}
-    nav{display:flex;gap:18px;align-items:center;padding:14px 20px;background:linear-gradient(90deg,#0077be,#00a8e8);color:#fff}
-    nav a{color:#fff;text-decoration:none;font-weight:700}
-    .wrap{max-width:1000px;margin:20px auto;padding:18px}
-    .grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
-    .card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 10px 30px rgba(6,20,40,0.06)}
-    video{width:100%;border-radius:8px;background:#000;object-fit:cover}
-    .controls{display:flex;gap:8px;flex-wrap:wrap}
-    .btn{padding:8px 12px;border-radius:8px;border:0;background:linear-gradient(90deg,var(--accent),#0b74de);color:#fff;font-weight:700;cursor:pointer}
-    label{display:block;margin-top:10px;font-size:13px;color:var(--muted)}
-    input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #eef6ff;margin-top:6px}
-    .muted{color:var(--muted);font-size:13px}
-    footer{text-align:center;color:var(--muted);margin-top:18px;font-size:13px}
-    @media(max-width:900px){ .grid{grid-template-columns:1fr} }
+    /* (unchanged styling from your original file) */
+    :root{
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff; --muted:#6f8396;
+      --card:#ffffff; --bg:#f7fbff; --radius:14px;
+    }
+    *{box-sizing:border-box;}
+    html,body{margin:0;font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,Arial;}
+    body{background:var(--bg);color:var(--ocean-900);-webkit-font-smoothing:antialiased;}
+
+    nav{
+      position:sticky;top:0;z-index:1000;
+      display:flex;justify-content:center;gap:24px;
+      padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+    }
+    nav a{
+      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
+      padding:6px 18px;border-radius:999px;
+    }
+    nav a:hover{background:rgba(255,255,255,0.22);}
+
+    .wrap{max-width:1100px;margin:26px auto;padding:0 16px;text-align:center;}
+
+    h1{margin-bottom:4px;}
+    p.sub{margin-top:0;color:var(--muted);}
+
+    .stage{
+      display:grid;
+      grid-template-columns:120px 1fr 120px;
+      gap:14px;
+      align-items:start;
+      margin-top:18px;
+    }
+    .side-stack{
+      display:flex;flex-direction:column;gap:12px;align-items:center;
+    }
+    .side-stack img{
+      width:100%;height:120px;border-radius:10px;object-fit:cover;
+      box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    }
+    .center-card{
+      background:var(--card);border-radius:var(--radius);padding:16px;
+      box-shadow:0 12px 34px rgba(0,0,0,0.07);
+      display:flex;flex-direction:column;align-items:center;gap:12px;
+    }
+    video#webcam{
+      width:100%;max-width:520px;
+      border-radius:10px;background:#000;aspect-ratio:4/3;object-fit:cover;
+      box-shadow:0 8px 30px rgba(0,0,0,0.06);
+    }
+    .ocean-controls{
+      display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:4px;
+    }
+    .ocean-controls button{
+      border:0;padding:10px 16px;border-radius:8px;font-weight:800;
+      color:#fff;cursor:pointer;min-width:150px;
+    }
+    .ocean-controls .start{background:linear-gradient(90deg,#39a1ff,#0b74de);}
+    .ocean-controls .stop{background:linear-gradient(90deg,#ff6b6b,#ff3b3b);}
+    .ocean-controls .connect{background:linear-gradient(90deg,#0b74de,#055fa8);}
+    .ocean-controls .csv{background:linear-gradient(90deg,#2b9bde,#0b74de);}
+
+    .status{
+      color:#02283a;font-weight:700;margin-top:6px;
+      background:#ffffff; padding:8px 12px;border-radius:8px;display:inline-block;
+    }
+
+    .counters{
+      display:inline-flex;gap:12px;margin-top:6px;flex-wrap:wrap;justify-content:center;
+    }
+    .counter{
+      background:#fff;padding:8px 10px;border-radius:8px;
+      box-shadow:0 6px 14px rgba(0,0,0,0.04);font-weight:800;
+    }
+
+    #errorBox{
+      display:none;position:fixed;left:12px;right:12px;bottom:12px;
+      padding:10px;background:#fff3cd;border:1px solid #f5c6cb;border-radius:8px;z-index:9999;
+      text-align:left;
+    }
+
+    footer{margin:20px 0 10px;color:var(--muted);font-size:13px;}
+
+    @media (max-width:960px){
+      .stage{grid-template-columns:80px 1fr 80px;}
+      .side-stack img{height:100px;}
+    }
+    @media (max-width:600px){
+      .stage{grid-template-columns:1fr;row-gap:12px;}
+      .side-stack{flex-direction:row;}
+      .side-stack img{width:44%;height:100px;}
+    }
   </style>
 </head>
 <body>
   <nav>
     <a href="index.html">Home</a>
     <a href="live-demo.html">Live Demo</a>
-    <a href="marine-dashboard.html">Dashboard</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
   </nav>
 
   <main class="wrap">
-    <h2 style="margin:0 0 6px">Live Demo — Smart Vision Submarine</h2>
-    <div class="muted">Camera preview • Record samples • Ask AI (Perplexity)</div>
+    <h1>Live Demo – SMART VISION Submarine</h1>
+    <p class="sub">Teachable Machine image model + micro:bit over Web Serial (USB).</p>
 
-    <div class="grid" style="margin-top:14px">
-      <div class="card">
-        <video id="webcam" playsinline muted></video>
-        <div style="margin-top:10px" class="controls">
-          <button id="startCam" class="btn">Start Camera</button>
-          <button id="stopCam" class="btn" style="background:linear-gradient(90deg,#ff6b6b,#ff3b3b)">Stop Camera</button>
-          <button id="snapshot" class="btn" style="background:linear-gradient(90deg,#05c46b,#0b7c3e)">Snapshot</button>
-        </div>
-        <div id="camStatus" class="muted" style="margin-top:8px">Camera: stopped</div>
+    <div class="stage" aria-label="main demo stage">
+      <div class="side-stack" aria-hidden="false">
+        <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster6.jpg" alt="poster6">
+        <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster8.jpg" alt="poster8">
       </div>
 
-      <aside class="card">
-        <h3 style="margin-top:0">Record Sample</h3>
-        <label>Location</label>
-        <input id="location" placeholder="Kombai-01">
-        <label>pH</label><input id="ph" type="number" step="0.01" placeholder="7.8">
-        <label>Temperature (°C)</label><input id="temperature" type="number" step="0.1" placeholder="28.2">
-        <label>Salinity (PSU)</label><input id="salinity" type="number" step="0.1" placeholder="34.1">
-        <label>Dissolved O₂ (mg/L)</label><input id="dox" type="number" step="0.1" placeholder="6.0">
-        <label>Turbidity (NTU)</label><input id="turb" type="number" step="0.1" placeholder="3.3">
+      <div class="center-card">
+        <video id="webcam" playsinline muted></video>
 
-        <div style="margin-top:12px;display:flex;gap:8px">
-          <button id="logSample" class="btn">Log Sample</button>
-          <button id="askAI" class="btn" style="background:linear-gradient(90deg,#05c46b,#0b7c3e)">Request AI</button>
+        <div class="ocean-controls" role="toolbar" aria-label="controls">
+          <button id="startBtn" class="start">Start Camera &amp; Load Model</button>
+          <button id="stopBtn" class="stop">Stop Camera</button>
+          <button id="connectBtn" class="connect">Connect micro:bit (USB)</button>
+          <button id="downloadCsv" class="csv">Download CSV</button>
         </div>
 
-        <div style="margin-top:12px">
-          <div class="muted">Last AI response:</div>
-          <textarea id="aiResult" readonly style="width:100%;height:120px;border-radius:8px;border:1px solid #eef6ff;padding:8px;margin-top:6px"></textarea>
+        <div class="status" id="statusText">Status: idle</div>
+
+        <div class="counters" aria-live="polite">
+          <div class="counter">Fish: <span id="fishCountDisplay">0</span></div>
+          <div class="counter">Trash: <span id="trashCountDisplay">0</span></div>
+          <div class="counter">Emerg: <span id="emergCountDisplay">0</span></div>
         </div>
-      </aside>
+
+        <!-- NEW: AI result area (keeps layout minimal / fits design) -->
+        <div id="aiPanel" style="margin-top:12px;width:100%;max-width:520px;text-align:left;">
+          <div style="font-weight:700;margin-bottom:6px">Last AI Result</div>
+          <textarea id="aiResult" readonly style="width:100%;height:120px;border-radius:8px;border:1px solid #eef6fb;padding:8px;background:#fbfdff"></textarea>
+        </div>
+
+        <!-- NEW: Manual sample form (compact, uses your theme) -->
+        <div id="manualSample" style="margin-top:12px;width:100%;max-width:520px;text-align:left;">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="inputLocation" placeholder="Location" style="flex:1;padding:8px;border-radius:8px;border:1px solid #eef6fb" />
+            <input id="inputPH" placeholder="pH" style="width:80px;padding:8px;border-radius:8px;border:1px solid #eef6fb" />
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="inputTemp" placeholder="Temp °C" style="flex:1;padding:8px;border-radius:8px;border:1px solid #eef6fb" />
+            <input id="inputSal" placeholder="Salinity" style="width:120px;padding:8px;border-radius:8px;border:1px solid #eef6fb" />
+          </div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button id="btnLogSample" class="start" style="min-width:140px">Log Sample</button>
+            <button id="btnAskServerAI" class="connect" style="min-width:140px">Request AI</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-stack">
+        <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster7.jpg" alt="poster7">
+        <img src="https://raw.githubusercontent.com/iyyappanbrte1984/sss/main/assets/poster9.jpg" alt="poster9">
+      </div>
     </div>
 
-    <footer>© SMART VISION • Use modern Chrome/Edge for camera & Web Serial.</footer>
+    <footer>Connect via Chrome/Edge on desktop • Web Serial works on HTTPS or localhost only.</footer>
   </main>
 
+  <div id="errorBox"><strong>Debug:</strong><pre id="errorText" style="white-space:pre-wrap"></pre></div>
+
   <script>
-    const API_BASE = "/.netlify/functions"; // Netlify functions base
+    /* =========================
+       CONFIG: Netlify API base
+       ========================= */
+    const API_BASE = "/.netlify/functions"; // no change - Netlify functions base
 
-    // camera
-    const video = document.getElementById("webcam");
-    const startBtn = document.getElementById("startCam");
-    const stopBtn = document.getElementById("stopCam");
-    const snapBtn = document.getElementById("snapshot");
-    const camStatus = document.getElementById("camStatus");
+    /* (existing model + camera + micro:bit logic left intact) */
+    const MODEL_URL = 'model/model.json';
+    const METADATA_URL = 'model/metadata.json';
+    const SEND_CONFIDENCE_THRESHOLD = 0.60;
+    const PREDICT_INTERVAL_MS = 600;
+    const MICROBIt_SEND_DEBOUNCE_MS = 700;
+
+    let tmModel = null;
+    let videoEl = document.getElementById('webcam');
     let stream = null;
+    let isPredicting = false;
+    let predictionsLog = [];
 
-    async function startCamera(){
+    let webFishCount = 0, webTrashCount = 0, webEmergCount = 0;
+
+    let serialPort = null;
+    let serialWriter = null;
+    let _lastMicrobitSendAt = 0;
+
+    function showStatus(text){ document.getElementById('statusText').textContent = 'Status: ' + text; }
+    function showError(e){
+      const box = document.getElementById('errorBox'), txt = document.getElementById('errorText');
+      txt.textContent = (e && e.stack) ? e.stack : String(e);
+      box.style.display = 'block';
+      showStatus('error: ' + (e && e.message ? e.message : e));
+      console.error(e);
+    }
+    function updateWebCountersUI(){
+      document.getElementById('fishCountDisplay').textContent = String(webFishCount);
+      document.getElementById('trashCountDisplay').textContent = String(webTrashCount);
+      document.getElementById('emergCountDisplay').textContent = String(webEmergCount);
+    }
+
+    async function sendCodeToMicrobit(code){
+      if (!serialWriter || !code) return;
+      const now = Date.now();
+      if (now - _lastMicrobitSendAt < MICROBIt_SEND_DEBOUNCE_MS) return;
+      _lastMicrobitSendAt = now;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode: 'environment' }, audio:false });
-        video.srcObject = stream; await video.play();
-        camStatus.textContent = "Camera: running";
+        await serialWriter.write(code + '\n');
+        console.log('Sent to micro:bit ->', code);
+      } catch(err){ console.warn('microbit write failed', err); }
+    }
+
+    async function startCameraAndModel(){
+      if (isPredicting) return;
+      showStatus('starting camera & model...');
+      try {
+        if (!tmModel) tmModel = await tmImage.load(MODEL_URL, METADATA_URL);
+        stream = await navigator.mediaDevices.getUserMedia({
+          video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}, audio:false
+        });
+        videoEl.srcObject = stream;
+        await videoEl.play();
+        isPredicting = true;
+        document.getElementById('startBtn').textContent = 'Camera running';
+        showStatus('camera running, model active');
+        await sendCodeToMicrobit('YES');
+        predictLoop();
+      } catch(err){ showError(err); }
+    }
+
+    function stopCamera(){
+      if (stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+      isPredicting = false;
+      document.getElementById('startBtn').textContent = 'Start Camera & Load Model';
+      showStatus('camera stopped');
+    }
+
+    function labelToCode(label){
+      if (!label) return null;
+      const low = String(label).toLowerCase();
+      if (low.includes('fish')) return 'F';
+      if (low.includes('trash')) return 'T';
+      if (low.includes('emerg') || low.includes('emergency')) return 'E';
+      return null;
+    }
+
+    async function predictLoop(){
+      try {
+        if (!tmModel) throw new Error('Model not loaded');
+        const preds = await tmModel.predict(videoEl, false);
+        preds.sort((a,b)=>b.probability - a.probability);
+        const top = preds[0] || {className:'--', probability:0};
+        const pct = Math.round(top.probability * 100);
+        showStatus(`live · ${pct}% · ${top.className || '--'}`);
+        predictionsLog.push({t:Date.now(), label: top.className, conf: top.probability});
+
+        if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
+          const code = labelToCode(top.className);
+
+          if (code === 'F'){
+            webFishCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('F');
+
+          } else if (code === 'T'){
+            webTrashCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('T');
+
+          } else if (code === 'E'){
+            webEmergCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('E');
+
+            if (webEmergCount >= 5) {
+              await sendCodeToMicrobit('ALARM');
+              showStatus('ALARM sent to micro:bit');
+            }
+          }
+        }
+
+        if (isPredicting) {
+          setTimeout(() => requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
+        }
       } catch(e){
-        console.error(e); camStatus.textContent = "Camera error: " + e.message;
+        showError(e);
       }
     }
-    function stopCamera(){
-      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null; camStatus.textContent = "Camera: stopped"; }
-    }
-    function snapshotImage(){
-      if (!video || !stream) return alert('Start camera first');
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
-      const ctx = canvas.getContext('2d'); ctx.drawImage(video,0,0,canvas.width,canvas.height);
-      return canvas.toDataURL('image/jpeg', 0.85);
+
+    function downloadCSV(){
+      if (predictionsLog.length === 0){ alert('No predictions recorded yet'); return; }
+      const header=['timestamp','label','confidence'];
+      const rows = predictionsLog.map(r=>[new Date(r.t).toISOString(), r.label, r.conf]);
+      const csv = [header, ...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'predictions.csv';
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 2000);
     }
 
-    startBtn.addEventListener('click', startCamera);
-    stopBtn.addEventListener('click', stopCamera);
-    snapBtn.addEventListener('click', ()=> {
-      const dataUrl = snapshotImage();
-      if (dataUrl) alert('Snapshot captured (not uploaded). Use sample fields to save readings.');
+    async function connectMicrobit() {
+      if (!(location.protocol === 'https:' || location.hostname === 'localhost')) {
+        alert('Web Serial requires HTTPS or http://localhost. Open this page over HTTPS.');
+        return;
+      }
+
+      if (!('serial' in navigator)) {
+        alert('Web Serial API not available. Use recent Chrome / Edge on desktop.');
+        return;
+      }
+
+      try {
+        showStatus('Requesting USB micro:bit...');
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate: 115200 });
+
+        const textEncoder = new TextEncoderStream();
+        textEncoder.readable.pipeTo(serialPort.writable);
+        serialWriter = textEncoder.writable.getWriter();
+
+        const textDecoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(textDecoder.writable);
+        const reader = textDecoder.readable.getReader();
+
+        showStatus('micro:bit USB connected');
+
+        (async function readLoop() {
+          try {
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) break;
+              if (value) {
+                const lines = value.replace(/\r/g,'').split('\n');
+                for (const line of lines) {
+                  const trimmed = line.trim();
+                  if (trimmed) handleIncomingFromMicrobit(trimmed);
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Serial read error', e);
+            showStatus('micro:bit USB disconnected');
+          }
+        })();
+
+      } catch (err) {
+        console.error('connectMicrobit error:', err);
+        showStatus('micro:bit USB connection failed');
+        alert('USB connection error: ' + (err && err.message ? err.message : String(err)) +
+              '\n\nCheck:\n• micro:bit is connected by USB\n• You select the micro:bit device in the dialog\n• No other program is using the serial port.');
+      }
+    }
+
+    function handleIncomingFromMicrobit(raw){
+      console.log('From micro:bit ->', raw);
+
+      if (raw === 'LOGO_TOGGLE'){
+        if (isPredicting) {
+          stopCamera();
+        } else {
+          startCameraAndModel();
+        }
+        return;
+      }
+
+      if (raw === 'BTN_A'){
+        const out = `COUNT:F:${webFishCount},T:${webTrashCount},E:${webEmergCount}`;
+        sendCodeToMicrobit(out);
+        showStatus('Sent all counts to micro:bit (A)');
+        return;
+      }
+
+      if (raw === 'BTN_B'){
+        const out = `EMERG:${webEmergCount}`;
+        sendCodeToMicrobit(out);
+        showStatus('Sent emergency count to micro:bit (B)');
+        return;
+      }
+
+      if (raw === 'BTN_AB'){
+        webFishCount = 0;
+        webTrashCount = 0;
+        webEmergCount = 0;
+        updateWebCountersUI();
+        sendCodeToMicrobit('RESET_OK');
+        showStatus('Counters reset from micro:bit (A+B)');
+        return;
+      }
+
+      if (raw === 'SHAKE'){
+        showStatus('Shake detected from micro:bit');
+        sendCodeToMicrobit('WAVE');
+        return;
+      }
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startCameraAndModel);
+    document.getElementById('stopBtn').addEventListener('click', stopCamera);
+    document.getElementById('downloadCsv').addEventListener('click', downloadCSV);
+    document.getElementById('connectBtn').addEventListener('click', connectMicrobit);
+
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.hidden && stream){
+        stopCamera();
+        showStatus('camera stopped (page hidden)');
+      }
     });
 
-    // read form
-    function readForm(){
-      return {
-        location: document.getElementById('location').value || 'unknown',
-        ph: parseFloat(document.getElementById('ph').value) || null,
-        temperature: parseFloat(document.getElementById('temperature').value) || null,
-        salinity: parseFloat(document.getElementById('salinity').value) || null,
-        dissolvedOxygen: parseFloat(document.getElementById('dox').value) || null,
-        turbidity: parseFloat(document.getElementById('turb').value) || null
-      };
-    }
+    /* =========================
+       NEW: Backend + AI integration
+       - Log sample to Netlify function
+       - Ask server AI via Netlify function (Perplexity)
+       - Show AI result in aiResult textarea
+       ========================= */
 
-    // POST sample to Netlify function
-    async function postSample(sample){
+    async function postSampleToServer(sample) {
+      // calls netlify function /.netlify/functions/log-sample
       try {
         const res = await fetch(`${API_BASE}/log-sample`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(sample)
         });
-        const json = await res.json();
-        return json;
-      } catch(err){
-        console.error('postSample', err); throw err;
+        return await res.json();
+      } catch (err) {
+        console.error('postSampleToServer error', err);
+        throw err;
       }
     }
 
-    // Ask server AI (Perplexity via serverless)
-    async function askAI(latestSample){
+    async function askAiForSample(latestSample) {
       try {
-        document.getElementById('aiResult').value = 'Requesting AI...';
         const res = await fetch(`${API_BASE}/marine-ai`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ latestSample })
         });
         const json = await res.json();
-        if (json.ai_text) {
-          document.getElementById('aiResult').value = String(json.ai_text).slice(0,10000);
-        } else {
-          document.getElementById('aiResult').value = JSON.stringify(json, null, 2);
-        }
-      } catch(e){
-        console.error(e); document.getElementById('aiResult').value = 'AI request failed: ' + (e.message || e);
+        return json; // { ai_text, stored }
+      } catch (err) {
+        console.error('askAiForSample error', err);
+        throw err;
       }
     }
 
-    document.getElementById('logSample').addEventListener('click', async ()=>{
-      const sample = readForm();
-      if (!sample.ph && !sample.temperature) return alert('Enter at least pH or temperature');
-      try {
-        const result = await postSample(sample);
-        alert('Sample logged. ID: ' + (result.inserted?.id || 'unknown'));
-      } catch(e){ alert('Failed to log sample'); }
-    });
+    // wire up the manual Log Sample and Request AI buttons (preserve original design)
+    document.getElementById('btnLogSample').addEventListener('click', async () => {
+      const sample = {
+        location: document.getElementById('inputLocation').value || 'unknown',
+        ph: parseFloat(document.getElementById('inputPH').value) || null,
+        temperature: parseFloat(document.getElementById('inputTemp').value) || null,
+        salinity: parseFloat(document.getElementById('inputSal').value) || null,
+        dissolvedOxygen: null,
+        turbidity: null,
+        meta: { source: 'manual-live-demo' },
+        recorded_at: new Date().toISOString()
+      };
 
-    document.getElementById('askAI').addEventListener('click', async ()=>{
-      // prefer using last inserted sample from API -> latest-samples
+      if (!sample.ph && !sample.temperature && !sample.salinity) {
+        alert('Enter at least one measurement (pH, Temp, or Salinity).');
+        return;
+      }
+
       try {
-        const rows = await fetch(`${API_BASE}/latest-samples?limit=1`).then(r => r.json());
-        const latest = (rows && rows[0]) || readForm();
-        await askAI(latest);
-      } catch(e){
-        console.error(e); alert('AI call failed');
+        showStatus('Sending sample to server...');
+        const result = await postSampleToServer(sample);
+        console.log('log-sample result', result);
+        showStatus('Sample logged — server id: ' + (result.inserted && result.inserted.id ? result.inserted.id : 'unknown'));
+        alert('Sample logged. ID: ' + (result.inserted && result.inserted.id ? result.inserted.id : 'unknown'));
+      } catch (err) {
+        showError(err);
+        alert('Failed to log sample. See console.');
       }
     });
+
+    document.getElementById('btnAskServerAI').addEventListener('click', async () => {
+      try {
+        showStatus('Fetching latest sample...');
+        // prefer latest from server
+        const rows = await fetch(`${API_BASE}/latest-samples?limit=1`).then(r => r.json());
+        const latest = (rows && rows[0]) ? rows[0] : {
+          location: document.getElementById('inputLocation').value || 'unknown',
+          ph: parseFloat(document.getElementById('inputPH').value) || null,
+          temperature: parseFloat(document.getElementById('inputTemp').value) || null,
+          salinity: parseFloat(document.getElementById('inputSal').value) || null,
+          recorded_at: new Date().toISOString()
+        };
+
+        showStatus('Requesting AI analysis...');
+        const aiRes = await askAiForSample(latest);
+        console.log('AI response', aiRes);
+        if (aiRes && aiRes.ai_text) {
+          document.getElementById('aiResult').value = String(aiRes.ai_text).slice(0, 10000);
+          showStatus('AI analysis returned');
+          // optionally show stored id
+          if (aiRes.stored && aiRes.stored.id) {
+            showStatus('AI stored id: ' + aiRes.stored.id);
+          }
+        } else {
+          document.getElementById('aiResult').value = JSON.stringify(aiRes, null, 2);
+          showStatus('AI returned unexpected result');
+        }
+      } catch (err) {
+        showError(err);
+        alert('AI call failed. See console.');
+      }
+    });
+
+    console.log('SMART VISION live demo loaded (enhanced).');
   </script>
 </body>
 </html>
