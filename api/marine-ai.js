@@ -80,7 +80,7 @@ Turbidity: ${latest.turbidity}
 
 Provide a short (2-4 sentence) assessment and suggested actions if needed.`;
 
-    // Call Perplexity
+    // Call Perplexity - FIXED MODEL NAME TO "sonar"
     const perRes = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -88,7 +88,7 @@ Provide a short (2-4 sentence) assessment and suggested actions if needed.`;
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'sonar',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 250
       })
@@ -110,7 +110,7 @@ Provide a short (2-4 sentence) assessment and suggested actions if needed.`;
     const storePayload = {
       sample_id: latest.id ?? null,
       provider: 'perplexity',
-      model: perJson?.model ?? 'llama-3.1-sonar-small-128k-online',
+      model: perJson?.model ?? 'sonar',
       score: null,
       summary: String(aiText).slice(0, 4000),
       details: perJson ?? {}
