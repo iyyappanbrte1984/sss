@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Endangered Ocean Species – Smart Gallery</title>
-  <meta name="viewport"content="width=device-width,initial-scale=1.0">
+  <title>Rare & Endangered Ocean Species</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
   <style>
     :root{
@@ -19,6 +19,7 @@
     body{
       margin:0;
       font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      /* OCEAN BACKGROUND */
       background:radial-gradient(circle at top,#032a4a,#020b1b 42%,#000 80%);
       color:#f8f9fa;
     }
@@ -102,10 +103,14 @@
     .view-toggle button.active{
       background:linear-gradient(90deg,#4cc9f0,#f72585);
     }
+    .view-toggle button[disabled]{
+      opacity:0.4;
+      cursor:not-allowed;
+    }
 
     .gallery-main{
       display:grid;
-      grid-template-columns:minmax(0,2fr) minmax(0,1.2fr);
+      grid-template-columns:minmax(0,2fr) minmax(0,1.15fr);
       gap:22px;
       margin-top:6px;
     }
@@ -120,6 +125,8 @@
       grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
       gap:18px;
     }
+
+    /* SPECIES CARDS */
     .species-card{
       background:var(--card-bg);
       color:var(--text-dark);
@@ -138,19 +145,25 @@
     .species-card:nth-child(2){animation-delay:0.09s;}
     .species-card:nth-child(3){animation-delay:0.13s;}
     .species-card:nth-child(4){animation-delay:0.17s;}
+    .species-card:nth-child(5){animation-delay:0.21s;}
+    .species-card:nth-child(6){animation-delay:0.25s;}
+
     @keyframes card-in{
       to{transform:translateY(0);opacity:1;}
     }
+
     .species-photo-wrap{
       position:relative;
       height:180px;
       overflow:hidden;
+      background:#000;
     }
     .species-photo{
       width:100%;
       height:100%;
       object-fit:cover;
       transition:transform 0.6s ease;
+      display:block;
     }
     .species-card:hover .species-photo{
       transform:scale(1.06);
@@ -249,7 +262,7 @@
       content:"";
       position:absolute;
       inset:0;
-      background:linear-gradient(120deg,rgba(123,47,242,0.25),rgba(123,47,242,0),rgba(123,47,242,0.25));
+      background:linear-gradient(120deg,rgba(123,47,242,0.22),rgba(123,47,242,0),rgba(123,47,242,0.22));
       opacity:0;
       transition:opacity .3s;
     }
@@ -280,7 +293,7 @@
       text-decoration:underline;
     }
 
-    /* AI panel on right side */
+    /* AI PANEL */
     .ai-panel{
       border-radius:16px;
       background:radial-gradient(circle at top,#182544,#050818 58%);
@@ -348,7 +361,6 @@
     .ai-badge span{
       font-size:11px;
     }
-
     .ai-display{
       position:relative;
       z-index:1;
@@ -368,7 +380,6 @@
       opacity:0.9;
       padding:16px 4px;
     }
-
     .ai-loading{
       display:flex;
       flex-direction:column;
@@ -625,7 +636,7 @@
     }
   ];
 
-  // === AI-style explanations per species (static for now; later you can call Perplexity) ===
+  // === AI-style explanations per species (static demo; can be replaced with real AI backend) ===
   const aiExplain = {
     vaquita: {
       title:"Why is the Vaquita so close to extinction?",
@@ -665,7 +676,7 @@
       body:[
         "Hawksbills were hunted for centuries for their beautifully patterned shells used in jewelry and ornaments (often called ‘tortoiseshell’). Although international trade is now banned, illegal trade still occurs.",
         "They nest on tropical beaches and feed around coral reefs—both of which are threatened by coastal development, climate change, and pollution.",
-        "Reducing demand for wildlife products, protecting nesting beaches, and safeguarding coral reefs all help Hawskbill populations recover."
+        "Reducing demand for wildlife products, protecting nesting beaches, and safeguarding coral reefs all help Hawksbill populations recover."
       ],
       footer:"Explanation inspired by sea turtle conservation groups and global assessments."
     },
@@ -744,7 +755,7 @@
           <div class="region-highlight"><span>📍</span>${species.region}</div>
           <div class="ai-speech"><span>“</span>${species.aiTip}<span>”</span></div>
           <div class="card-footer-row">
-            <span>Tap to let this species ‘speak’ louder.</span>
+            <span>Tap to let this species “speak” louder.</span>
             <span class="ask-ai-link" data-species="${species.id}">
               🤖 Ask the AI about this species
             </span>
@@ -759,9 +770,10 @@
     });
   }
 
-  // === AI Panel logic (offline demo; later connect to Perplexity backend) ===
+  // === AI Panel logic (offline demo; can be replaced with real AI backend) ===
   function showAiLoading(){
     const box=document.getElementById("aiDisplay");
+    if (!box) return;
     box.innerHTML=`
       <div class="ai-loading">
         <div class="ai-loading-spinner"></div>
@@ -777,6 +789,8 @@
     const species = endangeredSpecies.find(s=>s.id===speciesId);
     if(!cfg || !species) return;
     const box=document.getElementById("aiDisplay");
+    if(!box) return;
+
     const metricsHTML = (cfg.metrics||[]).map(m=>`
       <div class="ai-metric-card">
         <div class="ai-metric-main">${m.main}</div>
@@ -784,7 +798,9 @@
       </div>
     `).join("");
 
-    const bodyHTML = (cfg.body||[]).map(p=>`<p class="ai-body-text">${p}</p>`).join("");
+    const bodyHTML = (cfg.body||[]).map(p=>`
+      <p class="ai-body-text">${p}</p>
+    `).join("");
 
     box.innerHTML=`
       <div class="ai-answer-block">
@@ -795,27 +811,30 @@
         <div class="ai-metrics">${metricsHTML}</div>
         ${bodyHTML}
         <div class="ai-footer-text">
-          You’re exploring: <strong>${species.commonName}</strong> (<em>${species.sciName}</em>).
-          ${cfg.footer}
+          You’re exploring: <strong>${species.commonName}</strong>
+          (<em>${species.sciName}</em>). ${cfg.footer}
         </div>
       </div>
     `;
   }
 
   function attachAiHandlers(){
+    // Attach to "Ask the AI..." links
     document.querySelectorAll(".ask-ai-link").forEach(link=>{
       link.addEventListener("click",()=>{
         const speciesId = link.getAttribute("data-species");
+        if(!speciesId) return;
         showAiLoading();
-        // simulate AI latency
         setTimeout(()=>showAiAnswerBlock(speciesId),900);
       });
     });
 
+    // Surprise me button
     const randomBtn=document.getElementById("aiRandomBtn");
     if(randomBtn){
       randomBtn.addEventListener("click",()=>{
         const ids = Object.keys(aiExplain);
+        if(!ids.length) return;
         const pick = ids[Math.floor(Math.random()*ids.length)];
         showAiLoading();
         setTimeout(()=>showAiAnswerBlock(pick),900);
