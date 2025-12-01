@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <!-- NEW: Leaflet for camera event mini-map -->
+  <!-- Leaflet for camera event mini-map -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -17,7 +17,7 @@
   />
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-o9N1j7kPuqU57J3C0uHfF7nJH2kNFQZkTtWkTgLrjRI="
+    integrity="sha256-o9N1jkPuqU57J3C0uHfF7nJH2kNFQZkTtWkTgLrjRI="
     crossorigin="">
   </script>
 
@@ -140,29 +140,6 @@
       display:flex;align-items:center;gap:8px;z-index:1000;
       opacity:0;transition:opacity .3s;
     }
-    @keyframes pulseMarker {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.1); }
-}
-
-.new-detection {
-  animation: pulseMarker 2s ease-in-out infinite;
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.camera-card {
-  animation: slideInUp 0.5s ease-out;
-}
   </style>
 </head>
 <body>
@@ -170,7 +147,7 @@
     <a href="index.html">Home</a>
     <a href="live-demo.html">Live Demo</a>
     <a href="marine-dashboard.html">Marine AI Dashboard</a>
-        <a href="ocean-explorer.html">Ocean Explorer</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
     <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
     <a href="pollution-pathways.html">Pollution Pathways</a>
     <a href="biodiversity-awareness.html">Red List & Self-Assessment</a>
@@ -202,29 +179,22 @@
       </div>
     </section>
 
-    <!-- NEW: Camera events card + mini map + AI analysis -->
+    <!-- Camera events card -->
     <section id="cameraEventsSection" style="margin-top:24px;">
       <h2 style="font-size:20px;margin-bottom:10px;">AI Camera – F/T/E Detections (Last 24 Hours)</h2>
 
       <div id="cameraCard" style="
-          display:flex;flex-wrap:wrap;gap:12px;
           background:#ffffff;border-radius:16px;
           padding:16px;box-shadow:0 10px 30px rgba(0,119,190,.08);
           border:1px solid rgba(0,119,190,.1);">
-        <div style="flex:1;min-width:160px;">
-          <h3 style="margin:4px 0;font-size:16px;">Detections Summary</h3>
-          <p id="cameraSummaryText" style="margin:4px 0;color:#6f8396;font-size:13px;">Loading camera events...</p>
-          <ul style="list-style:none;padding:0;margin-top:8px;font-size:13px;">
-            <li>🐟 Fish detections: <strong id="camFishCount">0</strong></li>
-            <li>🗑️ Trash detections: <strong id="camTrashCount">0</strong></li>
-            <li>🚨 Emergency detections: <strong id="camEmergCount">0</strong></li>
-          </ul>
-          <small id="camLastUpdated" style="color:#9aa7b6;font-size:11px;"></small>
-        </div>
-
-        <div style="flex:1;min-width:220px;">
-          <div id="cameraMap" style="width:100%;height:220px;border-radius:12px;overflow:hidden;"></div>
-        </div>
+        <h3 style="margin:4px 0;font-size:16px;">Detections Summary</h3>
+        <p id="cameraSummaryText" style="margin:4px 0;color:#6f8396;font-size:13px;">Loading camera events...</p>
+        <ul style="list-style:none;padding:0;margin-top:8px;font-size:13px;">
+          <li>🐟 Fish detections: <strong id="camFishCount">0</strong></li>
+          <li>🗑️ Trash detections: <strong id="camTrashCount">0</strong></li>
+          <li>🚨 Emergency detections: <strong id="camEmergCount">0</strong></li>
+        </ul>
+        <small id="camLastUpdated" style="color:#9aa7b6;font-size:11px;"></small>
       </div>
 
       <div style="
@@ -265,7 +235,8 @@
     </section>
 
     <footer>
-      Dashboard powered by Vercel + Supabase + Perplexity AI
+      Dashboard powered by Vercel + Supabase + Perplexity AI<br/>
+      <small style="color:#0b74de">✓ Camera events synced from Live Demo via localStorage</small>
     </footer>
   </main>
 
@@ -273,14 +244,15 @@
     <div class="loading"></div>
     <span>Loading data...</span>
   </div>
+
 <script>
     const API_BASE = "/api";
+    
+    // NEW: localStorage key for camera events (same as Live Demo)
+    const CAMERA_EVENTS_KEY = "marineCameraEvents_v1";
+    
     let tempChart = null;
     let currentSamples = [];
-
-    // NEW: camera events map state
-    let cameraMap;
-    let cameraMarkersLayer;
 
     function num(v){ return (v == null) ? "—" : Number(v).toFixed(2); }
     function setAIText(t){ document.getElementById('aiText').value = t; }
@@ -409,122 +381,91 @@
       showRefresh("Data loaded ✓");
     }
 
-    // NEW: fetch camera events summary for card + map
-    async function loadCameraEventsSummary() {
+    // NEW: Generate AI analysis text from camera event counts
+    function generateCameraAnalysisFromLocal(fish, trash, emerg, total) {
+      const lines = [];
+
+      if (total === 0) {
+        return "No camera events in the last 24 hours. The monitored area appears calm. " +
+               "Try running the Live Demo camera to collect new detections.";
+      }
+
+      lines.push(`In the last 24 hours, there were ${total} camera events detected by the AI camera.`);
+
+      if (fish > 0) {
+        lines.push(`\n🐟 Fish activity: ${fish} detection(s). This suggests normal or active marine life in the observed frames.`);
+      } else {
+        lines.push("\n🐟 No fish detections. This may be due to low activity, camera angle, or limited field of view.");
+      }
+
+      if (trash > 0) {
+        lines.push(`\n🗑️ Trash detections: ${trash}. This indicates visible pollution in the monitored area. Consider cleanup or awareness campaigns.`);
+      } else {
+        lines.push("\n🗑️ No trash detected in the monitored frames — the visible water surface appears clean.");
+      }
+
+      if (emerg > 0) {
+        lines.push(`\n🚨 Emergency alerts: ${emerg}. These are critical events and should be investigated immediately for possible hazards.`);
+      } else {
+        lines.push("\n🚨 No emergency-level events flagged by the camera during this period.");
+      }
+
+      lines.push("\n\nOverall, combine these observations with water quality measurements for a fuller picture of ocean health.");
+
+      return lines.join("");
+    }
+
+    // NEW: Load camera events from localStorage
+    function loadCameraEventsFromLocal() {
+      const statusEl = document.getElementById('cameraSummaryText');
+      const fishEl   = document.getElementById('camFishCount');
+      const trashEl  = document.getElementById('camTrashCount');
+      const emergEl  = document.getElementById('camEmergCount');
+      const lastUpdatedEl = document.getElementById('camLastUpdated');
+      const aiArea = document.getElementById('cameraAiText');
+
       try {
-        const res = await fetch(`${API_BASE}/camera-events-summary`);
-        if (!res.ok) {
-          document.getElementById('cameraSummaryText').textContent =
-            'Failed to load camera events.';
+        const raw = localStorage.getItem(CAMERA_EVENTS_KEY);
+        if (!raw) {
+          statusEl.textContent =
+            'No saved camera events. Open the Live Demo page on this device and run detections.';
+          fishEl.textContent = '0';
+          trashEl.textContent = '0';
+          emergEl.textContent = '0';
+          lastUpdatedEl.textContent = '';
+          aiArea.value = generateCameraAnalysisFromLocal(0, 0, 0, 0);
           return;
         }
-        const json = await res.json();
-        const counts = json.counts || [];
-        const recent = json.recent || [];
 
-        let fish = 0, trash = 0, emerg = 0;
-        counts.forEach(row => {
-          if (row.code === 'F') fish = row.count;
-          if (row.code === 'T') trash = row.count;
-          if (row.code === 'E') emerg = row.count;
-        });
+        const data = JSON.parse(raw);
+        const allEvents = Array.isArray(data.events) ? data.events : [];
+        const now = Date.now();
+        const cutoff = now - 24 * 60 * 60 * 1000; // last 24h
 
-        document.getElementById('camFishCount').textContent = fish;
-        document.getElementById('camTrashCount').textContent = trash;
-        document.getElementById('camEmergCount').textContent = emerg;
+        const recent = allEvents.filter(ev =>
+          typeof ev.timestamp === 'number' && ev.timestamp >= cutoff
+        );
 
-        const total = fish + trash + emerg;
-        if (total === 0) {
-          document.getElementById('cameraSummaryText').textContent =
-            'No camera detections in the last 24 hours.';
-        } else {
-          document.getElementById('cameraSummaryText').textContent =
-            `Total ${total} detections in the last 24 hours. ` +
-            `${fish} fish, ${trash} trash, ${emerg} emergencies.`;
-        }
-        document.getElementById('camLastUpdated').textContent =
+        const fishCount  = recent.filter(ev => ev.code === 'F').length;
+        const trashCount = recent.filter(ev => ev.code === 'T').length;
+        const emergCount = recent.filter(ev => ev.code === 'E').length;
+        const total = recent.length;
+
+        fishEl.textContent = fishCount;
+        trashEl.textContent = trashCount;
+        emergEl.textContent = emergCount;
+        statusEl.textContent =
+          total === 0
+            ? 'No camera detections in the last 24 hours (from local storage).'
+            : `Loaded ${total} detections from local storage (last 24 hours).`;
+        lastUpdatedEl.textContent =
           'Updated at ' + new Date().toLocaleTimeString();
 
-        updateCameraMap(recent);
+        aiArea.value = generateCameraAnalysisFromLocal(fishCount, trashCount, emergCount, total);
       } catch (err) {
-        console.error('loadCameraEventsSummary error', err);
-        document.getElementById('cameraSummaryText').textContent =
-          'Error loading camera events.';
+        console.error('Failed to load camera events from localStorage', err);
+        statusEl.textContent = 'Error reading camera events from local storage.';
       }
-    }
-
-    // ***** STEP 5: Real-time Updates *****
-    let lastEventId = 0;
-
-    async function checkForNewEvents() {
-      try {
-        const res = await fetch(`${API_BASE}/camera-events-summary`);
-        if (!res.ok) return;
-        
-        const json = await res.json();
-        const recent = json.recent || [];
-        
-        if (recent.length > 0 && recent[0].id > lastEventId) {
-          lastEventId = recent[0].id;
-          
-          // Flash notification
-          showRefresh(`New detection: ${recent[0].label}! 🎯`);
-          
-          // Add pulse animation to the camera card
-          const cameraCard = document.getElementById('cameraCard');
-          cameraCard.style.animation = 'none';
-          setTimeout(() => {
-            cameraCard.style.animation = 'slideInUp 0.5s ease-out';
-          }, 10);
-          
-          // Reload with animation
-          await loadCameraEventsSummary();
-        }
-      } catch (err) {
-        console.error('checkForNewEvents error:', err);
-      }
-    }
-
-    // Check every 5 seconds for new events
-    setInterval(checkForNewEvents, 5000);
-    // ***** END STEP 5 *****
-
-    function initCameraMap() {
-      if (cameraMap) return;
-      cameraMap = L.map('cameraMap').setView([20.0, 78.0], 4); // center on India
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(cameraMap);
-
-      cameraMarkersLayer = L.layerGroup().addTo(cameraMap);
-    }
-
-    function updateCameraMap(events) {
-      initCameraMap();
-      cameraMarkersLayer.clearLayers();
-
-      const withLocation = (events || []).filter(e => e.lat && e.lng);
-      if (withLocation.length === 0) {
-        return; // no coordinates yet
-      }
-
-      withLocation.forEach(e => {
-        const label = e.label || e.code;
-        const time = e.created_at ? new Date(e.created_at).toLocaleString() : '';
-        const popup = `
-          <strong>${label}</strong><br/>
-          Code: ${e.code}<br/>
-          Confidence: ${(e.confidence * 100).toFixed(1)}%<br/>
-          Time: ${time}
-        `;
-        L.marker([e.lat, e.lng]).bindPopup(popup).addTo(cameraMarkersLayer);
-      });
-
-      const latlngs = withLocation.map(e => [e.lat, e.lng]);
-      const bounds = L.latLngBounds(latlngs);
-      cameraMap.fitBounds(bounds, { padding: [20, 20] });
     }
 
     document.getElementById("btnLocalAI").addEventListener("click",()=>{
@@ -561,48 +502,19 @@
       }
     });
 
-    // NEW: button to request AI summary for camera events
-    document.getElementById('btnCameraAI').addEventListener('click', async () => {
-      const area = document.getElementById('cameraAiText');
-      try {
-        area.value = 'Asking AI about camera events...';
-        const res = await fetch(`${API_BASE}/camera-events-ai`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ windowHours: 24 })
-        });
-        if (!res.ok) {
-          area.value = 'AI analysis failed. Please try again.';
-          return;
-        }
-        const json = await res.json();
-        area.value = json.ai_text || JSON.stringify(json, null, 2);
-      } catch (err) {
-        console.error('camera-events-ai error', err);
-        area.value = 'Error talking to AI endpoint.';
-      }
+    // NEW: Button to refresh camera AI analysis from localStorage
+    document.getElementById('btnCameraAI').addEventListener('click', () => {
+      loadCameraEventsFromLocal();
     });
 
-    // Auto-refresh intervals (only once!)
+    // Auto-refresh intervals
     setInterval(()=>{renderDashboard();},30000); // Water samples every 30s
-    setInterval(()=>{loadCameraEventsSummary();},30000); // Camera events every 30s
+    setInterval(()=>{loadCameraEventsFromLocal();},5000); // Camera events every 5s (faster refresh)
 
     // Initialize on page load
     (async function init(){
       await renderDashboard();
-      await loadCameraEventsSummary();
-      
-      // Initialize lastEventId with current latest event
-      try {
-        const res = await fetch(`${API_BASE}/camera-events-summary`);
-        const json = await res.json();
-        const recent = json.recent || [];
-        if (recent.length > 0) {
-          lastEventId = recent[0].id;
-        }
-      } catch (err) {
-        console.error('Failed to initialize lastEventId:', err);
-      }
+      loadCameraEventsFromLocal();
     })();
   </script>
 
