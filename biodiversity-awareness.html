@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Biodiversity & Red List — SMART VISION</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
+      --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
+      --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--ocean-900);}
+    nav{
+      position:sticky;top:0;z-index:1000;
+      display:flex;justify-content:center;gap:24px;padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    }
+    nav a{
+      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
+      padding:8px 20px;border-radius:999px;transition:all .3s;
+    }
+    nav a:hover{background:rgba(255,255,255,0.2);transform:translateY(-2px);}
+    .hero-header{
+      padding:28px 16px 20px;text-align:center;
+      background:linear-gradient(135deg,#005fa3,#00a8e8,#39a1ff);
+      color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.15);
+    }
+    .hero-header h1{font-size:30px;font-weight:900;letter-spacing:.06em;margin-bottom:6px;}
+    .hero-header p{font-size:14px;opacity:.96;}
+    .wrap{max-width:1200px;margin:26px auto 30px;padding:0 20px;}
+
+    .grid-2{
+      display:grid;grid-template-columns:1.5fr 1.1fr;gap:18px;margin-bottom:22px;
+    }
+    @media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
+
+    .card{
+      background:#fff;border-radius:16px;padding:18px 20px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
+    }
+    .card h2{font-size:20px;margin-bottom:6px;}
+    .card h3{font-size:17px;margin-bottom:6px;}
+    .card p{font-size:13px;color:var(--muted);margin-bottom:6px;}
+
+    .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+    .tag{
+      padding:4px 10px;border-radius:999px;
+      font-size:11px;font-weight:600;
+      background:rgba(0,119,190,0.08);color:var(--ocean-700);
+    }
+
+    .badge{
+      display:inline-block;padding:3px 9px;border-radius:999px;
+      font-size:11px;font-weight:600;
+    }
+    .badge-ok{background:rgba(30,174,96,0.12);color:var(--ok);}
+    .badge-warn{background:rgba(245,166,35,0.12);color:var(--warn);}
+    .badge-bad{background:rgba(230,57,70,0.12);color:var(--bad);}
+
+    .checklist{
+      list-style:none;margin-top:10px;font-size:13px;color:var(--ocean-900);
+    }
+    .checklist li{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:8px;
+    }
+    .checklist label{display:flex;align-items:center;gap:8px;cursor:pointer;}
+    .score-box{
+      margin-top:10px;padding:10px 12px;border-radius:10px;
+      background:#f9fbff;border:1px dashed rgba(0,119,190,0.25);
+      font-size:12px;color:var(--muted);white-space:pre-line;
+    }
+
+    .slider-wrap{
+      margin-top:10px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .slider-wrap input[type="range"]{flex:1;}
+
+    footer{margin:26px 0 16px;text-align:center;font-size:12px;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
+    <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
+    <a href="sdg-dashboard.html">SDG & Biodiversity</a>
+  </nav>
+
+  <header class="hero-header">
+    <h1>BIODIVERSITY & RED LIST</h1>
+    <p>Understanding threatened species and cutting plastic in daily life</p>
+  </header>
+
+  <main class="wrap">
+    <section class="grid-2">
+      <div class="card">
+        <h2>What is the IUCN Red List?</h2>
+        <p>
+          The IUCN Red List of Threatened Species is a global reference that shows how close different plants and animals are to extinction. 
+          Species are grouped into categories such as Least Concern, Vulnerable, Endangered and Critically Endangered based on scientific assessments.
+        </p>
+        <p>
+          Many freshwater and marine species are moving into higher‑risk categories because of pollution, plastic waste, habitat loss and climate change. 
+          Protecting lakes and rivers around you helps protect fish, amphibians, insects, birds and mammals along the entire river‑to‑ocean pathway.
+        </p>
+        <div class="tag-row">
+          <span class="tag">Vulnerable (VU)</span>
+          <span class="tag">Endangered (EN)</span>
+          <span class="tag">Critically Endangered (CR)</span>
+          <span class="tag">Extinct in the Wild (EW)</span>
+        </div>
+        <p style="margin-top:8px;font-size:12px;">
+          For detailed species lists and official information, always visit the IUCN Red List website and related resources directly.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Biodiversity Snapshot</h3>
+        <p>This example chart uses approximate counts for how many species in each group are listed as threatened worldwide, based on public summaries.</p>
+        anvas id="speciesChart" height="180"></canvas>
+        <p style="font-size:11px;color:var(--muted);margin-top:4px;">
+          These numbers are for learning and may change as IUCN assessments are updated. Always refer to the official Red List for the latest figures.
+        </p>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h3>Daily Plastic Self‑Assessment</h3>
+        <p>Use this checklist to reflect on how much single‑use plastic you used today. Try to lower your score over time.</p>
+
+        <ul class="checklist">
+          <li>
+            <label>
+              <input type="checkbox" class="plastic-item" value="1" />
+              Plastic carry bag
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" class="plastic-item" value="1" />
+              Plastic water or soft‑drink bottle
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" class="plastic-item" value="1" />
+              Disposable cup / straw
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" class="plastic-item" value="1" />
+              Snack wrapper (chips, biscuits, chocolate)
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" class="plastic-item" value="1" />
+              Other single‑use plastic item
+            </label>
+          </li>
+        </ul>
+
+        <div class="slider-wrap">
+          <span style="font-size:12px;color:var(--muted);">Items avoided today:</span>
+          <input type="range" id="avoidSlider" min="0" max="10" value="0" />
+          <span id="avoidLabel" style="font-size:13px;font-weight:600;">0</span>
+        </div>
+
+        <div class="score-box" id="scoreBox">
+          Select the items you used and set how many plastics you successfully avoided today. 
+          Aim for a lower usage score and a higher avoided score as you move towards a circular, low‑plastic lifestyle.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Why Your Choices Matter</h3>
+        <p>
+          Every plastic item you refuse, reduce, reuse or recycle lowers the chance that it will reach lakes, rivers and the ocean. 
+          Less plastic in the water means cleaner habitats for fish, amphibians, birds, mammals and many other species.
+        </p>
+        <p>
+          By combining this self‑assessment with water‑quality measurements and ocean maps in your dashboard, students can see how daily habits connect to global goals under SDG&nbsp;14: Life Below Water.
+        </p>
+        <p style="font-size:12px;color:var(--muted);">
+          You can also explore UN and regional e‑learning courses on marine plastic pollution and circular economy to go deeper and become a local SDG champion.
+        </p>
+
+        <div style="margin-top:8px;font-size:12px;">
+          Today’s personal plastic status:
+          <span id="personalBadge" class="badge badge-warn">Reflecting</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Biodiversity & Red List awareness powered by Vercel · Supabase · Planet · Perplexity AI
+  </footer>
+
+  <script>
+    // Simple threatened species bar chart (example values)
+    const ctx = document.getElementById("speciesChart").getContext("2d");
+    const speciesChart = new Chart(ctx,{
+      type:"bar",
+      data:{
+        labels:["Fish","Amphibians","Insects","Molluscs","Reptiles","Mammals","Birds","Others"],
+        datasets:[{
+          label:"Approx. threatened species (example)",
+          data:[4085,2930,2680,2616,1859,1364,1256,1691],
+          backgroundColor:"#0b74de"
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{font:{size:11}},grid:{display:false}},
+          y:{grid:{color:"#f0f7fc"}}
+        }
+      }
+    });
+
+    // Self-assessment logic
+    const items = document.querySelectorAll(".plastic-item");
+    const avoidSlider = document.getElementById("avoidSlider");
+    const avoidLabel = document.getElementById("avoidLabel");
+    const scoreBox = document.getElementById("scoreBox");
+    const personalBadge = document.getElementById("personalBadge");
+
+    function updateSelfAssessment(){
+      let used = 0;
+      items.forEach(i => { if(i.checked) used += Number(i.value || 0); });
+
+      const avoided = Number(avoidSlider.value || 0);
+      avoidLabel.textContent = avoided;
+
+      const net = avoided - used; // positive is good
+      let message = `Plastic items used today: ${used}\nPlastic items avoided today: ${avoided}\n\n`;
+
+      if(used === 0 && avoided === 0){
+        message += "Start by tracking your plastic use honestly. Tomorrow, try to avoid at least one single‑use plastic item.";
+        personalBadge.textContent = "Reflecting";
+        personalBadge.className = "badge badge-warn";
+      } else if(net >= 2){
+        message += "Great job! You avoided more plastics than you used today. Keep bringing your own bottle, bag and lunch box to protect rivers and oceans.";
+        personalBadge.textContent = "On Track";
+        personalBadge.className = "badge badge-ok";
+      } else if(net >= 0){
+        message += "Balanced day. You avoided some items, but you can still reduce more single‑use plastics. Aim to increase the avoided number tomorrow.";
+        personalBadge.textContent = "Improving";
+        personalBadge.className = "badge badge-warn";
+      } else {
+        message += "You used more plastics than you avoided today. Think about which items were most common and plan easy swaps, like cloth bags or metal bottles.";
+        personalBadge.textContent = "High Use";
+        personalBadge.className = "badge badge-bad";
+      }
+
+      scoreBox.textContent = message;
+    }
+
+    items.forEach(i => i.addEventListener("change", updateSelfAssessment));
+    avoidSlider.addEventListener("input", updateSelfAssessment);
+    updateSelfAssessment();
+  </script>
+</body>
+</html>
