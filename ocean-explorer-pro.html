@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ocean Explorer Pro — SMART VISION</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root{
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
+      --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
+      --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--ocean-900);height:100%;}
+    body{display:flex;flex-direction:column;}
+
+    nav{
+      position:sticky;top:0;z-index:1000;
+      display:flex;justify-content:center;gap:24px;padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    }
+    nav a{
+      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
+      padding:8px 20px;border-radius:999px;transition:all .3s;
+    }
+    nav a:hover{background:rgba(255,255,255,0.2);transform:translateY(-2px);}
+
+    .hero-header{
+      padding:28px 16px 20px;text-align:center;
+      background:linear-gradient(135deg,#005fa3,#00a8e8,#39a1ff);
+      color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.15);
+    }
+    .hero-header h1{font-size:30px;font-weight:900;letter-spacing:.06em;margin-bottom:6px;}
+    .hero-header p{font-size:14px;opacity:.96;}
+
+    main.wrap{
+      max-width:1200px;margin:24px auto 30px;padding:0 20px;flex:1;width:100%;
+      display:flex;flex-direction:column;gap:16px;
+    }
+
+    .layout{
+      display:grid;grid-template-columns:320px 1fr;gap:18px;
+    }
+    @media(max-width:900px){
+      .layout{grid-template-columns:1fr;}
+      .side-panel{order:2;}
+    }
+
+    .side-panel{
+      background:#fff;border-radius:16px;padding:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
+    }
+    .side-panel h2{
+      font-size:18px;margin-bottom:10px;color:var(--ocean-900);
+    }
+    .side-panel small{color:var(--muted);font-size:12px;}
+
+    .layer-group{margin-top:14px;}
+    .layer-group h3{
+      font-size:13px;text-transform:uppercase;
+      letter-spacing:.08em;color:var(--muted);margin-bottom:6px;
+    }
+    .layer-item{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:8px;font-size:13px;
+    }
+    .layer-item label{display:flex;align-items:center;gap:8px;cursor:pointer;}
+    .layer-chip{
+      width:10px;height:10px;border-radius:50%;
+    }
+    .chip-plastic{background:#e63946;}
+    .chip-chl{background:#00b894;}
+    .chip-sst{background:#ff7675;}
+    .chip-currents{background:#0984e3;}
+    .chip-turb{background:#6c5ce7;}
+    .chip-mpa{background:#fdcb6e;}
+
+    #map{
+      width:100%;height:520px;
+      border-radius:16px;overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
+    }
+
+    .bottom-bar{
+      margin-top:10px;
+      display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      gap:10px;font-size:12px;color:var(--muted);
+    }
+    .slider-wrap{
+      display:flex;align-items:center;gap:8px;
+      background:#fff;border-radius:999px;
+      padding:8px 14px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.05);
+      border:1px solid rgba(0,119,190,0.08);
+    }
+    .slider-wrap input[type="range"]{width:180px;}
+    .badge{
+      display:inline-block;padding:4px 10px;border-radius:999px;
+      font-size:11px;font-weight:600;
+    }
+    .badge-ok{background:rgba(30,174,96,0.12);color:var(--ok);}
+    .badge-warn{background:rgba(245,166,35,0.12);color:var(--warn);}
+    .badge-bad{background:rgba(230,57,70,0.12);color:var(--bad);}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
+    <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
+    <a href="sdg-dashboard.html">SDG & Biodiversity</a>
+  </nav>
+
+  <header class="hero-header">
+    <h1>OCEAN EXPLORER PRO</h1>
+    <p>Advanced satellite layers + plastic pathways for SDG 14</p>
+  </header>
+
+  <main class="wrap">
+    <div class="layout">
+      <aside class="side-panel">
+        <h2>Layers & Health</h2>
+        <small>Select layers to visualize plastic and ocean health. Time slider adjusts the date.</small>
+
+        <div class="layer-group">
+          <h3>Pollution & Productivity</h3>
+
+          <div class="layer-item">
+            <label>
+              <span class="layer-chip chip-plastic"></span>
+              <span>Plastic Debris Zones</span>
+            </label>
+            <input type="checkbox" id="layerPlastic" />
+          </div>
+
+          <div class="layer-item">
+            <label>
+              <span class="layer-chip chip-chl"></span>
+              <span>Phytoplankton (Chlorophyll)</span>
+            </label>
+            <input type="checkbox" id="layerChl" />
+          </div>
+
+          <div class="layer-item">
+            <label>
+              <span class="layer-chip chip-sst"></span>
+              <span>Sea Surface Temperature</span>
+            </label>
+            <input type="checkbox" id="layerSst" />
+          </div>
+        </div>
+
+        <div class="layer-group" style="margin-top:12px;">
+          <h3>Physical Ocean</h3>
+
+          <div class="layer-item">
+            <label>
+              <span class="layer-chip chip-currents"></span>
+              <span>Ocean Currents</span>
+            </label>
+            <input type="checkbox" id="layerCurrents" />
+          </div>
+
+          <div class="layer-item">
+            <label>
+              <span class="layer-chip chip-turb"></span>
+              <span>Turbidity / Sediment</span>
+            </label>
+            <input type="checkbox" id="layerTurb" />
+          </div>
+
+          <div class="layer-item">
+            <label>
+              <span class="layer-chip chip-mpa"></span>
+              <span>Marine Protected Areas</span>
+            </label>
+            <input type="checkbox" id="layerMpa" />
+          </div>
+        </div>
+
+        <div style="margin-top:16px;font-size:12px;color:var(--muted);">
+          Overall ocean health:
+          <span id="healthBadge" class="badge badge-warn">WATCH</span>
+        </div>
+      </aside>
+
+      <section>
+        <div id="map"></div>
+
+        <div class="bottom-bar">
+          <div class="slider-wrap">
+            <span style="font-weight:600;font-size:11px;">DATE</span>
+            <input type="range" id="dateSlider" min="0" max="6" value="0" />
+            <span id="dateLabel">Today</span>
+          </div>
+
+          <div>
+            <span style="font-weight:600;font-size:11px;">Legend (example)</span>
+            &nbsp;|&nbsp; <span style="color:#e63946;font-weight:600;">High plastic</span>
+            &nbsp;•&nbsp; <span style="color:#00b894;font-weight:600;">High chlorophyll</span>
+            &nbsp;•&nbsp; <span style="color:#ff7675;font-weight:600;">Warm SST</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // Basic init
+    const map = L.map('map', {
+      center: [11.5, 78.2], // Roughly Tamil Nadu / Bay of Bengal region
+      zoom: 6,
+      worldCopyJump: true
+    });
+
+    // Base map
+    const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Placeholder overlay layers (replace later with real tile URLs or data via /api/ocean-data-layers)
+    const overlayLayers = {
+      plastic: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{opacity:0.5}),
+      chl: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{opacity:0.45}),
+      sst: L.tileLayer('https://{s}.tile.stamen.com/toner-lite/{z}/{x}/{y}.png',{opacity:0.4}),
+      currents: L.tileLayer('https://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg',{opacity:0.5}),
+      turb: L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{opacity:0.45}),
+      mpa: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{opacity:0.3})
+    };
+
+    // Hook up checkboxes
+    function setupLayerToggle(id, key){
+      const checkbox = document.getElementById(id);
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked){
+          overlayLayers[key].addTo(map);
+        } else {
+          map.removeLayer(overlayLayers[key]);
+        }
+      });
+    }
+
+    setupLayerToggle('layerPlastic','plastic');
+    setupLayerToggle('layerChl','chl');
+    setupLayerToggle('layerSst','sst');
+    setupLayerToggle('layerCurrents','currents');
+    setupLayerToggle('layerTurb','turb');
+    setupLayerToggle('layerMpa','mpa');
+
+    // Simple date slider logic (last 7 days)
+    const dateSlider = document.getElementById('dateSlider');
+    const dateLabel = document.getElementById('dateLabel');
+
+    function updateDateLabel(){
+      const daysAgo = parseInt(dateSlider.value,10);
+      if(daysAgo === 0){
+        dateLabel.textContent = 'Today';
+      } else if(daysAgo === 1){
+        dateLabel.textContent = '1 day ago';
+      } else {
+        dateLabel.textContent = daysAgo + ' days ago';
+      }
+
+      // Later: use daysAgo to request dated tiles from /api/ocean-data-layers
+      // Example idea:
+      // fetch(`/api/ocean-data-layers?layer=chl&daysAgo=${daysAgo}`).then(...)
+    }
+    dateSlider.addEventListener('input', updateDateLabel);
+    updateDateLabel();
+
+    // Example: simple rule to update health badge based on active layers
+    const healthBadge = document.getElementById('healthBadge');
+    function updateHealthBadge(){
+      const plasticOn = document.getElementById('layerPlastic').checked;
+      const sstOn = document.getElementById('layerSst').checked;
+      if (plasticOn && sstOn){
+        healthBadge.textContent = 'ALERT';
+        healthBadge.className = 'badge badge-bad';
+      } else if (plasticOn || sstOn){
+        healthBadge.textContent = 'WATCH';
+        healthBadge.className = 'badge badge-warn';
+      } else {
+        healthBadge.textContent = 'HEALTHY';
+        healthBadge.className = 'badge badge-ok';
+      }
+    }
+
+    ['layerPlastic','layerSst'].forEach(id => {
+      document.getElementById(id).addEventListener('change', updateHealthBadge);
+    });
+    updateHealthBadge();
+  </script>
+</body>
+</html>
