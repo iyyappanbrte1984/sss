@@ -2,517 +2,621 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Rare & Endangered Ocean Species</title>
+  <title>Rare & Endangered Ocean Species — SMART VISION</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --deep-blue:#020b1b;
-      --card-bg:#ffffff;
+      --ocean-900:#032735;
+      --ocean-700:#0b74de;
+      --ocean-500:#39a1ff;
+      --bg:#f4f9ff;
+      --card:#ffffff;
+      --muted:#6f8396;
       --accent-cr:#e63946;
       --accent-en:#f77f00;
-      --accent-vu:#f9c74f;
-      --text-dark:#1d3557;
-      --text-muted:#6c757d;
+      --accent-vu:#90be6d;
       --ai-purple:#7b2ff2;
     }
-    body{
+    *{box-sizing:border-box;}
+    html,body{
       margin:0;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      /* OCEAN BACKGROUND */
-      background:radial-gradient(circle at top,#032a4a,#020b1b 42%,#000 80%);
-      color:#f8f9fa;
+      font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--ocean-900);
+      -webkit-font-smoothing:antialiased;
     }
+
+    /* NAVBAR - Match other pages */
+    nav{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      display:flex;
+      justify-content:center;
+      gap:24px;
+      padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+      flex-wrap:wrap;
+    }
+    nav a{
+      color:#fff;
+      text-decoration:none;
+      font-weight:700;
+      font-size:16px;
+      padding:6px 18px;
+      border-radius:999px;
+    }
+    nav a:hover{background:rgba(255,255,255,0.22);}
+    nav a.active{background:rgba(255,255,255,0.3);}
+
+    /* HEADER WITH WAVE - Match homepage */
+    .ocean-header{
+      text-align:center;
+      padding:32px 16px 40px;
+      font-size:28px;
+      font-weight:900;
+      letter-spacing:0.03em;
+      background:linear-gradient(90deg,#005fa3,#0088cc,#00b9e0);
+      color:#ffffff;
+      position:relative;
+      overflow:hidden;
+    }
+    .ocean-header::after{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:-18px;
+      height:40px;
+      background:
+        radial-gradient(circle at 20px -10px, transparent 24px, #f4f9ff 25px),
+        radial-gradient(circle at 60px -10px, transparent 24px, #f4f9ff 25px),
+        radial-gradient(circle at 100px -10px, transparent 24px, #f4f9ff 25px);
+      background-size:80px 40px;
+      background-repeat:repeat-x;
+      animation:oceanWave 5s linear infinite;
+    }
+    @keyframes oceanWave{
+      from{background-position-x:0;}
+      to{background-position-x:-80px;}
+    }
+
     .page-shell{
-      max-width:1180px;
+      max-width:1200px;
       margin:0 auto;
-      padding:20px 16px 48px;
+      padding:32px 16px 48px;
     }
+
+    /* Gallery Section */
     #endangered-gallery{
       margin-top:10px;
-      padding:22px 18px 28px;
-      border-radius:18px;
-      background:linear-gradient(135deg,#05152b,#030a1b 50%,#0b2347);
-      box-shadow:0 18px 45px rgba(0,0,0,0.45);
-      border:1px solid rgba(255,255,255,0.05);
+      padding:28px 24px 32px;
+      border-radius:20px;
+      background:var(--card);
+      box-shadow:0 12px 40px rgba(0,0,0,0.08);
+      border:2px solid rgba(11,116,222,0.15);
     }
     .gallery-heading{
-      font-size:24px;
-      margin:0 0 4px;
+      font-size:32px;
+      margin:0 0 8px;
       display:flex;
       align-items:center;
-      gap:8px;
+      gap:12px;
+      color:var(--ocean-700);
+      justify-content:center;
     }
     .gallery-subtitle{
-      font-size:13px;
-      color:#d3dde9;
-      max-width:640px;
-      margin-bottom:12px;
+      font-size:15px;
+      color:var(--muted);
+      text-align:center;
+      max-width:800px;
+      margin:0 auto 20px;
+      line-height:1.6;
     }
     .gallery-subtitle span{
-      color:#ffce6b;
-      font-weight:600;
+      color:var(--ocean-700);
+      font-weight:700;
     }
+
+    /* Legend & Toolbar */
     .gallery-toolbar{
       display:flex;
       flex-wrap:wrap;
-      gap:10px;
+      gap:14px;
       align-items:center;
-      justify-content:space-between;
-      margin-bottom:10px;
+      justify-content:center;
+      margin-bottom:24px;
+      padding:16px;
+      background:linear-gradient(135deg,#e3f2fd,#fff);
+      border-radius:12px;
+      border:1px solid rgba(11,116,222,0.2);
     }
     .legend-chips{
       display:flex;
       flex-wrap:wrap;
-      gap:8px;
-      font-size:11px;
+      gap:10px;
+      font-size:13px;
     }
     .legend-chip{
       border-radius:999px;
-      padding:3px 8px;
-      border:1px solid rgba(255,255,255,0.14);
+      padding:6px 14px;
+      border:2px solid;
       display:inline-flex;
       align-items:center;
-      gap:6px;
-      background:rgba(0,0,0,0.25);
+      gap:8px;
+      background:#fff;
+      font-weight:600;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
     }
+    .legend-chip.cr{border-color:var(--accent-cr);color:var(--accent-cr);}
+    .legend-chip.en{border-color:var(--accent-en);color:var(--accent-en);}
+    .legend-chip.vu{border-color:var(--accent-vu);color:var(--accent-vu);}
     .legend-dot{
-      width:9px;
-      height:9px;
+      width:12px;
+      height:12px;
       border-radius:50%;
     }
-    .legend-dot.cr{background:linear-gradient(90deg,#e63946,#f77f00);}
-    .legend-dot.en{background:linear-gradient(90deg,#f77f00,#fcbf49);}
-    .legend-dot.vu{background:linear-gradient(90deg,#f9c74f,#90be6d);}
-    .view-toggle{
-      font-size:11px;
-      display:flex;
-      gap:6px;
-      align-items:center;
-      color:#cfd7e4;
-    }
-    .view-toggle button{
-      border-radius:999px;
-      border:0;
-      padding:4px 9px;
-      background:rgba(255,255,255,0.08);
-      color:#e9eef8;
-      cursor:pointer;
-      font-size:11px;
-    }
-    .view-toggle button.active{
-      background:linear-gradient(90deg,#4cc9f0,#f72585);
-    }
-    .view-toggle button[disabled]{
-      opacity:0.4;
-      cursor:not-allowed;
-    }
+    .legend-dot.cr{background:var(--accent-cr);}
+    .legend-dot.en{background:var(--accent-en);}
+    .legend-dot.vu{background:var(--accent-vu);}
 
+    /* Main Layout */
     .gallery-main{
       display:grid;
-      grid-template-columns:minmax(0,2fr) minmax(0,1.15fr);
-      gap:22px;
-      margin-top:6px;
+      grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+      gap:24px;
+      margin-top:10px;
     }
-    @media(max-width:900px){
-      .gallery-main{
-        grid-template-columns:1fr;
-      }
+    @media(max-width:1000px){
+      .gallery-main{grid-template-columns:1fr;}
     }
 
     .gallery-grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:18px;
+      grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+      gap:20px;
     }
 
-    /* SPECIES CARDS */
+    /* SPECIES CARDS - Light & Beautiful */
     .species-card{
-      background:var(--card-bg);
-      color:var(--text-dark);
-      border-radius:18px;
+      background:#fff;
+      color:var(--ocean-900);
+      border-radius:20px;
       overflow:hidden;
       position:relative;
-      box-shadow:0 14px 34px rgba(1,17,40,0.18);
+      box-shadow:0 8px 24px rgba(0,0,0,0.08);
+      border:2px solid rgba(11,116,222,0.1);
       display:flex;
       flex-direction:column;
-      min-height:340px;
-      transform:translateY(6px);
+      min-height:420px;
+      transform:translateY(10px);
       opacity:0;
-      animation:card-in 0.5s ease forwards;
+      animation:card-in 0.6s ease forwards;
+      transition:transform 0.3s ease, box-shadow 0.3s ease;
     }
-    .species-card:nth-child(1){animation-delay:0.05s;}
-    .species-card:nth-child(2){animation-delay:0.09s;}
-    .species-card:nth-child(3){animation-delay:0.13s;}
-    .species-card:nth-child(4){animation-delay:0.17s;}
-    .species-card:nth-child(5){animation-delay:0.21s;}
-    .species-card:nth-child(6){animation-delay:0.25s;}
+    .species-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 16px 40px rgba(11,116,222,0.2);
+    }
+    .species-card:nth-child(1){animation-delay:0.1s;}
+    .species-card:nth-child(2){animation-delay:0.2s;}
+    .species-card:nth-child(3){animation-delay:0.3s;}
+    .species-card:nth-child(4){animation-delay:0.4s;}
+    .species-card:nth-child(5){animation-delay:0.5s;}
+    .species-card:nth-child(6){animation-delay:0.6s;}
 
     @keyframes card-in{
       to{transform:translateY(0);opacity:1;}
     }
 
+    /* Photo with gradient overlay */
     .species-photo-wrap{
       position:relative;
-      height:180px;
+      height:200px;
       overflow:hidden;
-      background:#000;
+      background:linear-gradient(135deg,#e3f2fd,#bbdefb);
     }
     .species-photo{
       width:100%;
       height:100%;
       object-fit:cover;
-      transition:transform 0.6s ease;
+      transition:transform 0.4s ease;
       display:block;
     }
     .species-card:hover .species-photo{
-      transform:scale(1.06);
+      transform:scale(1.08);
     }
+    .photo-overlay{
+      position:absolute;
+      inset:0;
+      background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.6));
+      pointer-events:none;
+    }
+
+    /* Status Badges */
     .status-badge{
       position:absolute;
-      top:12px;
-      left:12px;
-      padding:4px 10px;
+      top:14px;
+      left:14px;
+      padding:6px 14px;
       border-radius:999px;
-      font-size:11px;
+      font-size:12px;
       font-weight:700;
       color:#fff;
-      box-shadow:0 4px 10px rgba(0,0,0,0.35);
+      box-shadow:0 6px 16px rgba(0,0,0,0.3);
+      backdrop-filter:blur(8px);
     }
     .species-card.status-cr .status-badge{
-      background:linear-gradient(90deg,#e63946,#f77f00);
+      background:linear-gradient(135deg,#e63946,#d62828);
     }
     .species-card.status-en .status-badge{
-      background:linear-gradient(90deg,#f77f00,#f9c74f);
+      background:linear-gradient(135deg,#f77f00,#f9844a);
     }
     .species-card.status-vu .status-badge{
-      background:linear-gradient(90deg,#f9c74f,#90be6d);
+      background:linear-gradient(135deg,#90be6d,#76c893);
     }
     .iucn-pill{
       position:absolute;
-      top:12px;
-      right:12px;
-      font-size:10px;
-      padding:3px 7px;
+      top:14px;
+      right:14px;
+      font-size:11px;
+      padding:5px 10px;
       border-radius:999px;
-      background:rgba(3,4,15,0.78);
-      color:#f1f3f8;
-      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(255,255,255,0.95);
+      color:var(--ocean-900);
+      border:1px solid rgba(0,0,0,0.1);
+      font-weight:700;
+      box-shadow:0 4px 12px rgba(0,0,0,0.15);
     }
+
+    /* Card Body */
     .species-body{
-      padding:10px 13px 12px;
+      padding:16px 18px 18px;
       flex:1;
       display:flex;
       flex-direction:column;
-      gap:4px;
+      gap:8px;
     }
     .common-name{
-      font-size:18px;
+      font-size:22px;
       font-weight:700;
+      color:var(--ocean-700);
       display:flex;
       align-items:center;
       justify-content:space-between;
     }
     .sci-name{
-      font-size:12px;
+      font-size:13px;
       font-style:italic;
-      color:#4b5563;
+      color:var(--muted);
     }
     .pop-count{
-      font-size:11px;
-      color:#495057;
+      font-size:12px;
+      color:var(--ocean-900);
+      background:#e3f2fd;
+      padding:6px 10px;
+      border-radius:8px;
+      font-weight:600;
     }
     .bio-text{
-      font-size:12px;
-      line-height:1.45;
-      margin-top:4px;
+      font-size:13px;
+      line-height:1.6;
+      margin-top:6px;
       color:#374151;
     }
     .threats{
       list-style:none;
-      margin:6px 0 0;
+      margin:8px 0 0;
       padding:0;
-      font-size:11px;
-      color:#6b7280;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .threats b{
+      color:var(--ocean-900);
     }
     .region-highlight{
-      margin-top:6px;
-      font-size:11px;
-      color:#1f2933;
+      margin-top:8px;
+      font-size:12px;
+      color:var(--ocean-700);
       display:flex;
       align-items:center;
-      gap:4px;
+      gap:6px;
+      font-weight:600;
+      background:#fff3e0;
+      padding:6px 10px;
+      border-radius:8px;
     }
     .region-highlight span{
-      font-size:12px;
+      font-size:14px;
     }
+
+    /* AI Speech Bubble */
     .ai-speech{
-      margin-top:7px;
-      font-size:11px;
+      margin-top:10px;
+      font-size:12px;
       font-style:italic;
       color:var(--ai-purple);
-      background:rgba(123,47,242,0.06);
-      border-radius:10px;
-      padding:7px 10px;
-      border:1px dashed rgba(123,47,242,0.45);
+      background:linear-gradient(135deg,#f3e5f5,#e1bee7);
+      border-radius:12px;
+      padding:10px 12px;
+      border:2px solid rgba(123,47,242,0.3);
       position:relative;
       overflow:hidden;
+      transition:all 0.3s ease;
     }
-    .ai-speech::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(120deg,rgba(123,47,242,0.22),rgba(123,47,242,0),rgba(123,47,242,0.22));
-      opacity:0;
-      transition:opacity .3s;
-    }
-    .species-card.speak .ai-speech::before{
-      opacity:1;
+    .species-card:hover .ai-speech{
+      background:linear-gradient(135deg,#e1bee7,#ce93d8);
+      border-color:var(--ai-purple);
+      transform:scale(1.02);
     }
     .ai-speech span{
-      font-size:15px;
-      color:#a855f7;
+      font-size:16px;
+      font-weight:700;
     }
+
     .card-footer-row{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      margin-top:6px;
+      margin-top:10px;
+      padding-top:10px;
+      border-top:2px solid #e3f2fd;
       font-size:11px;
-      color:#6b7280;
+      color:var(--muted);
     }
     .ask-ai-link{
       color:var(--ai-purple);
       cursor:pointer;
       display:inline-flex;
       align-items:center;
-      gap:4px;
-      font-weight:600;
+      gap:5px;
+      font-weight:700;
+      font-size:12px;
+      padding:6px 12px;
+      background:#f3e5f5;
+      border-radius:999px;
+      transition:all 0.3s ease;
     }
     .ask-ai-link:hover{
-      text-decoration:underline;
+      background:var(--ai-purple);
+      color:#fff;
+      transform:scale(1.05);
     }
 
-    /* AI PANEL */
+    /* AI PANEL - Light Theme */
     .ai-panel{
-      border-radius:16px;
-      background:radial-gradient(circle at top,#182544,#050818 58%);
-      padding:14px 14px 16px;
-      border:1px solid rgba(255,255,255,0.08);
+      border-radius:20px;
+      background:linear-gradient(135deg,#fff,#e3f2fd);
+      padding:20px;
+      border:2px solid rgba(11,116,222,0.2);
+      box-shadow:0 12px 40px rgba(0,0,0,0.08);
       display:flex;
       flex-direction:column;
-      gap:8px;
-      position:relative;
-      overflow:hidden;
-    }
-    .ai-panel::before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      background:radial-gradient(circle at 10% 0%,rgba(58,134,255,0.6),transparent 55%),
-                 radial-gradient(circle at 90% 100%,rgba(250,82,160,0.55),transparent 65%);
-      opacity:0.22;
-      pointer-events:none;
+      gap:16px;
+      position:sticky;
+      top:80px;
+      max-height:calc(100vh - 100px);
+      overflow:auto;
     }
     .ai-panel-header{
       position:relative;
-      z-index:1;
     }
     .ai-title-row{
       display:flex;
       align-items:center;
-      gap:8px;
+      gap:12px;
     }
     .ai-orb{
-      width:22px;
-      height:22px;
+      width:32px;
+      height:32px;
       border-radius:50%;
       background:conic-gradient(from 0deg,#4cc9f0,#f72585,#4cc9f0);
-      box-shadow:0 0 15px rgba(80,220,255,0.78);
+      box-shadow:0 0 20px rgba(76,201,240,0.6);
       animation:spin 3s linear infinite;
     }
     @keyframes spin{
       to{transform:rotate(360deg);}
     }
     .ai-title{
-      font-size:13px;
+      font-size:18px;
       font-weight:700;
-      letter-spacing:0.02em;
+      color:var(--ocean-700);
     }
     .ai-subtitle{
-      font-size:11px;
-      color:#cbd5f1;
-      margin-top:2px;
+      font-size:13px;
+      color:var(--muted);
+      margin-top:4px;
+      line-height:1.4;
     }
     .ai-badge{
       position:absolute;
       top:0;
       right:0;
-      padding:3px 8px;
+      padding:5px 12px;
       border-radius:999px;
-      font-size:10px;
-      background:rgba(0,0,0,0.50);
-      color:#e5e7eb;
-      border:1px solid rgba(148,163,184,0.6);
+      font-size:11px;
+      background:var(--ai-purple);
+      color:#fff;
+      font-weight:700;
       display:flex;
       align-items:center;
-      gap:5px;
+      gap:6px;
     }
-    .ai-badge span{
-      font-size:11px;
-    }
+
     .ai-display{
-      position:relative;
-      z-index:1;
-      border-radius:12px;
-      background:rgba(3,5,18,0.8);
-      border:1px solid rgba(148,163,184,0.35);
-      padding:10px 11px;
-      min-height:120px;
-      font-size:12px;
-      color:#e5e7eb;
+      border-radius:16px;
+      background:#fff;
+      border:2px solid rgba(11,116,222,0.15);
+      padding:16px;
+      min-height:200px;
+      font-size:13px;
+      color:var(--ocean-900);
       overflow:auto;
+      box-shadow:inset 0 2px 8px rgba(0,0,0,0.05);
     }
     .ai-placeholder{
       text-align:center;
-      font-size:12px;
-      color:#a5b4fc;
-      opacity:0.9;
-      padding:16px 4px;
+      font-size:13px;
+      color:var(--muted);
+      padding:32px 12px;
+      line-height:1.8;
     }
+    .ai-placeholder strong{
+      color:var(--ocean-700);
+    }
+
+    /* Loading Animation */
     .ai-loading{
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap:8px;
-      padding:14px 0;
+      gap:12px;
+      padding:24px 0;
     }
     .ai-loading-spinner{
-      width:30px;
-      height:30px;
+      width:40px;
+      height:40px;
       border-radius:50%;
-      border:3px solid rgba(148,163,184,0.38);
+      border:4px solid rgba(11,116,222,0.2);
       border-top-color:#4cc9f0;
       border-right-color:#f72585;
-      animation:spin 0.9s linear infinite;
+      animation:spin 0.8s linear infinite;
     }
     .ai-loading-label{
-      font-size:11px;
-      color:#e5e7eb;
+      font-size:12px;
+      color:var(--muted);
       text-align:center;
     }
+
+    /* AI Answer Block */
     .ai-answer-block{
-      animation:fade-up .45s ease-out;
+      animation:fade-up 0.5s ease-out;
     }
     @keyframes fade-up{
-      from{opacity:0;transform:translateY(10px);}
+      from{opacity:0;transform:translateY(12px);}
       to{opacity:1;transform:translateY(0);}
     }
     .ai-answer-title{
-      font-size:12px;
-      font-weight:600;
-      margin-bottom:4px;
-      color:#e0e7ff;
+      font-size:16px;
+      font-weight:700;
+      margin-bottom:12px;
+      color:var(--ocean-700);
       display:flex;
       align-items:center;
-      gap:6px;
-    }
-    .ai-answer-title span{
-      font-size:13px;
+      gap:8px;
     }
     .ai-metrics{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(90px,1fr));
-      gap:6px;
-      margin:4px 0 8px;
+      grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
+      gap:10px;
+      margin:8px 0 16px;
     }
     .ai-metric-card{
-      background:rgba(15,23,42,0.95);
-      border-radius:8px;
-      padding:5px 7px;
-      border:1px solid rgba(99,102,241,0.65);
+      background:linear-gradient(135deg,#e3f2fd,#bbdefb);
+      border-radius:12px;
+      padding:12px;
+      border:2px solid rgba(11,116,222,0.3);
+      text-align:center;
     }
     .ai-metric-main{
-      font-size:13px;
+      font-size:20px;
       font-weight:700;
-      color:#f9fafb;
+      color:var(--ocean-700);
     }
     .ai-metric-label{
       font-size:11px;
-      color:#a5b4fc;
-    }
-    .ai-body-text{
-      font-size:11px;
-      line-height:1.55;
-      color:#e5e7eb;
-      margin-bottom:5px;
-    }
-    .ai-footer-text{
-      font-size:10px;
-      color:#9ca3af;
+      color:var(--muted);
       margin-top:4px;
     }
+    .ai-body-text{
+      font-size:13px;
+      line-height:1.7;
+      color:#374151;
+      margin-bottom:12px;
+    }
+    .ai-footer-text{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:8px;
+      padding-top:12px;
+      border-top:1px solid #e3f2fd;
+    }
+
     .ai-actions-row{
-      position:relative;
-      z-index:1;
       display:flex;
       justify-content:space-between;
       align-items:center;
-      margin-top:6px;
       font-size:11px;
-      color:#c7d2fe;
-    }
-    .ai-small-note{
-      opacity:0.8;
+      color:var(--muted);
     }
     .ai-refresh-btn{
       border-radius:999px;
       border:0;
-      padding:5px 11px;
-      font-size:11px;
-      font-weight:600;
+      padding:8px 16px;
+      font-size:12px;
+      font-weight:700;
       background:linear-gradient(90deg,#4cc9f0,#f72585);
       color:#fff;
       cursor:pointer;
       display:inline-flex;
       align-items:center;
-      gap:4px;
+      gap:6px;
+      transition:all 0.3s ease;
     }
     .ai-refresh-btn:hover{
-      filter:brightness(1.06);
+      transform:scale(1.05);
+      box-shadow:0 6px 20px rgba(76,201,240,0.4);
     }
-    .ai-refresh-btn span{
-      font-size:12px;
+
+    footer{
+      text-align:center;
+      margin:32px 0 16px;
+      color:var(--muted);
+      font-size:13px;
     }
   </style>
 </head>
 <body>
-<div class="page-shell">
+  <!-- Navigation matching other pages -->
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
+    <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
+    <a href="pollution-pathways.html">Pollution Pathways</a>
+    <a href="biodiversity-awareness.html" class="active">Red List & Self‑Assessment</a>
+    <a href="sdg-dashboard.html">SDG & Biodiversity</a>
+    <a href="presentation-mode.html">Presentation Mode</a>   
+  </nav>
 
+  <!-- Header with wave animation -->
+  <div class="ocean-header">
+    🌊 RARE & ENDANGERED OCEAN SPECIES 🐋
+  </div>
+
+<div class="page-shell">
   <section id="endangered-gallery">
-    <h2 class="gallery-heading">🌊 Rare & Endangered Ocean Species</h2>
+    <h2 class="gallery-heading">🌊 Ocean's Most Threatened Animals</h2>
     <p class="gallery-subtitle">
-      Discover some of the ocean’s most threatened animals. Each card shows real conservation
-      status and an AI‑style “voice” explaining what that species needs from us. <span>Hover</span> to
-      let them “speak,” or ask the AI panel on the right for a deeper explanation.
+      Discover some of the ocean's most threatened animals. Each card shows real conservation
+      status and an AI‑style "voice" explaining what that species needs from us. <span>Hover or click</span> to
+      explore, or ask the AI panel on the right for deeper insights.
     </p>
 
     <div class="gallery-toolbar">
       <div class="legend-chips">
-        <div class="legend-chip">
+        <div class="legend-chip cr">
           <div class="legend-dot cr"></div><span>CR – Critically Endangered</span>
         </div>
-        <div class="legend-chip">
+        <div class="legend-chip en">
           <div class="legend-dot en"></div><span>EN – Endangered</span>
         </div>
-        <div class="legend-chip">
+        <div class="legend-chip vu">
           <div class="legend-dot vu"></div><span>VU – Vulnerable</span>
         </div>
-      </div>
-      <div class="view-toggle">
-        View mode:
-        <button class="active" type="button">Cards</button>
-        <button type="button" disabled title="Map view coming soon">Map (soon)</button>
       </div>
     </div>
 
@@ -526,28 +630,28 @@
           <div class="ai-title-row">
             <div class="ai-orb"></div>
             <div>
-              <div class="ai-title">Ocean Species AI Explainer</div>
+              <div class="ai-title">🤖 Ocean Species AI Explainer</div>
               <div class="ai-subtitle">
-                Click <strong>“Ask the AI about this species”</strong> on any card to get a tailored explanation here.
+                Click <strong>"Ask the AI"</strong> on any card to get a detailed explanation here.
               </div>
             </div>
           </div>
           <div class="ai-badge">
-            <span>🤖</span> Conceptual AI · Offline demo
+            <span>🤖</span> AI Demo
           </div>
         </div>
 
         <div id="aiDisplay" class="ai-display">
           <div class="ai-placeholder">
             Choose a species on the left and tap<br>
-            <strong>“Ask the AI about this species”</strong><br>
+            <strong>"🤖 Ask the AI about this species"</strong><br>
             to see a smart, student‑friendly explanation here.
           </div>
         </div>
 
         <div class="ai-actions-row">
           <div class="ai-small-note">
-            Responses are generated from curated knowledge<br>about endangered marine life.
+            Educational conservation insights
           </div>
           <button class="ai-refresh-btn" type="button" id="aiRandomBtn">
             <span>🎲</span> Surprise me
@@ -557,6 +661,9 @@
     </div>
   </section>
 
+  <footer>
+    © Vanavil Mandram • SMART VISION FOR A CLEANER OCEAN — 2025
+  </footer>
 </div>
 
 <script>
@@ -567,11 +674,11 @@
       commonName:"Vaquita",
       sciName:"Phocoena sinus",
       status:"CR",
-      img:"https://upload.wikimedia.org/wikipedia/commons/5/5d/Vaquita5_Olson_NOAA.jpg",
+      img:"https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop",
       count:"< 30",
-      bio:"The vaquita is the world’s rarest marine mammal, found only in the northern Gulf of California. Scientists believe fewer than 30 remain.",
+      bio:"The vaquita is the world's rarest marine mammal, found only in the northern Gulf of California. Scientists believe fewer than 30 remain.",
       threats:["Illegal gillnet fishing","Bycatch in totoaba nets","Habitat degradation"],
-      aiTip:"If I could speak, I’d ask for a net‑free sanctuary in my last remaining home in the Gulf of California.",
+      aiTip:"If I could speak, I'd ask for a net‑free sanctuary in my last remaining home in the Gulf of California.",
       region:"Northern Gulf of California, Mexico"
     },
     {
@@ -579,7 +686,7 @@
       commonName:"North Atlantic Right Whale",
       sciName:"Eubalaena glacialis",
       status:"CR",
-      img:"https://upload.wikimedia.org/wikipedia/commons/b/b1/North_Atlantic_Right_Whale_with_calve.jpg",
+      img:"https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop&q=80",
       count:"~340",
       bio:"Once heavily hunted, this whale now struggles mainly with ship strikes and fishing gear entanglement along busy shipping corridors.",
       threats:["Ship strikes","Fishing rope entanglement","Noise pollution"],
@@ -591,7 +698,7 @@
       commonName:"Hawksbill Turtle",
       sciName:"Eretmochelys imbricata",
       status:"CR",
-      img:"https://upload.wikimedia.org/wikipedia/commons/b/b9/Hawksbill_Turtle_-_Eretmochelys_imbricata.jpg",
+      img:"https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop&q=75",
       count:"~8,000 nesting females",
       bio:"A reef‑dwelling turtle prized for its beautiful shell. Habitat loss, egg collection, and plastic pollution have driven severe declines.",
       threats:["Illegal shell trade","Egg harvesting","Marine plastics","Coral reef loss"],
@@ -603,11 +710,11 @@
       commonName:"Giant Manta Ray",
       sciName:"Mobula birostris",
       status:"EN",
-      img:"https://upload.wikimedia.org/wikipedia/commons/c/c6/Manta_birostris-Thailand1.jpg",
+      img:"https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=600&h=400&fit=crop",
       count:"Declining",
       bio:"With a wingspan up to 7 meters, giant mantas are filter‑feeding giants that migrate across ocean basins and often gather at cleaning stations.",
       threats:["Overfishing for gill plates","Bycatch in nets","Pollution and microplastics"],
-      aiTip:"Protecting key aggregation sites and regulating trade in my gill plates lets me keep ‘flying’ through the open ocean.",
+      aiTip:"Protecting key aggregation sites and regulating trade in my gill plates lets me keep 'flying' through the open ocean.",
       region:"Tropical & subtropical oceans worldwide"
     },
     {
@@ -615,9 +722,9 @@
       commonName:"Hawaiian Monk Seal",
       sciName:"Neomonachus schauinslandi",
       status:"EN",
-      img:"https://upload.wikimedia.org/wikipedia/commons/0/0b/Hawaiian_Monk_Seal_Molokai.JPG",
+      img:"https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=600&h=400&fit=crop",
       count:"~1,500",
-      bio:"One of the world’s only tropical seals, found mostly around the Northwestern Hawaiian Islands. Threatened by entanglement, disease, and habitat loss.",
+      bio:"One of the world's only tropical seals, found mostly around the Northwestern Hawaiian Islands. Threatened by entanglement, disease, and habitat loss.",
       threats:["Fishing gear entanglement","Disease","Loss of pupping beaches"],
       aiTip:"Clean beaches, careful fisheries, and disease monitoring can keep pups safe along our remote island shores.",
       region:"Hawaiian Archipelago"
@@ -627,7 +734,7 @@
       commonName:"Dugong",
       sciName:"Dugong dugon",
       status:"VU",
-      img:"https://upload.wikimedia.org/wikipedia/commons/0/0c/Dugong_m0011160.jpg",
+      img:"https://images.unsplash.com/photo-1583212292454-1fe6229603b7?w=600&h=400&fit=crop&q=70",
       count:"Patchy & declining",
       bio:"A gentle seagrass‑grazing relative of manatees. Dugongs depend on shallow, healthy seagrass meadows for food and shelter.",
       threats:["Boat strikes","Seagrass loss","Entanglement","Hunting in some regions"],
@@ -636,14 +743,14 @@
     }
   ];
 
-  // === AI-style explanations per species (static demo; can be replaced with real AI backend) ===
+  // === AI-style explanations per species ===
   const aiExplain = {
     vaquita: {
       title:"Why is the Vaquita so close to extinction?",
       metrics:[
-        {main:"< 30",label:"Estimated individuals left"},
+        {main:"< 30",label:"Individuals left"},
         {main:"1",label:"Small home range"},
-        {main:"Gillnets",label:"Top driver of decline"}
+        {main:"Gillnets",label:"Top threat"}
       ],
       body:[
         "The vaquita lives in only one small region of the ocean: the northern Gulf of California. That limited range makes it extremely vulnerable to any local threat.",
@@ -657,12 +764,12 @@
       metrics:[
         {main:"~340",label:"Individuals left"},
         {main:"Ship strikes",label:"Major cause of death"},
-        {main:"Entanglement",label:"Chronic stress & injury"}
+        {main:"Entanglement",label:"Chronic stress"}
       ],
       body:[
         "Right whales migrate through some of the busiest shipping lanes in the North Atlantic. Collisions with large vessels can be fatal, especially for calves.",
         "Fishing ropes and lines can wrap around whales, cutting into skin and slowing them down. Over time, this makes it harder for them to feed, heal, and reproduce.",
-        "Solutions include speed restrictions, route changes, and new rope‑free fishing technologies designed to protect both whales and fishers’ livelihoods."
+        "Solutions include speed restrictions, route changes, and new rope‑free fishing technologies designed to protect both whales and fishers' livelihoods."
       ],
       footer:"Data adapted from whale research organizations and IUCN summaries."
     },
@@ -670,11 +777,11 @@
       title:"Why are Hawksbill turtles critically endangered?",
       metrics:[
         {main:"CR",label:"IUCN status"},
-        {main:"Tortoiseshell",label:"Historic trade"},
+        {main:"Shell trade",label:"Historic threat"},
         {main:"Coral reefs",label:"Key habitat at risk"}
       ],
       body:[
-        "Hawksbills were hunted for centuries for their beautifully patterned shells used in jewelry and ornaments (often called ‘tortoiseshell’). Although international trade is now banned, illegal trade still occurs.",
+        "Hawksbills were hunted for centuries for their beautifully patterned shells used in jewelry and ornaments. Although international trade is now banned, illegal trade still occurs.",
         "They nest on tropical beaches and feed around coral reefs—both of which are threatened by coastal development, climate change, and pollution.",
         "Reducing demand for wildlife products, protecting nesting beaches, and safeguarding coral reefs all help Hawksbill populations recover."
       ],
@@ -685,12 +792,12 @@
       metrics:[
         {main:"7 m",label:"Wingspan up to"},
         {main:"Slow",label:"Reproduction rate"},
-        {main:"Gill plate trade",label:"Key threat"}
+        {main:"Gill trade",label:"Key threat"}
       ],
       body:[
         "Giant mantas produce very few young, typically a single pup after a long gestation. That means populations recover slowly from any losses.",
         "Targeted fishing and bycatch have increased due to demand for manta gill plates in some traditional medicines and markets.",
-        "Marine protected areas, ecotourism, and strict regulations on targeted fishing give these ‘flying’ rays a chance to rebuild their numbers."
+        "Marine protected areas, ecotourism, and strict regulations on targeted fishing give these 'flying' rays a chance to rebuild their numbers."
       ],
       footer:"Summarized from scientific literature on manta ray life history and fisheries."
     },
@@ -698,7 +805,7 @@
       title:"Why is the Hawaiian monk seal endangered?",
       metrics:[
         {main:"~1,500",label:"Remaining seals"},
-        {main:"Beaches",label:"Crucial for pupping"},
+        {main:"Beaches",label:"Crucial for pups"},
         {main:"Entanglement",label:"Frequent hazard"}
       ],
       body:[
@@ -711,14 +818,14 @@
     dugong:{
       title:"How do Dugongs tell us if seagrass meadows are healthy?",
       metrics:[
-        {main:"‘Sea cows’",label:"Nicknamed for grazing"},
-        {main:"Seagrass",label:"Main food source"},
-        {main:"Shallow coasts",label:"Most at risk"}
+        {main:"'Sea cows'",label:"Nicknamed"},
+        {main:"Seagrass",label:"Main food"},
+        {main:"Shallow",label:"Coastal habitat"}
       ],
       body:[
         "Dugongs depend on shallow seagrass beds, which are sensitive to pollution, dredging, and climate‑driven changes.",
         "Where dugongs thrive, it often means that water quality is high and seagrass meadows are doing well—supporting many fish, invertebrates, and coastal communities.",
-        "Protecting dugongs means protecting seagrass, which also stores ‘blue carbon’ and helps buffer coasts from erosion."
+        "Protecting dugongs means protecting seagrass, which also stores 'blue carbon' and helps buffer coasts from erosion."
       ],
       footer:"Drawn from seagrass and marine mammal conservation research."
     }
@@ -738,7 +845,9 @@
 
       card.innerHTML=`
         <div class="species-photo-wrap">
-          <img src="${species.img}" alt="${species.commonName}" class="species-photo">
+          <img src="${species.img}" alt="${species.commonName}" class="species-photo"
+               onerror="this.src='https://via.placeholder.com/600x400/0b74de/ffffff?text=${encodeURIComponent(species.commonName)}';">
+          <div class="photo-overlay"></div>
           <div class="status-badge">${statusLabel}</div>
           <div class="iucn-pill">IUCN: ${species.status}</div>
         </div>
@@ -747,15 +856,14 @@
             <span>${species.commonName}</span>
           </div>
           <div class="sci-name">${species.sciName}</div>
-          <div class="pop-count">Estimated remaining: <strong>${species.count}</strong></div>
+          <div class="pop-count">📊 Estimated remaining: <strong>${species.count}</strong></div>
           <div class="bio-text">${species.bio}</div>
           <ul class="threats">
             <li><b>Key threats:</b> ${species.threats.join(", ")}</li>
           </ul>
           <div class="region-highlight"><span>📍</span>${species.region}</div>
-          <div class="ai-speech"><span>“</span>${species.aiTip}<span>”</span></div>
+          <div class="ai-speech"><span>"</span>${species.aiTip}<span>"</span></div>
           <div class="card-footer-row">
-            <span>Tap to let this species “speak” louder.</span>
             <span class="ask-ai-link" data-species="${species.id}">
               🤖 Ask the AI about this species
             </span>
@@ -763,14 +871,16 @@
         </div>
       `;
 
-      card.addEventListener("mouseenter",()=>card.classList.add("speak"));
-      card.addEventListener("mouseleave",()=>card.classList.remove("speak"));
+      card.addEventListener("click",()=>{
+        card.style.transform="scale(1.02)";
+        setTimeout(()=>card.style.transform="",200);
+      });
 
       grid.appendChild(card);
     });
   }
 
-  // === AI Panel logic (offline demo; can be replaced with real AI backend) ===
+  // === AI Panel logic ===
   function showAiLoading(){
     const box=document.getElementById("aiDisplay");
     if (!box) return;
@@ -778,7 +888,7 @@
       <div class="ai-loading">
         <div class="ai-loading-spinner"></div>
         <div class="ai-loading-label">
-          Analyzing conservation data and recent science for this species…
+          🔍 Analyzing conservation data and recent science for this species…
         </div>
       </div>
     `;
@@ -811,17 +921,16 @@
         <div class="ai-metrics">${metricsHTML}</div>
         ${bodyHTML}
         <div class="ai-footer-text">
-          You’re exploring: <strong>${species.commonName}</strong>
-          (<em>${species.sciName}</em>). ${cfg.footer}
+          <strong>About ${species.commonName}</strong> (<em>${species.sciName}</em>): ${cfg.footer}
         </div>
       </div>
     `;
   }
 
   function attachAiHandlers(){
-    // Attach to "Ask the AI..." links
     document.querySelectorAll(".ask-ai-link").forEach(link=>{
-      link.addEventListener("click",()=>{
+      link.addEventListener("click",(e)=>{
+        e.stopPropagation();
         const speciesId = link.getAttribute("data-species");
         if(!speciesId) return;
         showAiLoading();
@@ -829,7 +938,6 @@
       });
     });
 
-    // Surprise me button
     const randomBtn=document.getElementById("aiRandomBtn");
     if(randomBtn){
       randomBtn.addEventListener("click",()=>{
