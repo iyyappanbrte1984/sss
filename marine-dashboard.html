@@ -8,6 +8,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+  <!-- NEW: Leaflet for camera event mini-map -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j7kPuqU57J3C0uHfF7nJH2kNFQZkTtWkTgLrjRI="
+    crossorigin="">
+  </script>
+
   <style>
     :root{
       --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
@@ -137,7 +150,7 @@
         <a href="ocean-explorer.html">Ocean Explorer</a>
     <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
     <a href="pollution-pathways.html">Pollution Pathways</a>
-    <a href="biodiversity-awareness.html">Red List & Self‑Assessment</a>
+    <a href="biodiversity-awareness.html">Red List & Self-Assessment</a>
     <a href="sdg-dashboard.html">SDG & Biodiversity</a>
     <a href="presentation-mode.html">Presentation Mode</a>   
   </nav>
@@ -163,6 +176,48 @@
           <button class="btn btn-primary" id="btnLocalAI">Local Rules AI</button>
           <button class="btn btn-success" id="btnServerAI">Perplexity AI</button>
         </div>
+      </div>
+    </section>
+
+    <!-- NEW: Camera events card + mini map + AI analysis -->
+    <section id="cameraEventsSection" style="margin-top:24px;">
+      <h2 style="font-size:20px;margin-bottom:10px;">AI Camera – F/T/E Detections (Last 24 Hours)</h2>
+
+      <div id="cameraCard" style="
+          display:flex;flex-wrap:wrap;gap:12px;
+          background:#ffffff;border-radius:16px;
+          padding:16px;box-shadow:0 10px 30px rgba(0,119,190,.08);
+          border:1px solid rgba(0,119,190,.1);">
+        <div style="flex:1;min-width:160px;">
+          <h3 style="margin:4px 0;font-size:16px;">Detections Summary</h3>
+          <p id="cameraSummaryText" style="margin:4px 0;color:#6f8396;font-size:13px;">Loading camera events...</p>
+          <ul style="list-style:none;padding:0;margin-top:8px;font-size:13px;">
+            <li>🐟 Fish detections: <strong id="camFishCount">0</strong></li>
+            <li>🗑️ Trash detections: <strong id="camTrashCount">0</strong></li>
+            <li>🚨 Emergency detections: <strong id="camEmergCount">0</strong></li>
+          </ul>
+          <small id="camLastUpdated" style="color:#9aa7b6;font-size:11px;"></small>
+        </div>
+
+        <div style="flex:1;min-width:220px;">
+          <div id="cameraMap" style="width:100%;height:220px;border-radius:12px;overflow:hidden;"></div>
+        </div>
+      </div>
+
+      <div style="
+          margin-top:12px;
+          background:#ffffff;border-radius:16px;
+          padding:16px;box-shadow:0 8px 22px rgba(0,0,0,.05);
+          border:1px solid rgba(0,119,190,.08);">
+        <h3 style="margin-top:0;font-size:16px;">AI Analysis from Camera Events</h3>
+        <button id="btnCameraAI" style="
+            border:0;padding:8px 14px;border-radius:8px;
+            background:linear-gradient(90deg,#39a1ff,#0b74de);
+            color:#fff;font-weight:700;cursor:pointer;margin-bottom:8px;font-size:13px;">
+          Refresh AI analysis
+        </button>
+        <textarea id="cameraAiText" readonly
+          style="width:100%;min-height:140px;border-radius:8px;border:1px solid #eef6fb;padding:8px;background:#fbfdff;font-size:13px;font-family:inherit;"></textarea>
       </div>
     </section>
 
@@ -200,6 +255,10 @@
     const API_BASE = "/api";
     let tempChart = null;
     let currentSamples = [];
+
+    // NEW: camera events map state
+    let cameraMap;
+    let cameraMarkersLayer;
 
     function num(v){ return (v == null) ? "—" : Number(v).toFixed(2); }
     function setAIText(t){ document.getElementById('aiText').value = t; }
@@ -328,6 +387,88 @@
       showRefresh("Data loaded ✓");
     }
 
+    // NEW: fetch camera events summary for card + map
+    async function loadCameraEventsSummary() {
+      try {
+        const res = await fetch(`${API_BASE}/camera-events-summary`);
+        if (!res.ok) {
+          document.getElementById('cameraSummaryText').textContent =
+            'Failed to load camera events.';
+          return;
+        }
+        const json = await res.json();
+        const counts = json.counts || [];
+        const recent = json.recent || [];
+
+        let fish = 0, trash = 0, emerg = 0;
+        counts.forEach(row => {
+          if (row.code === 'F') fish = row.count;
+          if (row.code === 'T') trash = row.count;
+          if (row.code === 'E') emerg = row.count;
+        });
+
+        document.getElementById('camFishCount').textContent = fish;
+        document.getElementById('camTrashCount').textContent = trash;
+        document.getElementById('camEmergCount').textContent = emerg;
+
+        const total = fish + trash + emerg;
+        if (total === 0) {
+          document.getElementById('cameraSummaryText').textContent =
+            'No camera detections in the last 24 hours.';
+        } else {
+          document.getElementById('cameraSummaryText').textContent =
+            `Total ${total} detections in the last 24 hours. ` +
+            `${fish} fish, ${trash} trash, ${emerg} emergencies.`;
+        }
+        document.getElementById('camLastUpdated').textContent =
+          'Updated at ' + new Date().toLocaleTimeString();
+
+        updateCameraMap(recent);
+      } catch (err) {
+        console.error('loadCameraEventsSummary error', err);
+        document.getElementById('cameraSummaryText').textContent =
+          'Error loading camera events.';
+      }
+    }
+
+    function initCameraMap() {
+      if (cameraMap) return;
+      cameraMap = L.map('cameraMap').setView([20.0, 78.0], 4); // center on India
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(cameraMap);
+
+      cameraMarkersLayer = L.layerGroup().addTo(cameraMap);
+    }
+
+    function updateCameraMap(events) {
+      initCameraMap();
+      cameraMarkersLayer.clearLayers();
+
+      const withLocation = (events || []).filter(e => e.lat && e.lng);
+      if (withLocation.length === 0) {
+        return; // no coordinates yet
+      }
+
+      withLocation.forEach(e => {
+        const label = e.label || e.code;
+        const time = e.created_at ? new Date(e.created_at).toLocaleString() : '';
+        const popup = `
+          <strong>${label}</strong><br/>
+          Code: ${e.code}<br/>
+          Confidence: ${(e.confidence * 100).toFixed(1)}%<br/>
+          Time: ${time}
+        `;
+        L.marker([e.lat, e.lng]).bindPopup(popup).addTo(cameraMarkersLayer);
+      });
+
+      const latlngs = withLocation.map(e => [e.lat, e.lng]);
+      const bounds = L.latLngBounds(latlngs);
+      cameraMap.fitBounds(bounds, { padding: [20, 20] });
+    }
+
     document.getElementById("btnLocalAI").addEventListener("click",()=>{
       if(currentSamples.length===0){alert("No data available");return;}
       const pred = getLocalPrediction(currentSamples[0]);
@@ -362,10 +503,36 @@
       }
     });
 
+    // NEW: button to request AI summary for camera events
+    document.getElementById('btnCameraAI').addEventListener('click', async () => {
+      const area = document.getElementById('cameraAiText');
+      try {
+        area.value = 'Asking AI about camera events...';
+        const res = await fetch(`${API_BASE}/camera-events-ai`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ windowHours: 24 })
+        });
+        if (!res.ok) {
+          area.value = 'AI analysis failed. Please try again.';
+          return;
+        }
+        const json = await res.json();
+        area.value = json.ai_text || JSON.stringify(json, null, 2);
+      } catch (err) {
+        console.error('camera-events-ai error', err);
+        area.value = 'Error talking to AI endpoint.';
+      }
+    });
+
+    // existing auto-refresh for water samples
     setInterval(()=>{renderDashboard();},30000);
+    // NEW auto-refresh for camera events
+    setInterval(()=>{loadCameraEventsSummary();},30000);
 
     (async function init(){
       await renderDashboard();
+      await loadCameraEventsSummary();
     })();
   </script>
 </body>
