@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Check for both possible environment variable names
+const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY;
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY  // ← Changed from SUPABASE_KEY
+  supabaseKey
 );
 
 export default async function handler(req, res) {
@@ -11,6 +14,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Check if Supabase is configured
+    if (!process.env.SUPABASE_URL || !supabaseKey) {
+      throw new Error('Supabase not configured. Missing SUPABASE_URL or SUPABASE_KEY/SUPABASE_SERVICE_KEY');
+    }
+
     // Get events from last 24 hours
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -49,6 +57,9 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('camera-events-summary error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ 
+      error: err.message,
+      details: 'Check Vercel environment variables'
+    });
   }
 }
