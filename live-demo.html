@@ -253,7 +253,42 @@
         console.warn('microbit write failed', err);
       }
     }
+    // NEW: Log camera detection event to backend
+async function logCameraEvent(code, label, confidence) {
+  try {
+    // Get location if available (you can add geolocation API)
+    const position = await new Promise((resolve) => {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => resolve({ lat: null, lng: null })
+        );
+      } else {
+        resolve({ lat: null, lng: null });
+      }
+    });
 
+    const event = {
+      code: code,
+      label: label,
+      confidence: confidence,
+      lat: position.lat,
+      lng: position.lng,
+      meta: { source: 'live-camera-demo' },
+      created_at: new Date().toISOString()
+    };
+
+    await fetch(`${API_BASE}/log-camera-event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event)
+    });
+    
+    console.log('Camera event logged:', event);
+  } catch (err) {
+    console.warn('Failed to log camera event:', err);
+  }
+}
     // map label string -> short code
     function labelToCode(label){
       if (!label) return null;
@@ -290,49 +325,51 @@
       showStatus('camera stopped');
     }
 
-    async function predictLoop(){
-      try {
-        if (!tmModel) throw new Error('Model not loaded');
-        const preds = await tmModel.predict(videoEl, false);
-        preds.sort((a,b)=>b.probability - a.probability);
-        const top = preds[0] || {className:'--', probability:0};
-        const pct = Math.round(top.probability * 100);
-        showStatus(`live · ${pct}% · ${top.className || '--'}`);
-        predictionsLog.push({t:Date.now(), label: top.className, conf: top.probability});
+  async function predictLoop(){
+  try {
+    if (!tmModel) throw new Error('Model not loaded');
+    const preds = await tmModel.predict(videoEl, false);
+    preds.sort((a,b)=>b.probability - a.probability);
+    const top = preds[0] || {className:'--', probability:0};
+    const pct = Math.round(top.probability * 100);
+    showStatus(`live · ${pct}% · ${top.className || '--'}`);
+    predictionsLog.push({t:Date.now(), label: top.className, conf: top.probability});
 
-        if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
-          const code = labelToCode(top.className);
+    if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
+      const code = labelToCode(top.className);
 
-          if (code === 'F'){
-            webFishCount++;
-            updateWebCountersUI();
-            await sendCodeToMicrobit('F');
+      if (code === 'F'){
+        webFishCount++;
+        updateWebCountersUI();
+        await sendCodeToMicrobit('F');
+        await logCameraEvent('F', top.className, top.probability); // NEW
 
-          } else if (code === 'T'){
-            webTrashCount++;
-            updateWebCountersUI();
-            await sendCodeToMicrobit('T');
+      } else if (code === 'T'){
+        webTrashCount++;
+        updateWebCountersUI();
+        await sendCodeToMicrobit('T');
+        await logCameraEvent('T', top.className, top.probability); // NEW
 
-          } else if (code === 'E'){
-            webEmergCount++;
-            updateWebCountersUI();
-            await sendCodeToMicrobit('E');
+      } else if (code === 'E'){
+        webEmergCount++;
+        updateWebCountersUI();
+        await sendCodeToMicrobit('E');
+        await logCameraEvent('E', top.className, top.probability); // NEW
 
-            if (webEmergCount >= 5) {
-              await sendCodeToMicrobit('ALARM');
-              showStatus('ALARM sent to micro:bit');
-            }
-          }
+        if (webEmergCount >= 5) {
+          await sendCodeToMicrobit('ALARM');
+          showStatus('ALARM sent to micro:bit');
         }
-
-        if (isPredicting) {
-          setTimeout(() => requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
-        }
-      } catch(e){
-        showError(e);
       }
     }
 
+    if (isPredicting) {
+      setTimeout(() => requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
+    }
+  } catch(e){
+    showError(e);
+  }
+}
     function downloadCSV(){
       if (predictionsLog.length === 0){ alert('No predictions recorded yet'); return; }
       const header=['timestamp','label','confidence'];
