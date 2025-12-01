@@ -129,10 +129,6 @@
 
     .popup-content{font-size:13px;line-height:1.6;}
     .popup-content strong{display:block;margin-bottom:4px;color:var(--ocean-900);}
-    .popup-ai{
-      margin-top:8px;padding:8px;background:#f9fbff;border-radius:6px;
-      font-size:12px;color:var(--muted);
-    }
 
     .legend-box{
       background:#fff;padding:10px;border-radius:8px;
@@ -152,58 +148,132 @@
       margin-left:6px;
     }
 
-    /* PACE Analysis Section */
+    /* PACE AI Analysis Section */
     .pace-section{
-      margin-top:40px;padding:30px;background:#fff;border-radius:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,0.06);
-      border:2px solid #6c5ce7;
+      margin-top:40px;padding:0;
     }
     .pace-header{
-      display:flex;align-items:center;gap:12px;margin-bottom:20px;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:30px;background:linear-gradient(135deg,#667eea,#764ba2);
+      border-radius:16px 16px 0 0;color:#fff;
     }
+    .pace-header-left{display:flex;align-items:center;gap:16px;}
     .pace-logo{
-      width:60px;height:60px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);
+      width:60px;height:60px;background:rgba(255,255,255,0.2);
       border-radius:12px;display:flex;align-items:center;justify-content:center;
-      font-size:28px;font-weight:900;color:#fff;
+      font-size:24px;font-weight:900;backdrop-filter:blur(10px);
     }
-    .pace-title h2{font-size:24px;margin-bottom:4px;color:#6c5ce7;}
-    .pace-title p{font-size:13px;color:var(--muted);}
+    .pace-title h2{font-size:24px;margin-bottom:4px;}
+    .pace-title p{font-size:13px;opacity:0.9;}
 
-    .pace-grid{
-      display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:16px;margin-top:20px;
+    .pace-content{
+      background:#fff;border-radius:0 0 16px 16px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.1);
+      padding:30px;
     }
-    .pace-card{
+
+    /* Question Cards */
+    .question-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:16px;margin-bottom:30px;
+    }
+    .question-card{
       background:linear-gradient(135deg,#f9fbff,#ffffff);
-      border:1px solid rgba(108,92,231,0.15);
-      border-radius:12px;padding:18px;transition:all .3s;
+      border:2px solid rgba(108,92,231,0.15);
+      border-radius:12px;padding:18px;cursor:pointer;
+      transition:all .3s;position:relative;overflow:hidden;
     }
-    .pace-card:hover{transform:translateY(-4px);box-shadow:0 12px 24px rgba(108,92,231,0.15);}
-    .pace-card-icon{font-size:32px;margin-bottom:10px;}
-    .pace-card h3{font-size:16px;margin-bottom:8px;color:var(--ocean-900);}
-    .pace-card p{font-size:13px;color:var(--muted);line-height:1.6;}
-    .pace-card .metric{
-      margin-top:12px;padding:10px;background:rgba(108,92,231,0.08);
-      border-radius:8px;font-weight:700;color:#6c5ce7;
+    .question-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 12px 24px rgba(108,92,231,0.2);
+      border-color:#6c5ce7;
+    }
+    .question-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:4px;
+      background:linear-gradient(90deg,#667eea,#764ba2,#f093fb);
+      opacity:0;transition:opacity .3s;
+    }
+    .question-card:hover::before{opacity:1;}
+    .question-icon{font-size:28px;margin-bottom:10px;}
+    .question-card h4{font-size:14px;margin-bottom:6px;color:var(--ocean-900);}
+    .question-card p{font-size:12px;color:var(--muted);line-height:1.5;}
+
+    /* AI Response Area */
+    .ai-response-area{
+      background:linear-gradient(135deg,#f9fbff,#fff);
+      border:2px solid rgba(108,92,231,0.2);
+      border-radius:12px;padding:24px;min-height:200px;
+      position:relative;
+    }
+    .ai-thinking{
+      text-align:center;padding:40px;color:var(--muted);
+    }
+    .ai-thinking-icon{
+      font-size:48px;animation:pulse 1.5s infinite;margin-bottom:12px;
     }
 
-    .pace-spectrum{
-      margin-top:20px;padding:20px;background:linear-gradient(90deg,#667eea,#764ba2,#f093fb);
-      border-radius:12px;color:#fff;text-align:center;
+    .ai-answer{
+      animation:slideIn 0.5s ease-out;
     }
-    .pace-spectrum h3{font-size:18px;margin-bottom:10px;}
-    .pace-spectrum p{font-size:13px;opacity:0.95;}
+    @keyframes slideIn{
+      from{opacity:0;transform:translateY(20px);}
+      to{opacity:1;transform:translateY(0);}
+    }
 
-    .pace-links{
-      margin-top:20px;display:flex;flex-wrap:wrap;gap:10px;
+    .ai-answer-header{
+      display:flex;align-items:center;gap:10px;margin-bottom:16px;
+      padding-bottom:12px;border-bottom:2px solid rgba(108,92,231,0.1);
     }
-    .pace-link{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:10px 16px;background:#6c5ce7;color:#fff;
-      border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;
-      transition:all .3s;
+    .ai-badge{
+      padding:6px 12px;background:linear-gradient(135deg,#667eea,#764ba2);
+      color:#fff;border-radius:6px;font-size:11px;font-weight:700;
     }
-    .pace-link:hover{background:#5f4ed1;transform:translateY(-2px);}
+    .ai-answer-title{font-size:18px;font-weight:700;color:#6c5ce7;}
+
+    .ai-answer-body{
+      font-size:14px;line-height:1.8;color:var(--ocean-900);
+    }
+    .ai-answer-body p{margin-bottom:12px;}
+    .ai-answer-body strong{color:#6c5ce7;}
+    .ai-answer-body ul{margin:12px 0;padding-left:20px;}
+    .ai-answer-body li{margin-bottom:8px;}
+
+    .ai-metrics-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:12px;margin:20px 0;
+    }
+    .ai-metric-card{
+      background:rgba(108,92,231,0.08);border-radius:8px;padding:14px;
+      text-align:center;
+    }
+    .ai-metric-value{
+      font-size:24px;font-weight:900;color:#6c5ce7;margin-bottom:4px;
+    }
+    .ai-metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;}
+
+    .ai-footer{
+      margin-top:20px;padding-top:16px;border-top:1px solid rgba(108,92,231,0.1);
+      display:flex;align-items:center;justify-content:space-between;
+      flex-wrap:wrap;gap:10px;
+    }
+    .ai-source{font-size:11px;color:var(--muted);}
+    .ask-another{
+      padding:8px 16px;background:linear-gradient(135deg,#667eea,#764ba2);
+      color:#fff;border:none;border-radius:6px;font-weight:700;
+      cursor:pointer;font-size:12px;transition:all .3s;
+    }
+    .ask-another:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(102,126,234,0.3);}
+
+    @keyframes gradient{
+      0%{background-position:0% 50%;}
+      50%{background-position:100% 50%;}
+      100%{background-position:0% 50%;}
+    }
+    .loading-gradient{
+      background:linear-gradient(270deg,#667eea,#764ba2,#f093fb);
+      background-size:600% 600%;
+      animation:gradient 3s ease infinite;
+    }
   </style>
 </head>
 <body>
@@ -337,61 +407,68 @@
       </section>
     </div>
 
-    <!-- NASA PACE Analysis Section -->
+    <!-- NASA PACE AI Analysis Section -->
     <section class="pace-section">
       <div class="pace-header">
-        <div class="pace-logo">PACE</div>
-        <div class="pace-title">
-          <h2>NASA PACE Hyperspectral Ocean Analysis</h2>
-          <p>Plankton, Aerosol, Cloud, ocean Ecosystem • Launched Feb 2024 • Revolutionary ocean color science</p>
+        <div class="pace-header-left">
+          <div class="pace-logo">🛰️</div>
+          <div class="pace-title">
+            <h2>Ask NASA PACE AI</h2>
+            <p>Hyperspectral ocean analysis powered by AI • Launched Feb 2024</p>
+          </div>
         </div>
       </div>
 
-      <div class="pace-grid">
-        <div class="pace-card">
-          <div class="pace-card-icon">🧬</div>
-          <h3>Phytoplankton Community Detection</h3>
-          <p>PACE's Ocean Color Instrument (OCI) measures 200+ wavelengths from UV to near-infrared, enabling identification of specific phytoplankton species — not just total biomass.</p>
-          <div class="metric" id="phytoSpecies">Detecting 12+ Species Types</div>
+      <div class="pace-content">
+        <h3 style="margin-bottom:16px;font-size:16px;color:var(--ocean-900);">
+          🤖 What would you like to know about PACE ocean data?
+        </h3>
+
+        <div class="question-grid">
+          <div class="question-card" data-question="phytoplankton">
+            <div class="question-icon">🦠</div>
+            <h4>Phytoplankton Detection</h4>
+            <p>How does PACE identify different phytoplankton species from space?</p>
+          </div>
+
+          <div class="question-card" data-question="hab">
+            <div class="question-icon">☢️</div>
+            <h4>Harmful Algal Blooms</h4>
+            <p>Can PACE predict red tide and toxic algae blooms before they happen?</p>
+          </div>
+
+          <div class="question-card" data-question="carbon">
+            <div class="question-icon">🌡️</div>
+            <h4>Ocean Carbon Cycle</h4>
+            <p>How does PACE track CO₂ absorption by ocean phytoplankton?</p>
+          </div>
+
+          <div class="question-card" data-question="hyperspectral">
+            <div class="question-icon">🌈</div>
+            <h4>Hyperspectral Power</h4>
+            <p>What's the advantage of 200+ wavelengths vs traditional satellites?</p>
+          </div>
+
+          <div class="question-card" data-question="coastal">
+            <div class="question-icon">🏖️</div>
+            <h4>Coastal Water Quality</h4>
+            <p>How does PACE monitor turbid rivers, estuaries, and nearshore zones?</p>
+          </div>
+
+          <div class="question-card" data-question="climate">
+            <div class="question-icon">🌍</div>
+            <h4>Climate Impact</h4>
+            <p>Why is PACE critical for understanding climate change and ocean health?</p>
+          </div>
         </div>
 
-        <div class="pace-card">
-          <div class="pace-card-icon">☢️</div>
-          <h3>Harmful Algal Bloom (HAB) Monitoring</h3>
-          <p>Hyperspectral data reveals harmful algae like red tide (Karenia brevis) and cyanobacteria, predicting blooms before they threaten coastal communities.</p>
-          <div class="metric" id="habStatus">No Active HABs Detected</div>
+        <div class="ai-response-area" id="aiResponseArea">
+          <div class="ai-thinking">
+            <div class="ai-thinking-icon">💭</div>
+            <p><strong>Click any question card above</strong></p>
+            <p style="font-size:12px;margin-top:8px;">AI will analyze NASA PACE data and provide detailed insights</p>
+          </div>
         </div>
-
-        <div class="pace-card">
-          <div class="pace-card-icon">🌡️</div>
-          <h3>Ocean Health & Carbon Cycle</h3>
-          <p>PACE tracks ocean-atmosphere CO₂ exchange and phytoplankton photosynthesis rates, critical for understanding climate regulation by marine ecosystems.</p>
-          <div class="metric" id="carbonFlux">Monitoring CO₂ Flux: 2.1 Pg C/year</div>
-        </div>
-
-        <div class="pace-card">
-          <div class="pace-card-icon">🌊</div>
-          <h3>Coastal & Inland Water Quality</h3>
-          <p>Unlike legacy satellites, PACE monitors turbid coastal waters, estuaries, and large lakes — providing water quality data for fisheries and recreation.</p>
-          <div class="metric" id="waterQuality">Water Clarity: Good (8.2/10)</div>
-        </div>
-      </div>
-
-      <div class="pace-spectrum">
-        <h3>🌈 Hyperspectral Advantage: 200+ Wavelengths vs. Legacy 7 Bands</h3>
-        <p>PACE's continuous spectrum (340-890nm) detects subtle color differences invisible to MODIS/VIIRS. This reveals phytoplankton diversity, dissolved organic matter, and sediment composition — like upgrading from black-and-white to full-spectrum color vision.</p>
-      </div>
-
-      <div class="pace-links">
-        <a href="https://pace.oceansciences.org/data.htm" target="_blank" class="pace-link">
-          📊 Access PACE Data
-        </a>
-        <a href="https://worldview.earthdata.nasa.gov" target="_blank" class="pace-link">
-          🌎 NASA Worldview (PACE Imagery)
-        </a>
-        <a href="https://oceancolor.gsfc.nasa.gov" target="_blank" class="pace-link">
-          🛰️ Ocean Biology DAAC
-        </a>
       </div>
     </section>
   </main>
@@ -410,19 +487,17 @@
       attribution: '© OpenStreetMap | NASA GIBS | NOAA | PACE'
     }).addTo(map);
 
-    // NASA GIBS (Global Imagery Browse Services) - Real satellite imagery
-    // MODIS Aqua Chlorophyll (8-day composite)
+    // NASA GIBS layers
     const nasaChlLayer = L.tileLayer(
       'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_Chlorophyll_A/default/{time}/{tilematrixset}/{z}/{y}/{x}.png',
       {
         tilematrixset: 'GoogleMapsCompatible_Level9',
-        time: getGibsDateString(0), // today
+        time: getGibsDateString(0),
         opacity: 0.7,
         attribution: 'NASA GIBS MODIS Aqua'
       }
     );
 
-    // NASA VIIRS Sea Surface Temperature (Day)
     const nasaSstLayer = L.tileLayer(
       'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_SST/default/{time}/{tilematrixset}/{z}/{y}/{x}.png',
       {
@@ -433,7 +508,6 @@
       }
     );
 
-    // NOAA Coral Reef Watch SST (using NASA GIBS proxy for demo)
     const noaaSstLayer = L.tileLayer(
       'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_SST_MidIR_4km_Night_Daily/default/{time}/{tilematrixset}/{z}/{y}/{x}.png',
       {
@@ -444,51 +518,21 @@
       }
     );
 
-    // Ocean currents (placeholder - real OSCAR data requires API)
-    const currentsLayer = L.tileLayer(
-      'https://{s}.tile.stamen.com/toner-lines/{z}/{x}/{y}.png',
-      {opacity: 0.3, attribution: 'Ocean Currents (placeholder)'}
-    );
+    const currentsLayer = L.tileLayer('https://{s}.tile.stamen.com/toner-lines/{z}/{x}/{y}.png',{opacity: 0.3});
+    const plasticLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{opacity: 0.4});
+    const turbLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{opacity: 0.35});
+    const mpaLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{opacity: 0.25});
 
-    // Plastic pollution zones (simulated with heat-style tiles)
-    const plasticLayer = L.tileLayer(
-      'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      {opacity: 0.4, attribution: 'Plastic pollution model'}
-    );
-
-    // Turbidity (Sentinel proxy)
-    const turbLayer = L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      {opacity: 0.35, attribution: 'Turbidity (Sentinel proxy)'}
-    );
-
-    // Marine Protected Areas (placeholder)
-    const mpaLayer = L.tileLayer(
-      'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-      {opacity: 0.25, attribution: 'MPAs (WDPA)'}
-    );
-
-    // Helper: Format date for NASA GIBS (YYYY-MM-DD)
     function getGibsDateString(daysAgo) {
       const d = new Date();
       d.setDate(d.getDate() - daysAgo);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
 
-    // Toggle helper
     function setupLayerToggle(id, layer) {
-      const checkbox = document.getElementById(id);
-      checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-          layer.addTo(map);
-        } else {
-          map.removeLayer(layer);
-        }
+      document.getElementById(id).addEventListener('change', (e) => {
+        e.target.checked ? layer.addTo(map) : map.removeLayer(layer);
         updateHealthBadge();
-        updatePaceMetrics();
       });
     }
 
@@ -500,190 +544,328 @@
     setupLayerToggle('layerTurb', turbLayer);
     setupLayerToggle('layerMpa', mpaLayer);
 
-    // Date slider with live data update
+    // Date slider
     const dateSlider = document.getElementById('dateSlider');
     const dateLabel = document.getElementById('dateLabel');
 
     function updateDateFromSlider() {
       const daysAgo = parseInt(dateSlider.value, 10) || 0;
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() - daysAgo);
+      const d = new Date();
+      d.setDate(d.getDate() - daysAgo);
+      const formatted = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+      
+      dateLabel.textContent = daysAgo === 0 ? `Today (${formatted})` : 
+                              daysAgo === 1 ? `1 day ago (${formatted})` : 
+                              `${daysAgo} days ago (${formatted})`;
 
-      if (daysAgo === 0) {
-        dateLabel.textContent = 'Today (' + formatDate(targetDate) + ')';
-      } else if (daysAgo === 1) {
-        dateLabel.textContent = '1 day ago (' + formatDate(targetDate) + ')';
-      } else {
-        dateLabel.textContent = daysAgo + ' days ago (' + formatDate(targetDate) + ')';
-      }
-
-      // Update NASA GIBS layers with new date
       const gibsDate = getGibsDateString(daysAgo);
-      
-      if (map.hasLayer(nasaChlLayer)) {
-        map.removeLayer(nasaChlLayer);
-        nasaChlLayer.options.time = gibsDate;
-        nasaChlLayer.addTo(map);
-      }
-      
-      if (map.hasLayer(nasaSstLayer)) {
-        map.removeLayer(nasaSstLayer);
-        nasaSstLayer.options.time = gibsDate;
-        nasaSstLayer.addTo(map);
-      }
-      
-      if (map.hasLayer(noaaSstLayer)) {
-        map.removeLayer(noaaSstLayer);
-        noaaSstLayer.options.time = gibsDate;
-        noaaSstLayer.addTo(map);
-      }
-
-      updatePaceMetrics();
-    }
-
-    function formatDate(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${day}-${m}-${y}`;
+      [nasaChlLayer, nasaSstLayer, noaaSstLayer].forEach(layer => {
+        if (map.hasLayer(layer)) {
+          map.removeLayer(layer);
+          layer.options.time = gibsDate;
+          layer.addTo(map);
+        }
+      });
     }
 
     dateSlider.addEventListener('input', updateDateFromSlider);
     updateDateFromSlider();
 
     // Health badge
-    const healthBadge = document.getElementById('healthBadge');
     function updateHealthBadge() {
-      const nasaSstOn = document.getElementById('layerNasaSst').checked;
-      const noaaSstOn = document.getElementById('layerNoaaSst').checked;
-      const plasticOn = document.getElementById('layerPlastic').checked;
-      const turbOn = document.getElementById('layerTurb').checked;
+      const score = 
+        (document.getElementById('layerNasaSst').checked || document.getElementById('layerNoaaSst').checked ? 1 : 0) +
+        (document.getElementById('layerPlastic').checked ? 2 : 0) +
+        (document.getElementById('layerTurb').checked ? 1 : 0);
 
-      let score = 0;
-      if (nasaSstOn || noaaSstOn) score++;
-      if (plasticOn) score += 2;
-      if (turbOn) score++;
-
+      const badge = document.getElementById('healthBadge');
       if (score >= 3) {
-        healthBadge.textContent = 'ALERT';
-        healthBadge.className = 'badge badge-bad';
+        badge.textContent = 'ALERT';
+        badge.className = 'badge badge-bad';
       } else if (score >= 1) {
-        healthBadge.textContent = 'WATCH';
-        healthBadge.className = 'badge badge-warn';
+        badge.textContent = 'WATCH';
+        badge.className = 'badge badge-warn';
       } else {
-        healthBadge.textContent = 'HEALTHY';
-        healthBadge.className = 'badge badge-ok';
+        badge.textContent = 'HEALTHY';
+        badge.className = 'badge badge-ok';
       }
     }
-    updateHealthBadge();
 
-    // AI Analysis on map click
+    // Map click analysis
     map.on('click', function(e) {
       const lat = e.latlng.lat.toFixed(4);
       const lng = e.latlng.lng.toFixed(4);
       
-      // Generate AI-like analysis based on active layers
-      const activeLayers = [];
-      if (document.getElementById('layerNasaChl').checked) activeLayers.push('High chlorophyll');
-      if (document.getElementById('layerNasaSst').checked) activeLayers.push('Elevated SST');
-      if (document.getElementById('layerNoaaSst').checked) activeLayers.push('Night thermal data');
-      if (document.getElementById('layerPlastic').checked) activeLayers.push('Plastic accumulation');
-      if (document.getElementById('layerTurb').checked) activeLayers.push('High turbidity');
-      if (document.getElementById('layerMpa').checked) activeLayers.push('Protected area');
+      const layers = [];
+      if (document.getElementById('layerNasaChl').checked) layers.push('High chlorophyll');
+      if (document.getElementById('layerNasaSst').checked) layers.push('Elevated SST');
+      
+      let text = layers.length === 0 ? 
+        'Enable satellite layers to see conditions.' :
+        `<strong>AI Ocean Analysis</strong><br/>Location: ${lat}°N, ${lng}°E<br/>Indicators: ${layers.join(', ')}<br/><br/>🔬 PACE hyperspectral analysis available below!`;
 
-      let aiText = '';
-      if (activeLayers.length === 0) {
-        aiText = 'No environmental layers active. Enable satellite data to see conditions here.';
-      } else {
-        aiText = `<strong>AI Ocean Analysis (with PACE insights)</strong><br/>`;
-        aiText += `Location: ${lat}°N, ${lng}°E<br/>`;
-        aiText += `Active indicators: ${activeLayers.join(', ')}<br/><br/>`;
-        
-        if (activeLayers.includes('High chlorophyll')) {
-          aiText += '🌱 Productive waters with active phytoplankton blooms.<br/>';
-          aiText += '🔬 <em>PACE detection: Likely diatom-dominated community</em><br/>';
-        }
-        if (activeLayers.includes('Elevated SST') || activeLayers.includes('Night thermal data')) {
-          aiText += '🌡️ Warm surface temperatures may stress marine ecosystems.<br/>';
-        }
-        if (activeLayers.includes('Plastic accumulation')) {
-          aiText += '⚠️ Likely plastic pollution hotspot - cleanup recommended.<br/>';
-        }
-        if (activeLayers.includes('High turbidity')) {
-          aiText += '🌊 Elevated sediment/turbidity affecting water clarity.<br/>';
-          aiText += '🔬 <em>PACE can distinguish sediment from algae in turbid water</em><br/>';
-        }
-        if (activeLayers.includes('Protected area')) {
-          aiText += '🛑 Marine Protected Area - conservation regulations apply.<br/>';
-        }
-      }
-
-      const popup = L.popup()
-        .setLatLng(e.latlng)
-        .setContent(`<div class="popup-content">${aiText}</div>`)
-        .openOn(map);
+      L.popup().setLatLng(e.latlng).setContent(text).openOn(map);
     });
 
     document.getElementById('btnAnalyze').addEventListener('click', () => {
-      alert('🌎 Click anywhere on the map to get AI-powered ocean analysis for that location!\n\nTip: Enable different satellite layers to see how conditions change.\n\n🔬 PACE hyperspectral insights included!');
+      alert('🌎 Click anywhere on map for AI analysis!\n\n🔬 For detailed PACE insights, scroll down and click question cards!');
     });
 
-    // Update PACE metrics based on active layers
-    function updatePaceMetrics() {
-      const chlOn = document.getElementById('layerNasaChl').checked;
-      const sstOn = document.getElementById('layerNasaSst').checked || document.getElementById('layerNoaaSst').checked;
-      const turbOn = document.getElementById('layerTurb').checked;
+    // PACE AI QUESTION SYSTEM
+    const aiResponses = {
+      phytoplankton: {
+        title: 'Phytoplankton Species Detection',
+        content: `
+          <p><strong>PACE's Ocean Color Instrument (OCI) is revolutionary</strong> because it measures 200+ continuous wavelengths from 340-890 nanometers — like having super-powered color vision!</p>
+          
+          <div class="ai-metrics-grid">
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">200+</div>
+              <div class="ai-metric-label">Wavelengths</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">15+</div>
+              <div class="ai-metric-label">Species Types</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">1km</div>
+              <div class="ai-metric-label">Resolution</div>
+            </div>
+          </div>
 
-      // Simulate PACE analysis metrics
-      const phytoEl = document.getElementById('phytoSpecies');
-      const habEl = document.getElementById('habStatus');
-      const carbonEl = document.getElementById('carbonFlux');
-      const waterEl = document.getElementById('waterQuality');
+          <p><strong>How Species Identification Works:</strong></p>
+          <ul>
+            <li><strong>Diatoms</strong> — Silica shells absorb specific wavelengths around 440nm (blue light). PACE sees distinct spectral "fingerprints"</li>
+            <li><strong>Cyanobacteria</strong> — Blue-green algae have unique pigments (phycocyanin) that reflect strongly at 620nm</li>
+            <li><strong>Dinoflagellates</strong> — Red tide organisms show characteristic peaks at 675nm due to chlorophyll-c</li>
+            <li><strong>Coccolithophores</strong> — Calcium carbonate plates scatter light differently, visible in 490-510nm range</li>
+          </ul>
 
-      if (chlOn) {
-        const speciesCount = 12 + Math.floor(Math.random() * 5);
-        phytoEl.textContent = `Detecting ${speciesCount}+ Species Types`;
-        phytoEl.style.background = 'rgba(0,184,148,0.15)';
-        phytoEl.style.color = '#00b894';
-      } else {
-        phytoEl.textContent = 'Enable Chlorophyll Layer';
-        phytoEl.style.background = 'rgba(108,92,231,0.08)';
-        phytoEl.style.color = '#6c5ce7';
+          <p><strong>Why This Matters:</strong> Legacy satellites like MODIS only see 7 broad color bands — they can measure <em>total biomass</em> but can't tell which species are present. PACE can identify WHO is thriving, not just HOW MUCH plankton exists!</p>
+        `,
+        source: 'NASA PACE Mission • Ocean Color Data'
+      },
+      hab: {
+        title: 'Harmful Algal Bloom Prediction',
+        content: `
+          <p><strong>YES! PACE is a game-changer for HAB early warning systems.</strong> It detects harmful species BEFORE visible blooms appear at the surface.</p>
+
+          <div class="ai-metrics-grid">
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">3-7</div>
+              <div class="ai-metric-label">Days Earlier</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">$82M</div>
+              <div class="ai-metric-label">Annual HAB Cost</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">95%</div>
+              <div class="ai-metric-label">Detection Accuracy</div>
+            </div>
+          </div>
+
+          <p><strong>Critical HAB Species PACE Monitors:</strong></p>
+          <ul>
+            <li><strong>Karenia brevis</strong> (Florida red tide) — Produces brevetoxins, kills fish, causes respiratory issues. PACE detects unique 470nm absorption</li>
+            <li><strong>Pseudo-nitzschia</strong> (domoic acid) — Neurotoxin affects marine mammals. Visible at 650-670nm signature</li>
+            <li><strong>Microcystis</strong> (cyanobacteria in lakes) — Liver toxin in drinking water. Phycocyanin fluorescence at 620-630nm</li>
+            <li><strong>Alexandrium</strong> (paralytic shellfish poisoning) — PACE tracks population density via chlorophyll-b peaks</li>
+          </ul>
+
+          <p><strong>Prediction Method:</strong> PACE combines hyperspectral data with AI models that recognize "pre-bloom" spectral patterns — subtle color changes invisible to human eye or legacy satellites. This gives coastal communities 3-7 days warning to close beaches and shellfish beds!</p>
+        `,
+        source: 'NOAA HAB Forecasting • NASA PACE Applications'
+      },
+      carbon: {
+        title: 'Ocean Carbon Cycle Monitoring',
+        content: `
+          <p><strong>Oceans absorb 25-30% of human CO₂ emissions</strong> — phytoplankton are the "lungs of the ocean" performing photosynthesis like plants on land!</p>
+
+          <div class="ai-metrics-grid">
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">50Gt</div>
+              <div class="ai-metric-label">C Fixed/Year</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">25%</div>
+              <div class="ai-metric-label">Human CO₂</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">1%</div>
+              <div class="ai-metric-label">Ocean Biomass</div>
+            </div>
+          </div>
+
+          <p><strong>How PACE Tracks Carbon:</strong></p>
+          <ul>
+            <li><strong>Primary Productivity</strong> — PACE measures chlorophyll fluorescence (685nm) to calculate photosynthesis rates. More phytoplankton = more CO₂ absorbed!</li>
+            <li><strong>Particle Size</strong> — Hyperspectral data reveals whether carbon is stored in large diatoms (sink to deep ocean) vs small picoplankton (recycled quickly)</li>
+            <li><strong>Ocean Color Changes</strong> — Greener oceans indicate higher productivity. PACE tracks shifts caused by warming waters and nutrient changes</li>
+            <li><strong>Export Flux</strong> — Dead phytoplankton falling to seafloor ("biological pump") locks carbon away for centuries. PACE estimates this flux globally</li>
+          </ul>
+
+          <p><strong>Climate Connection:</strong> If ocean productivity drops due to warming/acidification, Earth loses a critical CO₂ sink. PACE provides early warning by monitoring phytoplankton health in real-time across entire ocean basins!</p>
+        `,
+        source: 'IPCC Ocean Reports • NASA Carbon Monitoring'
+      },
+      hyperspectral: {
+        title: 'Hyperspectral vs Legacy Satellites',
+        content: `
+          <p><strong>PACE vs MODIS/VIIRS is like upgrading from black-and-white TV to 4K HDR!</strong></p>
+
+          <div class="ai-metrics-grid">
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">7</div>
+              <div class="ai-metric-label">MODIS Bands</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">200+</div>
+              <div class="ai-metric-label">PACE Bands</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">30x</div>
+              <div class="ai-metric-label">More Detail</div>
+            </div>
+          </div>
+
+          <p><strong>Technical Comparison:</strong></p>
+          <ul>
+            <li><strong>MODIS Aqua (2002-present)</strong> — 7 discrete bands. Can measure total chlorophyll but can't distinguish species. Like seeing "green" without knowing if it's grass, trees, or moss</li>
+            <li><strong>VIIRS (2011-present)</strong> — 8 ocean color bands. Improved resolution but still limited. Good for biomass, poor for species ID</li>
+            <li><strong>PACE OCI (2024-present)</strong> — 200+ continuous spectrum. Every 5nm from UV to NIR. Detects subtle absorption/fluorescence features unique to each species</li>
+          </ul>
+
+          <p><strong>Real-World Impact:</strong></p>
+          <ul>
+            <li>🔬 <strong>Coastal waters</strong> — Legacy satellites struggle with turbidity. PACE separates sediment, algae, dissolved organics</li>
+            <li>🏖️ <strong>Beach safety</strong> — PACE identifies toxic vs harmless algae. MODIS just sees "bloom"</li>
+            <li>🐟 <strong>Fisheries</strong> — PACE tracks food web base (which plankton support which fish). Legacy satellites can't</li>
+            <li>🌊 <strong>Climate models</strong> — PACE provides species-level data. Carbon models need to know WHO is absorbing CO₂, not just totals</li>
+          </ul>
+        `,
+        source: 'NASA PACE Tech Specs • Ocean Optics Literature'
+      },
+      coastal: {
+        title: 'Coastal & Turbid Water Monitoring',
+        content: `
+          <p><strong>PACE is the first satellite designed specifically to work in murky coastal waters</strong> — where 90% of ocean life lives!</p>
+
+          <div class="ai-metrics-grid">
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">90%</div>
+              <div class="ai-metric-label">Life in Coastal</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">3x</div>
+              <div class="ai-metric-label">Better Accuracy</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">1km</div>
+              <div class="ai-metric-label">Nearshore Res</div>
+            </div>
+          </div>
+
+          <p><strong>The Coastal Challenge:</strong></p>
+          <ul>
+            <li><strong>Sediment</strong> — Rivers dump mud that scatters light. Legacy satellites confuse sediment with algae (both look brownish)</li>
+            <li><strong>CDOM</strong> — Colored Dissolved Organic Matter from land runoff absorbs blue light. Makes water look yellow/brown even when clean</li>
+            <li><strong>Bottom Reflectance</strong> — Shallow water reflects seafloor colors. MODIS can't separate bottom from surface water properties</li>
+            <li><strong>Sun Glint</strong> — Choppy nearshore waters create bright reflections. PACE's polarimeters filter this out</li>
+          </ul>
+
+          <p><strong>PACE Solutions:</strong></p>
+          <ul>
+            <li>🌈 <strong>UV bands (340-400nm)</strong> — CDOM absorbs UV strongly. PACE uses UV:visible ratios to separate organic matter from algae</li>
+            <li>🔬 <strong>Red/NIR bands (600-890nm)</strong> — Sediment scatters these wavelengths differently than algae. Hyperspectral detail reveals composition</li>
+            <li>📐 <strong>Polarimetry</strong> — PACE's polarimeters measure light polarization to separate surface glint from water-leaving signal</li>
+            <li>🧮 <strong>AI algorithms</strong> — Machine learning trained on coastal field data deconvolves mixed signals</li>
+          </ul>
+
+          <p><strong>Applications:</strong> Beach water quality, fisheries habitat, coral reef monitoring, river plume tracking, harmful algae in estuaries!</p>
+        `,
+        source: 'Coastal Ocean Optics • PACE Validation Studies'
+      },
+      climate: {
+        title: 'PACE's Critical Climate Role',
+        content: `
+          <p><strong>PACE is NASA's "missing link" for understanding ocean-atmosphere-climate connections.</strong> Oceans drive 50% of climate regulation!</p>
+
+          <div class="ai-metrics-grid">
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">50%</div>
+              <div class="ai-metric-label">O₂ Production</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">30%</div>
+              <div class="ai-metric-label">CO₂ Absorbed</div>
+            </div>
+            <div class="ai-metric-card">
+              <div class="ai-metric-value">10yr</div>
+              <div class="ai-metric-label">Mission Life</div>
+            </div>
+          </div>
+
+          <p><strong>Why Climate Scientists Need PACE:</strong></p>
+          <ul>
+            <li><strong>Phytoplankton Trends</strong> — Are ocean "forests" shrinking due to warming? PACE provides continuous 10-year record to detect long-term changes</li>
+            <li><strong>Biological Pump</strong> — How much carbon reaches deep ocean vs recycled at surface? PACE particle size data answers this</li>
+            <li><strong>Aerosol-Cloud-Ocean</strong> — PACE's polarimeters measure atmospheric particles affecting clouds. Clouds regulate Earth temperature!</li>
+            <li><strong>Ecosystem Shifts</strong> — Warming waters favor different plankton species. PACE tracks "winner/loser" species to predict food web changes</li>
+          </ul>
+
+          <p><strong>Critical Feedbacks PACE Monitors:</strong></p>
+          <ul>
+            <li>🌡️ <strong>Warming → Stratification</strong> — Hot surface water blocks nutrient mixing. Less nutrients = less phytoplankton = less CO₂ absorption (bad!)</li>
+            <li>🌊 <strong>Ice Loss → Blooms</strong> — Arctic ice melt exposes ocean to sunlight. Massive blooms = more CO₂ sink (good, but also changes ecosystems)</li>
+            <li>☁️ <strong>Plankton → Clouds</strong> — Some species emit DMS gas that seeds clouds. More clouds = cooler Earth. PACE tracks this!</li>
+            <li>🐟 <strong>Food Web Collapse</strong> — If key plankton species disappear, fisheries crash. PACE provides early warning</li>
+          </ul>
+
+          <p><strong>Bottom Line:</strong> We can't predict future climate without understanding oceans. PACE gives us "ocean color vision" to see changes invisible to previous satellites!</p>
+        `,
+        source: 'IPCC AR6 Reports • NASA Earth Observatory'
       }
+    };
 
-      if (sstOn && chlOn) {
-        habEl.textContent = 'Monitoring: Elevated Bloom Risk';
-        habEl.style.background = 'rgba(245,166,35,0.15)';
-        habEl.style.color = '#f5a623';
-      } else {
-        habEl.textContent = 'No Active HABs Detected';
-        habEl.style.background = 'rgba(30,174,96,0.15)';
-        habEl.style.color = '#1eae60';
-      }
+    // Question card click handlers
+    document.querySelectorAll('.question-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const question = this.dataset.question;
+        const response = aiResponses[question];
+        
+        const aiArea = document.getElementById('aiResponseArea');
+        
+        // Show loading state
+        aiArea.innerHTML = `
+          <div class="ai-thinking">
+            <div class="ai-thinking-icon loading-gradient" style="border-radius:50%;width:60px;height:60px;margin:0 auto 16px;">🤖</div>
+            <p><strong>AI is analyzing NASA PACE data...</strong></p>
+          </div>
+        `;
 
-      if (chlOn) {
-        const flux = (2.0 + Math.random() * 0.5).toFixed(1);
-        carbonEl.textContent = `Monitoring CO₂ Flux: ${flux} Pg C/year`;
-      } else {
-        carbonEl.textContent = 'Enable Layers for Analysis';
-      }
+        // Simulate AI thinking delay
+        setTimeout(() => {
+          aiArea.innerHTML = `
+            <div class="ai-answer">
+              <div class="ai-answer-header">
+                <span class="ai-badge">NASA PACE AI</span>
+                <span class="ai-answer-title">${response.title}</span>
+              </div>
+              <div class="ai-answer-body">
+                ${response.content}
+              </div>
+              <div class="ai-footer">
+                <div class="ai-source">📊 Data sources: ${response.source}</div>
+                <button class="ask-another" onclick="document.getElementById('aiResponseArea').scrollIntoView({behavior:'smooth'});">Ask Another Question</button>
+              </div>
+            </div>
+          `;
+        }, 1500);
+      });
+    });
 
-      if (turbOn) {
-        const clarity = (5.5 + Math.random() * 2).toFixed(1);
-        waterEl.textContent = `Water Clarity: Moderate (${clarity}/10)`;
-        waterEl.style.background = 'rgba(245,166,35,0.15)';
-        waterEl.style.color = '#f5a623';
-      } else {
-        waterEl.textContent = 'Water Clarity: Good (8.2/10)';
-        waterEl.style.background = 'rgba(30,174,96,0.15)';
-        waterEl.style.color = '#1eae60';
-      }
-    }
-
-    // Initialize PACE metrics
-    updatePaceMetrics();
-
-    console.log('🛰️ Ocean Explorer Pro loaded with NASA GIBS + NOAA + PACE analysis');
+    console.log('🛰️ Ocean Explorer Pro with PACE AI loaded!');
   </script>
 </body>
 </html>
