@@ -229,16 +229,42 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Placeholder overlay layers (replace later with real tile URLs or data via /api/ocean-data-layers)
+    // Placeholder overlay layers 
     const overlayLayers = {
-      plastic: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{opacity:0.5}),
-      chl: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{opacity:0.45}),
-      sst: L.tileLayer('https://{s}.tile.stamen.com/toner-lite/{z}/{x}/{y}.png',{opacity:0.4}),
-      currents: L.tileLayer('https://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg',{opacity:0.5}),
-      turb: L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{opacity:0.45}),
-      mpa: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{opacity:0.3})
-    };
+  plastic: null,
+  chl: null,
+  sst: null,
+  currents: L.tileLayer('https://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg',{opacity:0.5}),
+  turb: L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{opacity:0.45}),
+  mpa: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{opacity:0.3})
+};
 
+let currentDaysAgo = 0;
+
+async function loadRemoteLayer(key, layerType) {
+  try {
+    const r = await fetch(`${API_BASE}/ocean-data-layers?layer=${layerType}&daysAgo=${currentDaysAgo}`);
+    if (!r.ok) throw new Error("config error");
+    const cfg = await r.json();
+
+    // Replace {date} placeholder in tileUrl
+    const url = cfg.tileUrl.replace("{date}", cfg.date);
+
+    if (overlayLayers[key]) {
+      map.removeLayer(overlayLayers[key]);
+    }
+    overlayLayers[key] = L.tileLayer(url, {
+      opacity: 0.65,
+      maxZoom: 9,
+      attribution: cfg.attribution
+    });
+
+    overlayLayers[key].addTo(map);
+  } catch (e) {
+    console.error("loadRemoteLayer", layerType, e);
+    alert("Could not load " + layerType + " tiles yet.");
+  }
+}
     // Hook up checkboxes
     function setupLayerToggle(id, key){
       const checkbox = document.getElementById(id);
