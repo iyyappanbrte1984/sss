@@ -263,21 +263,38 @@
     setupLayerToggle('layerMpa','mpa');
 
     // Date slider (label only for now)
-    const dateSlider = document.getElementById('dateSlider');
-    const dateLabel = document.getElementById('dateLabel');
+  const dateSlider = document.getElementById('dateSlider');
+const dateLabel = document.getElementById('dateLabel');
 
-    function updateDateLabel(){
-      const daysAgo = parseInt(dateSlider.value,10);
-      if(daysAgo === 0){
-        dateLabel.textContent = 'Today';
-      } else if(daysAgo === 1){
-        dateLabel.textContent = '1 day ago';
-      } else {
-        dateLabel.textContent = daysAgo + ' days ago';
-      }
-    }
-    dateSlider.addEventListener('input', updateDateLabel);
-    updateDateLabel();
+// store a base date (today)
+const baseDate = new Date();
+
+function formatDate(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${day}-${m}-${y}`;
+}
+
+function updateDateFromSlider(){
+  const daysAgo = parseInt(dateSlider.value,10) || 0;
+  const target = new Date(baseDate.getTime() - daysAgo * 24*60*60*1000);
+
+  if(daysAgo === 0){
+    dateLabel.textContent = "Today (" + formatDate(target) + ")";
+  } else if(daysAgo === 1){
+    dateLabel.textContent = "1 day ago (" + formatDate(target) + ")";
+  } else {
+    dateLabel.textContent = daysAgo + " days ago (" + formatDate(target) + ")";
+  }
+
+  // later: when you hook real APIs, you will reload
+  // your chlorophyll/SST tiles here using this target date
+  // e.g. reloadChlorophyll(target); reloadSst(target);
+}
+
+dateSlider.addEventListener("input", updateDateFromSlider);
+updateDateFromSlider();
 
     // Health badge based on plastic + SST switches
     const healthBadge = document.getElementById('healthBadge');
