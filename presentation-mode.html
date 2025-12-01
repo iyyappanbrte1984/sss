@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Presentation Mode — SMART VISION</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
+      --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
+      --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--ocean-900);height:100%;}
+    body{display:flex;flex-direction:column;}
+
+    nav{
+      position:sticky;top:0;z-index:1000;
+      display:flex;justify-content:center;gap:24px;padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    }
+    nav a{
+      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
+      padding:8px 20px;border-radius:999px;transition:all .3s;
+    }
+    nav a:hover{background:rgba(255,255,255,0.2);transform:translateY(-2px);}
+
+    .hero-header{
+      padding:22px 16px 14px;text-align:center;
+      background:linear-gradient(135deg,#005fa3,#00a8e8,#39a1ff);
+      color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.15);
+    }
+    .hero-header h1{font-size:26px;font-weight:900;letter-spacing:.06em;margin-bottom:4px;}
+    .hero-header p{font-size:13px;opacity:.96;}
+
+    main.wrap{
+      max-width:1200px;margin:20px auto 24px;padding:0 20px;flex:1;width:100%;
+      display:flex;flex-direction:column;gap:10px;
+    }
+
+    .top-row{
+      display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .slide-info{
+      font-size:13px;color:var(--muted);
+    }
+
+    .controls{
+      display:flex;flex-wrap:wrap;gap:8px;
+    }
+    .btn{
+      padding:8px 14px;border-radius:10px;border:none;
+      font-weight:700;font-size:12px;cursor:pointer;
+      transition:all .25s;
+    }
+    .btn-primary{
+      background:linear-gradient(135deg,#39a1ff,#0b74de);color:#fff;
+    }
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(11,116,222,0.35);}
+    .btn-outline{
+      background:#fff;color:var(--ocean-700);
+      border:1px solid rgba(0,119,190,0.3);
+    }
+    .btn-outline:hover{background:#f4f9ff;}
+
+    .badge{
+      display:inline-block;padding:3px 8px;border-radius:999px;
+      font-size:11px;font-weight:600;
+      background:rgba(0,119,190,0.1);color:var(--ocean-700);
+    }
+
+    .frame-wrap{
+      margin-top:12px;
+      background:#fff;border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
+      overflow:hidden;
+    }
+    iframe{
+      width:100%;height:520px;border:none;display:block;
+    }
+
+    footer{margin:20px 0 14px;text-align:center;font-size:12px;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+    <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
+    <a href="pollution-pathways.html">Pollution Pathways</a>
+    <a href="sdg-dashboard.html">SDG & Biodiversity</a>
+    <a href="biodiversity-awareness.html">Red List & Self‑Assessment</a>
+  </nav>
+
+  <header class="hero-header">
+    <h1>PRESENTATION MODE</h1>
+    <p>Auto‑guided tour of your SDG 14 ocean plastic project</p>
+  </header>
+
+  <main class="wrap">
+    <div class="top-row">
+      <div class="slide-info">
+        <div id="slideTitle" style="font-weight:700;">Slide 1: Marine AI Dashboard</div>
+        <div id="slideDesc" style="font-size:12px;">
+          Real‑time lake water quality and AI health analysis.
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="btnStart">Start Auto Demo</button>
+        <button class="btn btn-outline" id="btnPrev">Previous</button>
+        <button class="btn btn-outline" id="btnNext">Next</button>
+        <button class="btn btn-outline" id="btnStop">Stop</button>
+        <span class="badge" id="statusBadge">Idle</span>
+      </div>
+    </div>
+
+    <div class="frame-wrap">
+      <iframe id="demoFrame" src="marine-dashboard.html" title="Demo frame"></iframe>
+    </div>
+  </main>
+
+  <footer>
+    Use this page for classroom demos or science fairs. Let the auto tour run, or step through slides manually.
+  </footer>
+
+  <script>
+    // Define the slides in your story
+    const slides = [
+      {
+        title: "Slide 1: Marine AI Dashboard",
+        desc: "Real‑time lake water quality, animated metrics and AI health analysis.",
+        url: "marine-dashboard.html"
+      },
+      {
+        title: "Slide 2: Ocean Explorer Pro",
+        desc: "Advanced map layers to visualise plastic, chlorophyll and ocean conditions.",
+        url: "ocean-explorer-pro.html"
+      },
+      {
+        title: "Slide 3: Pollution Pathways",
+        desc: "Journey of one plastic bottle from local lake to Bay of Bengal and Indian Ocean.",
+        url: "pollution-pathways.html"
+      },
+      {
+        title: "Slide 4: SDG 14 Impact Dashboard",
+        desc: "Progress on plastic reduction, water quality improvement and community engagement.",
+        url: "sdg-dashboard.html"
+      },
+      {
+        title: "Slide 5: Biodiversity & Red List",
+        desc: "Threatened species awareness and daily plastic self‑assessment for students.",
+        url: "biodiversity-awareness.html"
+      }
+    ];
+
+    const frame = document.getElementById("demoFrame");
+    const slideTitle = document.getElementById("slideTitle");
+    const slideDesc = document.getElementById("slideDesc");
+    const statusBadge = document.getElementById("statusBadge");
+
+    const btnStart = document.getElementById("btnStart");
+    const btnPrev = document.getElementById("btnPrev");
+    const btnNext = document.getElementById("btnNext");
+    const btnStop = document.getElementById("btnStop");
+
+    let currentIndex = 0;
+    let timer = null;
+    const SLIDE_DURATION_MS = 15000; // 15 seconds per slide
+
+    function showSlide(idx){
+      if(idx < 0 || idx >= slides.length) return;
+      currentIndex = idx;
+      const s = slides[idx];
+      slideTitle.textContent = s.title;
+      slideDesc.textContent = s.desc;
+      frame.src = s.url;
+    }
+
+    function setStatus(text, mode){
+      statusBadge.textContent = text;
+      if(mode === "running"){
+        statusBadge.style.background = "rgba(30,174,96,0.12)";
+        statusBadge.style.color = "#1eae60";
+      } else if(mode === "stopped"){
+        statusBadge.style.background = "rgba(230,57,70,0.12)";
+        statusBadge.style.color = "#e63946";
+      } else {
+        statusBadge.style.background = "rgba(0,119,190,0.1)";
+        statusBadge.style.color = "#0b74de";
+      }
+    }
+
+    function startAuto(){
+      clearInterval(timer);
+      setStatus("Auto demo running", "running");
+      showSlide(0);
+      timer = setInterval(()=>{
+        let next = currentIndex + 1;
+        if(next >= slides.length) next = 0;
+        showSlide(next);
+      }, SLIDE_DURATION_MS);
+    }
+
+    function stopAuto(){
+      clearInterval(timer);
+      timer = null;
+      setStatus("Manual mode", "idle");
+    }
+
+    btnStart.addEventListener("click", startAuto);
+    btnStop.addEventListener("click", stopAuto);
+
+    btnNext.addEventListener("click", ()=>{
+      stopAuto();
+      let next = currentIndex + 1;
+      if(next >= slides.length) next = 0;
+      showSlide(next);
+    });
+
+    btnPrev.addEventListener("click", ()=>{
+      stopAuto();
+      let prev = currentIndex - 1;
+      if(prev < 0) prev = slides.length - 1;
+      showSlide(prev);
+    });
+
+    // Initial slide
+    showSlide(0);
+    setStatus("Idle", "idle");
+  </script>
+</body>
+</html>
