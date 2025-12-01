@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pollution Pathways — SMART VISION</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root{
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
+      --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
+      --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--ocean-900);height:100%;}
+    body{display:flex;flex-direction:column;}
+
+    nav{
+      position:sticky;top:0;z-index:1000;
+      display:flex;justify-content:center;gap:24px;padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    }
+    nav a{
+      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
+      padding:8px 20px;border-radius:999px;transition:all .3s;
+    }
+    nav a:hover{background:rgba(255,255,255,0.2);transform:translateY(-2px);}
+
+    .hero-header{
+      padding:28px 16px 20px;text-align:center;
+      background:linear-gradient(135deg,#005fa3,#00a8e8,#39a1ff);
+      color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.15);
+    }
+    .hero-header h1{font-size:30px;font-weight:900;letter-spacing:.06em;margin-bottom:6px;}
+    .hero-header p{font-size:14px;opacity:.96;}
+
+    main.wrap{
+      max-width:1200px;margin:24px auto 30px;padding:0 20px;flex:1;width:100%;
+      display:flex;flex-direction:column;gap:18px;
+    }
+
+    .layout{
+      display:grid;grid-template-columns:1.6fr 1fr;gap:18px;
+    }
+    @media(max-width:900px){
+      .layout{grid-template-columns:1fr;}
+    }
+
+    #map{
+      width:100%;height:520px;
+      border-radius:16px;overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
+    }
+
+    .story-panel{
+      background:#fff;border-radius:16px;padding:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .story-panel h2{font-size:20px;margin-bottom:4px;}
+    .story-step{
+      font-size:13px;color:var(--muted);line-height:1.6;
+      border-radius:10px;padding:10px 12px;
+      background:#f9fbff;border:1px dashed rgba(0,119,190,0.2);
+      min-height:110px;white-space:pre-line;
+    }
+    .step-indicator{
+      font-size:12px;font-weight:600;color:var(--ocean-700);
+    }
+
+    .controls{
+      display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;
+    }
+    .btn{
+      padding:9px 16px;border-radius:10px;border:none;
+      font-weight:700;font-size:13px;cursor:pointer;
+      transition:all .25s;
+    }
+    .btn-primary{
+      background:linear-gradient(135deg,#39a1ff,#0b74de);color:#fff;
+    }
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(11,116,222,0.35);}
+    .btn-outline{
+      background:#fff;color:var(--ocean-700);
+      border:1px solid rgba(0,119,190,0.3);
+    }
+    .btn-outline:hover{background:#f4f9ff;}
+
+    .progress-bar{
+      height:6px;border-radius:999px;overflow:hidden;
+      background:#e5f0f8;margin-top:8px;
+    }
+    .progress-inner{
+      height:100%;width:0%;background:linear-gradient(90deg,#1eae60,#39a1ff);
+      transition:width .4s ease-out;
+    }
+
+    footer{margin:22px 0 16px;text-align:center;font-size:12px;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
+    <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
+    <a href="sdg-dashboard.html">SDG & Biodiversity</a>
+  </nav>
+
+  <header class="hero-header">
+    <h1>POLLUTION PATHWAYS</h1>
+    <p>Follow one plastic bottle from your lake to the Indian Ocean and SDG 14</p>
+  </header>
+
+  <main class="wrap">
+    <div class="layout">
+      <section>
+        <div id="map"></div>
+      </section>
+
+      <aside class="story-panel">
+        <h2>Follow the Plastic</h2>
+        <span class="step-indicator" id="stepLabel">Step 1 of 5 · Local Lake</span>
+        <div class="story-step" id="storyText">
+          Click "Start Journey" to see how plastic from your local lakes can travel through rivers into the Bay of Bengal and the wider Indian Ocean.
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-inner" id="progressInner"></div>
+        </div>
+
+        <div class="controls">
+          <button class="btn btn-primary" id="btnStart">Start Journey</button>
+          <button class="btn btn-outline" id="btnNext">Next Step</button>
+          <button class="btn btn-outline" id="btnReset">Reset</button>
+        </div>
+
+        <div style="font-size:12px;color:var(--muted);margin-top:6px;">
+          This is a simple educational pathway. Later you can connect it to real ocean‑current data and AI analysis of travel time and impact.
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    Pollution pathways powered by Vercel · Supabase · Planet · Perplexity AI
+  </footer>
+
+  <script>
+    // Rough coordinates for your story (you can adjust later)
+    const points = {
+      danishpet: { name:"Danishpet Lake",   coords:[11.56, 78.15] },
+      pannapatti:{ name:"Pannapatti Lake",  coords:[11.47, 78.25] },
+      river:     { name:"River System",     coords:[11.30, 78.50] },
+      coast:     { name:"Bay of Bengal Coast", coords:[11.00, 79.85] },
+      offshore:  { name:"Offshore Gyre",    coords:[12.0, 82.5] }
+    };
+
+    const steps = [
+      {
+        label:"Step 1 of 5 · Local Lake",
+        text:"Plastic items dropped around Danishpet and Pannapatti lakes can enter the water through wind, rain and direct littering.\n\nBottles, wrappers and microplastics first collect near the shore where you are taking water‑quality samples.",
+        target:"danishpet"
+      },
+      {
+        label:"Step 2 of 5 · Rivers & Drains",
+        text:"During rain events and overflow, this plastic moves into connecting channels and rivers.\n\nWithout interception, currents slowly carry the waste downstream, mixing with other pollution from towns and farms.",
+        target:"river"
+      },
+      {
+        label:"Step 3 of 5 · Coastal Zone",
+        text:"Rivers eventually discharge into the Bay of Bengal along the Tamil Nadu coast.\n\nHere plastic fragments spread along the shoreline, affecting fishers, mangroves and coastal ecosystems.",
+        target:"coast"
+      },
+      {
+        label:"Step 4 of 5 · Open Ocean",
+        text:"Floating debris is pushed by winds and surface currents further offshore.\n\nOver weeks to months, pieces can join larger accumulation zones and interact with marine life such as turtles, seabirds and fish.",
+        target:"offshore"
+      },
+      {
+        label:"Step 5 of 5 · SDG 14 Action",
+        text:"Local action can break this pathway.\n\nClean‑ups, better waste management, reduced single‑use plastics and community monitoring with your dashboard all help prevent plastic from ever leaving the lake.\n\nLocal solutions create global impact for SDG 14: Life Below Water.",
+        target:"danishpet"
+      }
+    ];
+
+    // Map init
+    const map = L.map('map', {
+      center: [11.4, 79.0],
+      zoom: 7,
+      worldCopyJump: true
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Markers and path line
+    const markers = {};
+    Object.keys(points).forEach(key => {
+      const p = points[key];
+      markers[key] = L.circleMarker(p.coords,{
+        radius: key==="offshore" ? 7 : 6,
+        color:"#0b74de",
+        weight:2,
+        fillColor:"#39a1ff",
+        fillOpacity:0.8
+      }).addTo(map).bindPopup(p.name);
+    });
+
+    const pathCoords = [
+      points.danishpet.coords,
+      points.pannapatti.coords,
+      points.river.coords,
+      points.coast.coords,
+      points.offshore.coords
+    ];
+    const pathLine = L.polyline(pathCoords,{
+      color:"#1eae60",
+      weight:4,
+      opacity:0.8,
+      dashArray:"6 6"
+    }).addTo(map);
+
+    // Animated token (plastic bottle)
+    let bottleMarker = L.circleMarker(points.danishpet.coords,{
+      radius:8,
+      color:"#e63946",
+      weight:2,
+      fillColor:"#e63946",
+      fillOpacity:0.9
+    }).addTo(map).bindPopup("Plastic item");
+
+    // Story UI
+    const storyTextEl = document.getElementById("storyText");
+    const stepLabelEl = document.getElementById("stepLabel");
+    const progressInner = document.getElementById("progressInner");
+    const btnStart = document.getElementById("btnStart");
+    const btnNext = document.getElementById("btnNext");
+    const btnReset = document.getElementById("btnReset");
+
+    let currentStep = -1;
+    let animTimer = null;
+
+    function setStep(index){
+      if(index < 0 || index >= steps.length) return;
+      currentStep = index;
+      const step = steps[index];
+
+      stepLabelEl.textContent = step.label;
+      storyTextEl.textContent = step.text;
+
+      const progress = ((index+1)/steps.length)*100;
+      progressInner.style.width = progress + "%";
+
+      const targetPoint = points[step.target];
+      if(targetPoint){
+        map.panTo(targetPoint.coords,{animate:true,duration:0.7});
+        bottleMarker.setLatLng(targetPoint.coords);
+      }
+    }
+
+    function resetJourney(){
+      if(animTimer) { clearInterval(animTimer); animTimer=null; }
+      currentStep = -1;
+      progressInner.style.width = "0%";
+      storyTextEl.textContent = "Click \"Start Journey\" to see how plastic from your local lakes can travel through rivers into the Bay of Bengal and the wider Indian Ocean.";
+      stepLabelEl.textContent = "Step 1 of 5 · Local Lake";
+      bottleMarker.setLatLng(points.danishpet.coords);
+      map.setView([11.4,79.0],7);
+    }
+
+    function startAutoJourney(){
+      resetJourney();
+      let idx = 0;
+      setStep(idx);
+      animTimer = setInterval(()=>{
+        idx++;
+        if(idx >= steps.length){
+          clearInterval(animTimer);
+          animTimer=null;
+          return;
+        }
+        setStep(idx);
+      }, 6000); // 6 seconds per step
+    }
+
+    btnStart.addEventListener("click", startAutoJourney);
+    btnNext.addEventListener("click", ()=>{
+      if(animTimer){ clearInterval(animTimer); animTimer=null; }
+      if(currentStep < steps.length-1){
+        setStep(currentStep+1);
+      }
+    });
+    btnReset.addEventListener("click", resetJourney);
+
+    // Initialize view
+    resetJourney();
+  </script>
+</body>
+</html>
