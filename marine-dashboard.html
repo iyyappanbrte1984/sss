@@ -140,6 +140,29 @@
       display:flex;align-items:center;gap:8px;z-index:1000;
       opacity:0;transition:opacity .3s;
     }
+    @keyframes pulseMarker {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.new-detection {
+  animation: pulseMarker 2s ease-in-out infinite;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.camera-card {
+  animation: slideInUp 0.5s ease-out;
+}
   </style>
 </head>
 <body>
@@ -250,8 +273,7 @@
     <div class="loading"></div>
     <span>Loading data...</span>
   </div>
-
-  <script>
+<script>
     const API_BASE = "/api";
     let tempChart = null;
     let currentSamples = [];
@@ -431,6 +453,42 @@
       }
     }
 
+    // ***** STEP 5: Real-time Updates *****
+    let lastEventId = 0;
+
+    async function checkForNewEvents() {
+      try {
+        const res = await fetch(`${API_BASE}/camera-events-summary`);
+        if (!res.ok) return;
+        
+        const json = await res.json();
+        const recent = json.recent || [];
+        
+        if (recent.length > 0 && recent[0].id > lastEventId) {
+          lastEventId = recent[0].id;
+          
+          // Flash notification
+          showRefresh(`New detection: ${recent[0].label}! 🎯`);
+          
+          // Add pulse animation to the camera card
+          const cameraCard = document.getElementById('cameraCard');
+          cameraCard.style.animation = 'none';
+          setTimeout(() => {
+            cameraCard.style.animation = 'slideInUp 0.5s ease-out';
+          }, 10);
+          
+          // Reload with animation
+          await loadCameraEventsSummary();
+        }
+      } catch (err) {
+        console.error('checkForNewEvents error:', err);
+      }
+    }
+
+    // Check every 5 seconds for new events
+    setInterval(checkForNewEvents, 5000);
+    // ***** END STEP 5 *****
+
     function initCameraMap() {
       if (cameraMap) return;
       cameraMap = L.map('cameraMap').setView([20.0, 78.0], 4); // center on India
@@ -525,15 +583,28 @@
       }
     });
 
-    // existing auto-refresh for water samples
-    setInterval(()=>{renderDashboard();},30000);
-    // NEW auto-refresh for camera events
-    setInterval(()=>{loadCameraEventsSummary();},30000);
+    // Auto-refresh intervals (only once!)
+    setInterval(()=>{renderDashboard();},30000); // Water samples every 30s
+    setInterval(()=>{loadCameraEventsSummary();},30000); // Camera events every 30s
 
+    // Initialize on page load
     (async function init(){
       await renderDashboard();
       await loadCameraEventsSummary();
+      
+      // Initialize lastEventId with current latest event
+      try {
+        const res = await fetch(`${API_BASE}/camera-events-summary`);
+        const json = await res.json();
+        const recent = json.recent || [];
+        if (recent.length > 0) {
+          lastEventId = recent[0].id;
+        }
+      } catch (err) {
+        console.error('Failed to initialize lastEventId:', err);
+      }
     })();
   </script>
+
 </body>
 </html>
