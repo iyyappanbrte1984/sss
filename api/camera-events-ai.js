@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Check for both possible environment variable names
+const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY;
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY  // Use the variable name you have in Vercel
+  supabaseKey
 );
 
 export default async function handler(req, res) {
@@ -11,6 +14,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Check if Supabase is configured
+    if (!process.env.SUPABASE_URL || !supabaseKey) {
+      throw new Error('Supabase not configured');
+    }
+
     const { windowHours = 24 } = req.body;
 
     // Calculate the time threshold
