@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SDG 14 Dashboard — SMART VISION</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
+      --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
+      --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--ocean-900);}
+
+    nav{
+      position:sticky;top:0;z-index:1000;
+      display:flex;justify-content:center;gap:24px;padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    }
+    nav a{
+      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
+      padding:8px 20px;border-radius:999px;transition:all .3s;
+    }
+    nav a:hover{background:rgba(255,255,255,0.2);transform:translateY(-2px);}
+
+    .hero-header{
+      padding:28px 16px 20px;text-align:center;
+      background:linear-gradient(135deg,#005fa3,#00a8e8,#39a1ff);
+      color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.15);
+    }
+    .hero-header h1{font-size:30px;font-weight:900;letter-spacing:.06em;margin-bottom:6px;}
+    .hero-header p{font-size:14px;opacity:.96;}
+
+    .wrap{max-width:1200px;margin:26px auto 30px;padding:0 20px;}
+
+    .metrics-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:18px;margin-bottom:26px;
+    }
+    .metric-card{
+      background:linear-gradient(135deg,#fff,#f8fcff);
+      border-radius:16px;padding:18px 20px;
+      box-shadow:0 10px 30px rgba(0,119,190,0.08);
+      border:1px solid rgba(0,119,190,0.1);
+      position:relative;overflow:hidden;
+    }
+    .metric-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:4px;
+      background:linear-gradient(90deg,var(--ocean-700),var(--ocean-500));
+    }
+    .metric-label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+    .metric-value{font-size:30px;font-weight:900;margin:10px 0 4px;}
+    .metric-unit{font-size:12px;color:var(--muted);}
+    .metric-chip{
+      display:inline-block;margin-top:8px;padding:4px 10px;border-radius:999px;
+      font-size:11px;font-weight:600;color:#fff;
+    }
+    .chip-ok{background:var(--ok);}
+    .chip-warn{background:var(--warn);}
+    .chip-bad{background:var(--bad);}
+
+    .grid-2{
+      display:grid;grid-template-columns:2fr 1.2fr;gap:18px;margin-bottom:24px;
+    }
+    @media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
+
+    .card{
+      background:#fff;border-radius:16px;padding:20px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
+    }
+    .card h3{font-size:18px;margin-bottom:8px;}
+    .card p{font-size:13px;color:var(--muted);margin-bottom:4px;}
+
+    .sdg-tags{
+      display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:11px;
+    }
+    .sdg-tag{
+      padding:4px 10px;border-radius:999px;
+      background:rgba(0,119,190,0.08);color:var(--ocean-700);font-weight:600;
+    }
+
+    .analysis-box{
+      margin-top:10px;padding:10px 12px;border-radius:10px;
+      background:#f9fbff;border:1px dashed rgba(0,119,190,0.25);
+      font-size:12px;color:var(--muted);
+      max-height:180px;overflow:auto;white-space:pre-line;
+    }
+
+    footer{margin:26px 0 16px;text-align:center;font-size:12px;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
+    <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
+    <a href="sdg-dashboard.html">SDG & Biodiversity</a>
+  </nav>
+
+  <header class="hero-header">
+    <h1>SDG 14 IMPACT DASHBOARD</h1>
+    <p>Tracking plastic reduction, ocean health, and life below water</p>
+  </header>
+
+  <main class="wrap">
+    <!-- Top metrics -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Plastic Removed</div>
+        <div class="metric-value" id="valPlastic">0</div>
+        <div class="metric-unit">kg prevented from reaching rivers & ocean</div>
+        <span class="metric-chip chip-ok" id="chipPlastic">Goal: 0 / 100 kg</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Water Quality Improvement</div>
+        <div class="metric-value" id="valWater">0%</div>
+        <div class="metric-unit">vs. baseline pH, temperature, turbidity</div>
+        <span class="metric-chip chip-warn" id="chipWater">Status: Watch</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Community Engagement</div>
+        <div class="metric-value" id="valCommunity">0</div>
+        <div class="metric-unit">students & volunteers contributing data</div>
+        <span class="metric-chip chip-ok" id="chipCommunity">Target: 0 / 500</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Ocean Area Monitored</div>
+        <div class="metric-value" id="valArea">0</div>
+        <div class="metric-unit">km² covered by your observations & maps</div>
+        <span class="metric-chip chip-ok" id="chipArea">Expanding coverage</span>
+      </div>
+    </section>
+
+    <!-- Charts + SDG explanation -->
+    <section class="grid-2">
+      <div class="card">
+        <h3>Water Quality Trend</h3>
+        <p>Shows how average conditions at your lakes are changing over time.</p>
+        anvas id="waterChart" height="140"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>SDG 14 Targets</h3>
+        <p>This project contributes to several Life Below Water targets by reducing plastic leakage, improving local water quality, and raising student awareness.</p>
+        <div class="sdg-tags">
+          <span class="sdg-tag">14.1 Marine Pollution</span>
+          <span class="sdg-tag">14.2 Ecosystem Health</span>
+          <span class="sdg-tag">14.3 Climate & Acidification</span>
+          <span class="sdg-tag">14.5 Conservation</span>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);">
+          Today’s SDG‑14 status:
+          <div class="analysis-box" id="sdgAnalysis">
+            Loading short SDG analysis...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Marine life + AI insight -->
+    <section class="grid-2">
+      <div class="card">
+        <h3>Marine Life & Coral Health</h3>
+        <p>Your local plastic and water‑quality data can be linked to stress on fish, corals and other species in downstream rivers and the Bay of Bengal.</p>
+        <p style="font-size:12px;color:var(--muted);">
+          This panel can later connect to IUCN Red List information and show how many threatened species might benefit when plastic and pollution are reduced.
+        </p>
+        <div class="analysis-box" id="lifeAnalysis">
+          Waiting for latest samples...
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Your Contribution to SDG 14</h3>
+        <p>A simple progress estimate towards your own 2030 goals.</p>
+        anvas id="progressChart" height="130"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    SDG 14 dashboard powered by Vercel · Supabase · Planet · Perplexity AI
+  </footer>
+
+  <script>
+    const API_BASE = "/api";
+
+    let waterChart = null;
+    let progressChart = null;
+
+    // Utility easing counter
+    function animateValue(el, start, end, duration, suffix=""){
+      const startTime = performance.now();
+      function update(now){
+        const elapsed = now - startTime;
+        const t = Math.min(1, elapsed / duration);
+        const value = Math.round(start + (end - start) * t);
+        el.textContent = value.toLocaleString() + suffix;
+        if(t < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    async function fetchLatestSamples(limit=50){
+      try{
+        const r = await fetch(`${API_BASE}/latest-samples?limit=${limit}`);
+        if(!r.ok) throw new Error("Failed to fetch samples");
+        return await r.json();
+      }catch(e){
+        console.error("samples error:",e);
+        return [];
+      }
+    }
+
+    // Placeholder: later replace with /api/sdg-metrics
+    function computeSdgMetrics(samples){
+      const totalSamples = samples.length;
+      if(totalSamples === 0){
+        return {
+          plasticKg: 0,
+          waterImprovement: 0,
+          communityCount: 0,
+          areaKm2: 0,
+          sdgProgress: 20
+        };
+      }
+      // Very simple mock calculations
+      const plasticKg = Math.min(120, totalSamples * 0.4); // pretend each sample represents 0.4kg prevented
+      const waterImprovement = Math.min(35, 5 + totalSamples * 0.3);
+      const communityCount = Math.min(450, 50 + totalSamples * 2);
+      const areaKm2 = 150 + totalSamples * 1.5;
+      const sdgProgress = Math.min(90, 30 + totalSamples * 0.5);
+
+      return {plasticKg, waterImprovement, communityCount, areaKm2, sdgProgress};
+    }
+
+    function renderMetrics(metrics){
+      animateValue(document.getElementById("valPlastic"), 0, Math.round(metrics.plasticKg), 700, "");
+      document.getElementById("chipPlastic").textContent = `Goal: ${Math.round(metrics.plasticKg)} / 100 kg`;
+
+      animateValue(document.getElementById("valWater"), 0, Math.round(metrics.waterImprovement), 700, "%");
+      const chipWater = document.getElementById("chipWater");
+      chipWater.textContent = metrics.waterImprovement >= 20 ? "Status: Healthy" : "Status: Watch";
+      chipWater.className = "metric-chip " + (metrics.waterImprovement >= 20 ? "chip-ok" : "chip-warn");
+
+      animateValue(document.getElementById("valCommunity"), 0, Math.round(metrics.communityCount), 700, "");
+      document.getElementById("chipCommunity").textContent = `Target: ${Math.round(metrics.communityCount)} / 500`;
+
+      animateValue(document.getElementById("valArea"), 0, Math.round(metrics.areaKm2), 700, "");
+      document.getElementById("chipArea").textContent = "Expanding coverage";
+    }
+
+    function renderWaterChart(samples){
+      const ctx = document.getElementById("waterChart").getContext("2d");
+      const byDay = {};
+      samples.forEach(s => {
+        const d = new Date(s.recorded_at);
+        const key = d.toLocaleDateString();
+        if(!byDay[key]) byDay[key] = {count:0, temp:0, turb:0};
+        byDay[key].count += 1;
+        byDay[key].temp += Number(s.temperature || 0);
+        byDay[key].turb += Number(s.turbidity || 0);
+      });
+
+      const labels = Object.keys(byDay).sort((a,b)=> new Date(a)-new Date(b));
+      const avgTemp = labels.map(k => byDay[k].temp / byDay[k].count);
+      const avgTurb = labels.map(k => byDay[k].turb / byDay[k].count);
+
+      if(waterChart) waterChart.destroy();
+      waterChart = new Chart(ctx,{
+        type:"line",
+        data:{
+          labels,
+          datasets:[
+            {
+              label:"Avg Temperature (°C)",
+              data:avgTemp,
+              borderColor:"#0b74de",
+              backgroundColor:"rgba(11,116,222,0.08)",
+              tension:0.35,
+              yAxisID:"y"
+            },
+            {
+              label:"Avg Turbidity (NTU)",
+              data:avgTurb,
+              borderColor:"#e63946",
+              backgroundColor:"rgba(230,57,70,0.08)",
+              tension:0.35,
+              yAxisID:"y1"
+            }
+          ]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{position:"bottom"}},
+          scales:{
+            y:{type:"linear",position:"left",grid:{color:"#f0f7fc"}},
+            y1:{type:"linear",position:"right",grid:{drawOnChartArea:false}}
+          }
+        }
+      });
+    }
+
+    function renderProgressChart(progress){
+      const ctx = document.getElementById("progressChart").getContext("2d");
+      if(progressChart) progressChart.destroy();
+      progressChart = new Chart(ctx,{
+        type:"doughnut",
+        data:{
+          labels:["Progress","Remaining"],
+          datasets:[{
+            data:[progress,100-progress],
+            backgroundColor:["#1eae60","#e5f0f8"],
+            borderWidth:0
+          }]
+        },
+        options:{
+          cutout:"70%",
+          plugins:{legend:{display:false}},
+        }
+      });
+    }
+
+    async function fetchSdgAnalysis(samples, metrics){
+      const box = document.getElementById("sdgAnalysis");
+      try{
+        // Later you can call your AI endpoint here.
+        // For now, create a simple text based on metrics.
+        const lines = [];
+        lines.push(`Plastic prevented so far: ~${Math.round(metrics.plasticKg)} kg.`);
+        lines.push(`Average water quality improvement: ${Math.round(metrics.waterImprovement)}%.`);
+        lines.push(`Community members engaged: ~${Math.round(metrics.communityCount)} people.`);
+        lines.push("");
+        lines.push("Local monitoring of lakes and rivers is helping to reduce plastic leakage into the Bay of Bengal, supporting SDG 14.1 on marine pollution and SDG 14.2 on ecosystem health.");
+        box.textContent = lines.join("\n");
+      }catch(e){
+        console.error("sdg analysis error:",e);
+        box.textContent = "Unable to generate SDG analysis right now.";
+      }
+    }
+
+    function renderLifeAnalysis(samples){
+      const box = document.getElementById("lifeAnalysis");
+      if(samples.length === 0){
+        box.textContent = "No samples yet. Once water quality data is available, this panel can highlight possible stress on fish, invertebrates and coral reefs downstream.";
+        return;
+      }
+      const latest = samples[0];
+      const lines = [];
+      lines.push(`Latest sample: ${new Date(latest.recorded_at).toLocaleString()} from ${latest.location || "unknown site"}.`);
+      lines.push(`pH: ${Number(latest.ph || 0).toFixed(2)}, temperature: ${Number(latest.temperature || 0).toFixed(1)} °C, turbidity: ${Number(latest.turbidity || 0).toFixed(2)}.`);
+
+      lines.push("");
+      lines.push("If high turbidity and plastic persist, downstream habitats such as estuaries and coastal coral communities can face increased stress. Linking this dashboard with IUCN Red List information will help show which species may benefit when pollution is reduced.");
+      box.textContent = lines.join("\n");
+    }
+
+    (async function init(){
+      const samples = await fetchLatestSamples(60);
+      const metrics = computeSdgMetrics(samples);
+      renderMetrics(metrics);
+      renderWaterChart(samples);
+      renderProgressChart(metrics.sdgProgress);
+      await fetchSdgAnalysis(samples, metrics);
+      renderLifeAnalysis(samples);
+    })();
+  </script>
+</body>
+</html>
