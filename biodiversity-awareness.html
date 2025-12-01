@@ -1,283 +1,833 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Biodiversity & Red List — SMART VISION</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Endangered Ocean Species – Smart Gallery</title>
+  <meta name="viewport"content="width=device-width,initial-scale=1.0">
 
   <style>
     :root{
-      --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff;
-      --bg:#f4f9ff; --card:#ffffff; --muted:#6f8396;
-      --ok:#1eae60; --warn:#f5a623; --bad:#e63946;
+      --deep-blue:#020b1b;
+      --card-bg:#ffffff;
+      --accent-cr:#e63946;
+      --accent-en:#f77f00;
+      --accent-vu:#f9c74f;
+      --text-dark:#1d3557;
+      --text-muted:#6c757d;
+      --ai-purple:#7b2ff2;
     }
-    *{box-sizing:border-box;margin:0;padding:0;}
-    html,body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--ocean-900);}
-    nav{
-      position:sticky;top:0;z-index:1000;
-      display:flex;justify-content:center;gap:24px;padding:12px 24px;
-      background:linear-gradient(90deg,#0077be,#00a8e8);
-      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at top,#032a4a,#020b1b 42%,#000 80%);
+      color:#f8f9fa;
     }
-    nav a{
-      color:#fff;text-decoration:none;font-weight:700;font-size:16px;
-      padding:8px 20px;border-radius:999px;transition:all .3s;
+    .page-shell{
+      max-width:1180px;
+      margin:0 auto;
+      padding:20px 16px 48px;
     }
-    nav a:hover{background:rgba(255,255,255,0.2);transform:translateY(-2px);}
-    .hero-header{
-      padding:28px 16px 20px;text-align:center;
-      background:linear-gradient(135deg,#005fa3,#00a8e8,#39a1ff);
-      color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.15);
-    }
-    .hero-header h1{font-size:30px;font-weight:900;letter-spacing:.06em;margin-bottom:6px;}
-    .hero-header p{font-size:14px;opacity:.96;}
-    .wrap{max-width:1200px;margin:26px auto 30px;padding:0 20px;}
-
-    .grid-2{
-      display:grid;grid-template-columns:1.5fr 1.1fr;gap:18px;margin-bottom:22px;
-    }
-    @media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
-
-    .card{
-      background:#fff;border-radius:16px;padding:18px 20px;
-      box-shadow:0 10px 30px rgba(0,0,0,0.06);
-      border:1px solid rgba(0,119,190,0.08);
-    }
-    .card h2{font-size:20px;margin-bottom:6px;}
-    .card h3{font-size:17px;margin-bottom:6px;}
-    .card p{font-size:13px;color:var(--muted);margin-bottom:6px;}
-
-    .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
-    .tag{
-      padding:4px 10px;border-radius:999px;
-      font-size:11px;font-weight:600;
-      background:rgba(0,119,190,0.08);color:var(--ocean-700);
-    }
-
-    .badge{
-      display:inline-block;padding:3px 9px;border-radius:999px;
-      font-size:11px;font-weight:600;
-    }
-    .badge-ok{background:rgba(30,174,96,0.12);color:var(--ok);}
-    .badge-warn{background:rgba(245,166,35,0.12);color:var(--warn);}
-    .badge-bad{background:rgba(230,57,70,0.12);color:var(--bad);}
-
-    .checklist{
-      list-style:none;margin-top:10px;font-size:13px;color:var(--ocean-900);
-    }
-    .checklist li{
-      display:flex;align-items:center;justify-content:space-between;
-      margin-bottom:8px;
-    }
-    .checklist label{display:flex;align-items:center;gap:8px;cursor:pointer;}
-    .score-box{
-      margin-top:10px;padding:10px 12px;border-radius:10px;
-      background:#f9fbff;border:1px dashed rgba(0,119,190,0.25);
-      font-size:12px;color:var(--muted);white-space:pre-line;
-    }
-
-    .slider-wrap{
+    #endangered-gallery{
       margin-top:10px;
-      display:flex;align-items:center;gap:8px;
+      padding:22px 18px 28px;
+      border-radius:18px;
+      background:linear-gradient(135deg,#05152b,#030a1b 50%,#0b2347);
+      box-shadow:0 18px 45px rgba(0,0,0,0.45);
+      border:1px solid rgba(255,255,255,0.05);
     }
-    .slider-wrap input[type="range"]{flex:1;}
+    .gallery-heading{
+      font-size:24px;
+      margin:0 0 4px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .gallery-subtitle{
+      font-size:13px;
+      color:#d3dde9;
+      max-width:640px;
+      margin-bottom:12px;
+    }
+    .gallery-subtitle span{
+      color:#ffce6b;
+      font-weight:600;
+    }
+    .gallery-toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .legend-chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      font-size:11px;
+    }
+    .legend-chip{
+      border-radius:999px;
+      padding:3px 8px;
+      border:1px solid rgba(255,255,255,0.14);
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      background:rgba(0,0,0,0.25);
+    }
+    .legend-dot{
+      width:9px;
+      height:9px;
+      border-radius:50%;
+    }
+    .legend-dot.cr{background:linear-gradient(90deg,#e63946,#f77f00);}
+    .legend-dot.en{background:linear-gradient(90deg,#f77f00,#fcbf49);}
+    .legend-dot.vu{background:linear-gradient(90deg,#f9c74f,#90be6d);}
+    .view-toggle{
+      font-size:11px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+      color:#cfd7e4;
+    }
+    .view-toggle button{
+      border-radius:999px;
+      border:0;
+      padding:4px 9px;
+      background:rgba(255,255,255,0.08);
+      color:#e9eef8;
+      cursor:pointer;
+      font-size:11px;
+    }
+    .view-toggle button.active{
+      background:linear-gradient(90deg,#4cc9f0,#f72585);
+    }
 
-    footer{margin:26px 0 16px;text-align:center;font-size:12px;color:var(--muted);}
+    .gallery-main{
+      display:grid;
+      grid-template-columns:minmax(0,2fr) minmax(0,1.2fr);
+      gap:22px;
+      margin-top:6px;
+    }
+    @media(max-width:900px){
+      .gallery-main{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .gallery-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:18px;
+    }
+    .species-card{
+      background:var(--card-bg);
+      color:var(--text-dark);
+      border-radius:18px;
+      overflow:hidden;
+      position:relative;
+      box-shadow:0 14px 34px rgba(1,17,40,0.18);
+      display:flex;
+      flex-direction:column;
+      min-height:340px;
+      transform:translateY(6px);
+      opacity:0;
+      animation:card-in 0.5s ease forwards;
+    }
+    .species-card:nth-child(1){animation-delay:0.05s;}
+    .species-card:nth-child(2){animation-delay:0.09s;}
+    .species-card:nth-child(3){animation-delay:0.13s;}
+    .species-card:nth-child(4){animation-delay:0.17s;}
+    @keyframes card-in{
+      to{transform:translateY(0);opacity:1;}
+    }
+    .species-photo-wrap{
+      position:relative;
+      height:180px;
+      overflow:hidden;
+    }
+    .species-photo{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      transition:transform 0.6s ease;
+    }
+    .species-card:hover .species-photo{
+      transform:scale(1.06);
+    }
+    .status-badge{
+      position:absolute;
+      top:12px;
+      left:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      color:#fff;
+      box-shadow:0 4px 10px rgba(0,0,0,0.35);
+    }
+    .species-card.status-cr .status-badge{
+      background:linear-gradient(90deg,#e63946,#f77f00);
+    }
+    .species-card.status-en .status-badge{
+      background:linear-gradient(90deg,#f77f00,#f9c74f);
+    }
+    .species-card.status-vu .status-badge{
+      background:linear-gradient(90deg,#f9c74f,#90be6d);
+    }
+    .iucn-pill{
+      position:absolute;
+      top:12px;
+      right:12px;
+      font-size:10px;
+      padding:3px 7px;
+      border-radius:999px;
+      background:rgba(3,4,15,0.78);
+      color:#f1f3f8;
+      border:1px solid rgba(255,255,255,0.18);
+    }
+    .species-body{
+      padding:10px 13px 12px;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .common-name{
+      font-size:18px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .sci-name{
+      font-size:12px;
+      font-style:italic;
+      color:#4b5563;
+    }
+    .pop-count{
+      font-size:11px;
+      color:#495057;
+    }
+    .bio-text{
+      font-size:12px;
+      line-height:1.45;
+      margin-top:4px;
+      color:#374151;
+    }
+    .threats{
+      list-style:none;
+      margin:6px 0 0;
+      padding:0;
+      font-size:11px;
+      color:#6b7280;
+    }
+    .region-highlight{
+      margin-top:6px;
+      font-size:11px;
+      color:#1f2933;
+      display:flex;
+      align-items:center;
+      gap:4px;
+    }
+    .region-highlight span{
+      font-size:12px;
+    }
+    .ai-speech{
+      margin-top:7px;
+      font-size:11px;
+      font-style:italic;
+      color:var(--ai-purple);
+      background:rgba(123,47,242,0.06);
+      border-radius:10px;
+      padding:7px 10px;
+      border:1px dashed rgba(123,47,242,0.45);
+      position:relative;
+      overflow:hidden;
+    }
+    .ai-speech::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(120deg,rgba(123,47,242,0.25),rgba(123,47,242,0),rgba(123,47,242,0.25));
+      opacity:0;
+      transition:opacity .3s;
+    }
+    .species-card.speak .ai-speech::before{
+      opacity:1;
+    }
+    .ai-speech span{
+      font-size:15px;
+      color:#a855f7;
+    }
+    .card-footer-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:6px;
+      font-size:11px;
+      color:#6b7280;
+    }
+    .ask-ai-link{
+      color:var(--ai-purple);
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      font-weight:600;
+    }
+    .ask-ai-link:hover{
+      text-decoration:underline;
+    }
+
+    /* AI panel on right side */
+    .ai-panel{
+      border-radius:16px;
+      background:radial-gradient(circle at top,#182544,#050818 58%);
+      padding:14px 14px 16px;
+      border:1px solid rgba(255,255,255,0.08);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      position:relative;
+      overflow:hidden;
+    }
+    .ai-panel::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:radial-gradient(circle at 10% 0%,rgba(58,134,255,0.6),transparent 55%),
+                 radial-gradient(circle at 90% 100%,rgba(250,82,160,0.55),transparent 65%);
+      opacity:0.22;
+      pointer-events:none;
+    }
+    .ai-panel-header{
+      position:relative;
+      z-index:1;
+    }
+    .ai-title-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .ai-orb{
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      background:conic-gradient(from 0deg,#4cc9f0,#f72585,#4cc9f0);
+      box-shadow:0 0 15px rgba(80,220,255,0.78);
+      animation:spin 3s linear infinite;
+    }
+    @keyframes spin{
+      to{transform:rotate(360deg);}
+    }
+    .ai-title{
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:0.02em;
+    }
+    .ai-subtitle{
+      font-size:11px;
+      color:#cbd5f1;
+      margin-top:2px;
+    }
+    .ai-badge{
+      position:absolute;
+      top:0;
+      right:0;
+      padding:3px 8px;
+      border-radius:999px;
+      font-size:10px;
+      background:rgba(0,0,0,0.50);
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,0.6);
+      display:flex;
+      align-items:center;
+      gap:5px;
+    }
+    .ai-badge span{
+      font-size:11px;
+    }
+
+    .ai-display{
+      position:relative;
+      z-index:1;
+      border-radius:12px;
+      background:rgba(3,5,18,0.8);
+      border:1px solid rgba(148,163,184,0.35);
+      padding:10px 11px;
+      min-height:120px;
+      font-size:12px;
+      color:#e5e7eb;
+      overflow:auto;
+    }
+    .ai-placeholder{
+      text-align:center;
+      font-size:12px;
+      color:#a5b4fc;
+      opacity:0.9;
+      padding:16px 4px;
+    }
+
+    .ai-loading{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      padding:14px 0;
+    }
+    .ai-loading-spinner{
+      width:30px;
+      height:30px;
+      border-radius:50%;
+      border:3px solid rgba(148,163,184,0.38);
+      border-top-color:#4cc9f0;
+      border-right-color:#f72585;
+      animation:spin 0.9s linear infinite;
+    }
+    .ai-loading-label{
+      font-size:11px;
+      color:#e5e7eb;
+      text-align:center;
+    }
+    .ai-answer-block{
+      animation:fade-up .45s ease-out;
+    }
+    @keyframes fade-up{
+      from{opacity:0;transform:translateY(10px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+    .ai-answer-title{
+      font-size:12px;
+      font-weight:600;
+      margin-bottom:4px;
+      color:#e0e7ff;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .ai-answer-title span{
+      font-size:13px;
+    }
+    .ai-metrics{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(90px,1fr));
+      gap:6px;
+      margin:4px 0 8px;
+    }
+    .ai-metric-card{
+      background:rgba(15,23,42,0.95);
+      border-radius:8px;
+      padding:5px 7px;
+      border:1px solid rgba(99,102,241,0.65);
+    }
+    .ai-metric-main{
+      font-size:13px;
+      font-weight:700;
+      color:#f9fafb;
+    }
+    .ai-metric-label{
+      font-size:11px;
+      color:#a5b4fc;
+    }
+    .ai-body-text{
+      font-size:11px;
+      line-height:1.55;
+      color:#e5e7eb;
+      margin-bottom:5px;
+    }
+    .ai-footer-text{
+      font-size:10px;
+      color:#9ca3af;
+      margin-top:4px;
+    }
+    .ai-actions-row{
+      position:relative;
+      z-index:1;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:6px;
+      font-size:11px;
+      color:#c7d2fe;
+    }
+    .ai-small-note{
+      opacity:0.8;
+    }
+    .ai-refresh-btn{
+      border-radius:999px;
+      border:0;
+      padding:5px 11px;
+      font-size:11px;
+      font-weight:600;
+      background:linear-gradient(90deg,#4cc9f0,#f72585);
+      color:#fff;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+    }
+    .ai-refresh-btn:hover{
+      filter:brightness(1.06);
+    }
+    .ai-refresh-btn span{
+      font-size:12px;
+    }
   </style>
 </head>
 <body>
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="live-demo.html">Live Demo</a>
-    <a href="marine-dashboard.html">Marine AI Dashboard</a>
-       <a href="ocean-explorer.html">Ocean Explorer</a>
-    <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
-    <a href="pollution-pathways.html">Pollution Pathways</a>
-    <a href="biodiversity-awareness.html">Red List & Self‑Assessment</a>
-    <a href="sdg-dashboard.html">SDG & Biodiversity</a>
-    <a href="presentation-mode.html">Presentation Mode</a>   
-  </nav>
+<div class="page-shell">
 
-  <header class="hero-header">
-    <h1>BIODIVERSITY & RED LIST</h1>
-    <p>Understanding threatened species and cutting plastic in daily life</p>
-  </header>
+  <section id="endangered-gallery">
+    <h2 class="gallery-heading">🌊 Rare & Endangered Ocean Species</h2>
+    <p class="gallery-subtitle">
+      Discover some of the ocean’s most threatened animals. Each card shows real conservation
+      status and an AI‑style “voice” explaining what that species needs from us. <span>Hover</span> to
+      let them “speak,” or ask the AI panel on the right for a deeper explanation.
+    </p>
 
-  <main class="wrap">
-    <section class="grid-2">
-      <div class="card">
-        <h2>What is the IUCN Red List?</h2>
-        <p>
-          The IUCN Red List of Threatened Species is a global reference that shows how close different plants and animals are to extinction. 
-          Species are grouped into categories such as Least Concern, Vulnerable, Endangered and Critically Endangered based on scientific assessments.
-        </p>
-        <p>
-          Many freshwater and marine species are moving into higher‑risk categories because of pollution, plastic waste, habitat loss and climate change. 
-          Protecting lakes and rivers around you helps protect fish, amphibians, insects, birds and mammals along the entire river‑to‑ocean pathway.
-        </p>
-        <div class="tag-row">
-          <span class="tag">Vulnerable (VU)</span>
-          <span class="tag">Endangered (EN)</span>
-          <span class="tag">Critically Endangered (CR)</span>
-          <span class="tag">Extinct in the Wild (EW)</span>
+    <div class="gallery-toolbar">
+      <div class="legend-chips">
+        <div class="legend-chip">
+          <div class="legend-dot cr"></div><span>CR – Critically Endangered</span>
         </div>
-        <p style="margin-top:8px;font-size:12px;">
-          For detailed species lists and official information, always visit the IUCN Red List website and related resources directly.
-        </p>
-      </div>
-
-      <div class="card">
-        <h3>Biodiversity Snapshot</h3>
-        <p>This example chart uses approximate counts for how many species in each group are listed as threatened worldwide, based on public summaries.</p>
-        anvas id="speciesChart" height="180"></canvas>
-        <p style="font-size:11px;color:var(--muted);margin-top:4px;">
-          These numbers are for learning and may change as IUCN assessments are updated. Always refer to the official Red List for the latest figures.
-        </p>
-      </div>
-    </section>
-
-    <section class="grid-2">
-      <div class="card">
-        <h3>Daily Plastic Self‑Assessment</h3>
-        <p>Use this checklist to reflect on how much single‑use plastic you used today. Try to lower your score over time.</p>
-
-        <ul class="checklist">
-          <li>
-            <label>
-              <input type="checkbox" class="plastic-item" value="1" />
-              Plastic carry bag
-            </label>
-          </li>
-          <li>
-            <label>
-              <input type="checkbox" class="plastic-item" value="1" />
-              Plastic water or soft‑drink bottle
-            </label>
-          </li>
-          <li>
-            <label>
-              <input type="checkbox" class="plastic-item" value="1" />
-              Disposable cup / straw
-            </label>
-          </li>
-          <li>
-            <label>
-              <input type="checkbox" class="plastic-item" value="1" />
-              Snack wrapper (chips, biscuits, chocolate)
-            </label>
-          </li>
-          <li>
-            <label>
-              <input type="checkbox" class="plastic-item" value="1" />
-              Other single‑use plastic item
-            </label>
-          </li>
-        </ul>
-
-        <div class="slider-wrap">
-          <span style="font-size:12px;color:var(--muted);">Items avoided today:</span>
-          <input type="range" id="avoidSlider" min="0" max="10" value="0" />
-          <span id="avoidLabel" style="font-size:13px;font-weight:600;">0</span>
+        <div class="legend-chip">
+          <div class="legend-dot en"></div><span>EN – Endangered</span>
         </div>
-
-        <div class="score-box" id="scoreBox">
-          Select the items you used and set how many plastics you successfully avoided today. 
-          Aim for a lower usage score and a higher avoided score as you move towards a circular, low‑plastic lifestyle.
+        <div class="legend-chip">
+          <div class="legend-dot vu"></div><span>VU – Vulnerable</span>
         </div>
       </div>
+      <div class="view-toggle">
+        View mode:
+        <button class="active" type="button">Cards</button>
+        <button type="button" disabled title="Map view coming soon">Map (soon)</button>
+      </div>
+    </div>
 
-      <div class="card">
-        <h3>Why Your Choices Matter</h3>
-        <p>
-          Every plastic item you refuse, reduce, reuse or recycle lowers the chance that it will reach lakes, rivers and the ocean. 
-          Less plastic in the water means cleaner habitats for fish, amphibians, birds, mammals and many other species.
-        </p>
-        <p>
-          By combining this self‑assessment with water‑quality measurements and ocean maps in your dashboard, students can see how daily habits connect to global goals under SDG&nbsp;14: Life Below Water.
-        </p>
-        <p style="font-size:12px;color:var(--muted);">
-          You can also explore UN and regional e‑learning courses on marine plastic pollution and circular economy to go deeper and become a local SDG champion.
-        </p>
+    <div class="gallery-main">
+      <div class="gallery-grid">
+        <!-- species cards injected by JS -->
+      </div>
 
-        <div style="margin-top:8px;font-size:12px;">
-          Today’s personal plastic status:
-          <span id="personalBadge" class="badge badge-warn">Reflecting</span>
+      <aside class="ai-panel">
+        <div class="ai-panel-header">
+          <div class="ai-title-row">
+            <div class="ai-orb"></div>
+            <div>
+              <div class="ai-title">Ocean Species AI Explainer</div>
+              <div class="ai-subtitle">
+                Click <strong>“Ask the AI about this species”</strong> on any card to get a tailored explanation here.
+              </div>
+            </div>
+          </div>
+          <div class="ai-badge">
+            <span>🤖</span> Conceptual AI · Offline demo
+          </div>
+        </div>
+
+        <div id="aiDisplay" class="ai-display">
+          <div class="ai-placeholder">
+            Choose a species on the left and tap<br>
+            <strong>“Ask the AI about this species”</strong><br>
+            to see a smart, student‑friendly explanation here.
+          </div>
+        </div>
+
+        <div class="ai-actions-row">
+          <div class="ai-small-note">
+            Responses are generated from curated knowledge<br>about endangered marine life.
+          </div>
+          <button class="ai-refresh-btn" type="button" id="aiRandomBtn">
+            <span>🎲</span> Surprise me
+          </button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // === DATA: Endangered & Threatened Ocean Species ===
+  const endangeredSpecies = [
+    {
+      id:"vaquita",
+      commonName:"Vaquita",
+      sciName:"Phocoena sinus",
+      status:"CR",
+      img:"https://upload.wikimedia.org/wikipedia/commons/5/5d/Vaquita5_Olson_NOAA.jpg",
+      count:"< 30",
+      bio:"The vaquita is the world’s rarest marine mammal, found only in the northern Gulf of California. Scientists believe fewer than 30 remain.",
+      threats:["Illegal gillnet fishing","Bycatch in totoaba nets","Habitat degradation"],
+      aiTip:"If I could speak, I’d ask for a net‑free sanctuary in my last remaining home in the Gulf of California.",
+      region:"Northern Gulf of California, Mexico"
+    },
+    {
+      id:"north_atlantic_right_whale",
+      commonName:"North Atlantic Right Whale",
+      sciName:"Eubalaena glacialis",
+      status:"CR",
+      img:"https://upload.wikimedia.org/wikipedia/commons/b/b1/North_Atlantic_Right_Whale_with_calve.jpg",
+      count:"~340",
+      bio:"Once heavily hunted, this whale now struggles mainly with ship strikes and fishing gear entanglement along busy shipping corridors.",
+      threats:["Ship strikes","Fishing rope entanglement","Noise pollution"],
+      aiTip:"Slower ships, quieter seas, and safer fishing gear would give my calves a real chance to grow up.",
+      region:"Western North Atlantic Ocean"
+    },
+    {
+      id:"hawksbill_turtle",
+      commonName:"Hawksbill Turtle",
+      sciName:"Eretmochelys imbricata",
+      status:"CR",
+      img:"https://upload.wikimedia.org/wikipedia/commons/b/b9/Hawksbill_Turtle_-_Eretmochelys_imbricata.jpg",
+      count:"~8,000 nesting females",
+      bio:"A reef‑dwelling turtle prized for its beautiful shell. Habitat loss, egg collection, and plastic pollution have driven severe declines.",
+      threats:["Illegal shell trade","Egg harvesting","Marine plastics","Coral reef loss"],
+      aiTip:"Healthy coral reefs and plastic‑free coasts are my best hope. Every piece of plastic you skip truly helps.",
+      region:"Tropical coral reefs worldwide"
+    },
+    {
+      id:"giant_manta_ray",
+      commonName:"Giant Manta Ray",
+      sciName:"Mobula birostris",
+      status:"EN",
+      img:"https://upload.wikimedia.org/wikipedia/commons/c/c6/Manta_birostris-Thailand1.jpg",
+      count:"Declining",
+      bio:"With a wingspan up to 7 meters, giant mantas are filter‑feeding giants that migrate across ocean basins and often gather at cleaning stations.",
+      threats:["Overfishing for gill plates","Bycatch in nets","Pollution and microplastics"],
+      aiTip:"Protecting key aggregation sites and regulating trade in my gill plates lets me keep ‘flying’ through the open ocean.",
+      region:"Tropical & subtropical oceans worldwide"
+    },
+    {
+      id:"hawaiian_monk_seal",
+      commonName:"Hawaiian Monk Seal",
+      sciName:"Neomonachus schauinslandi",
+      status:"EN",
+      img:"https://upload.wikimedia.org/wikipedia/commons/0/0b/Hawaiian_Monk_Seal_Molokai.JPG",
+      count:"~1,500",
+      bio:"One of the world’s only tropical seals, found mostly around the Northwestern Hawaiian Islands. Threatened by entanglement, disease, and habitat loss.",
+      threats:["Fishing gear entanglement","Disease","Loss of pupping beaches"],
+      aiTip:"Clean beaches, careful fisheries, and disease monitoring can keep pups safe along our remote island shores.",
+      region:"Hawaiian Archipelago"
+    },
+    {
+      id:"dugong",
+      commonName:"Dugong",
+      sciName:"Dugong dugon",
+      status:"VU",
+      img:"https://upload.wikimedia.org/wikipedia/commons/0/0c/Dugong_m0011160.jpg",
+      count:"Patchy & declining",
+      bio:"A gentle seagrass‑grazing relative of manatees. Dugongs depend on shallow, healthy seagrass meadows for food and shelter.",
+      threats:["Boat strikes","Seagrass loss","Entanglement","Hunting in some regions"],
+      aiTip:"Protecting quiet, clear seagrass meadows gives me—and many fish and invertebrates—a living underwater garden.",
+      region:"Coastal Indian & western Pacific Oceans"
+    }
+  ];
+
+  // === AI-style explanations per species (static for now; later you can call Perplexity) ===
+  const aiExplain = {
+    vaquita: {
+      title:"Why is the Vaquita so close to extinction?",
+      metrics:[
+        {main:"< 30",label:"Estimated individuals left"},
+        {main:"1",label:"Small home range"},
+        {main:"Gillnets",label:"Top driver of decline"}
+      ],
+      body:[
+        "The vaquita lives in only one small region of the ocean: the northern Gulf of California. That limited range makes it extremely vulnerable to any local threat.",
+        "For many years, illegal fishing for another fish (the totoaba) used gillnets that the vaquita cannot detect. These nearly invisible nets entangle and drown the porpoises.",
+        "Conservation efforts now focus on enforcing gillnet‑free zones and finding alternative livelihoods for local fishers. Each net removed from the water could mean one more vaquita survives."
+      ],
+      footer:"This explanation is based on conservation reports for the vaquita, simplified for students."
+    },
+    north_atlantic_right_whale:{
+      title:"What is pushing the North Atlantic right whale to the edge?",
+      metrics:[
+        {main:"~340",label:"Individuals left"},
+        {main:"Ship strikes",label:"Major cause of death"},
+        {main:"Entanglement",label:"Chronic stress & injury"}
+      ],
+      body:[
+        "Right whales migrate through some of the busiest shipping lanes in the North Atlantic. Collisions with large vessels can be fatal, especially for calves.",
+        "Fishing ropes and lines can wrap around whales, cutting into skin and slowing them down. Over time, this makes it harder for them to feed, heal, and reproduce.",
+        "Solutions include speed restrictions, route changes, and new rope‑free fishing technologies designed to protect both whales and fishers’ livelihoods."
+      ],
+      footer:"Data adapted from whale research organizations and IUCN summaries."
+    },
+    hawksbill_turtle:{
+      title:"Why are Hawksbill turtles critically endangered?",
+      metrics:[
+        {main:"CR",label:"IUCN status"},
+        {main:"Tortoiseshell",label:"Historic trade"},
+        {main:"Coral reefs",label:"Key habitat at risk"}
+      ],
+      body:[
+        "Hawksbills were hunted for centuries for their beautifully patterned shells used in jewelry and ornaments (often called ‘tortoiseshell’). Although international trade is now banned, illegal trade still occurs.",
+        "They nest on tropical beaches and feed around coral reefs—both of which are threatened by coastal development, climate change, and pollution.",
+        "Reducing demand for wildlife products, protecting nesting beaches, and safeguarding coral reefs all help Hawskbill populations recover."
+      ],
+      footer:"Explanation inspired by sea turtle conservation groups and global assessments."
+    },
+    giant_manta_ray:{
+      title:"What makes Giant manta rays vulnerable?",
+      metrics:[
+        {main:"7 m",label:"Wingspan up to"},
+        {main:"Slow",label:"Reproduction rate"},
+        {main:"Gill plate trade",label:"Key threat"}
+      ],
+      body:[
+        "Giant mantas produce very few young, typically a single pup after a long gestation. That means populations recover slowly from any losses.",
+        "Targeted fishing and bycatch have increased due to demand for manta gill plates in some traditional medicines and markets.",
+        "Marine protected areas, ecotourism, and strict regulations on targeted fishing give these ‘flying’ rays a chance to rebuild their numbers."
+      ],
+      footer:"Summarized from scientific literature on manta ray life history and fisheries."
+    },
+    hawaiian_monk_seal:{
+      title:"Why is the Hawaiian monk seal endangered?",
+      metrics:[
+        {main:"~1,500",label:"Remaining seals"},
+        {main:"Beaches",label:"Crucial for pupping"},
+        {main:"Entanglement",label:"Frequent hazard"}
+      ],
+      body:[
+        "Hawaiian monk seals rely on quiet, undisturbed beaches to give birth and raise pups. Coastal development and disturbance can reduce the quality of these pupping sites.",
+        "Fishing nets and marine debris can trap curious seals, leading to injury or death.",
+        "Conservation programs in Hawaii combine beach protection, debris removal, and careful human‑wildlife coexistence to support monk seal recovery."
+      ],
+      footer:"Based on NOAA and local conservation program summaries."
+    },
+    dugong:{
+      title:"How do Dugongs tell us if seagrass meadows are healthy?",
+      metrics:[
+        {main:"‘Sea cows’",label:"Nicknamed for grazing"},
+        {main:"Seagrass",label:"Main food source"},
+        {main:"Shallow coasts",label:"Most at risk"}
+      ],
+      body:[
+        "Dugongs depend on shallow seagrass beds, which are sensitive to pollution, dredging, and climate‑driven changes.",
+        "Where dugongs thrive, it often means that water quality is high and seagrass meadows are doing well—supporting many fish, invertebrates, and coastal communities.",
+        "Protecting dugongs means protecting seagrass, which also stores ‘blue carbon’ and helps buffer coasts from erosion."
+      ],
+      footer:"Drawn from seagrass and marine mammal conservation research."
+    }
+  };
+
+  // === Build cards ===
+  function renderEndangeredCards(){
+    const grid=document.querySelector(".gallery-grid");
+    grid.innerHTML="";
+    endangeredSpecies.forEach(species=>{
+      const card=document.createElement("article");
+      card.className=`species-card status-${species.status.toLowerCase()}`;
+
+      const statusLabel = species.status==="CR" ? "Critically Endangered" :
+                          species.status==="EN" ? "Endangered" :
+                          species.status==="VU" ? "Vulnerable" : species.status;
+
+      card.innerHTML=`
+        <div class="species-photo-wrap">
+          <img src="${species.img}" alt="${species.commonName}" class="species-photo">
+          <div class="status-badge">${statusLabel}</div>
+          <div class="iucn-pill">IUCN: ${species.status}</div>
+        </div>
+        <div class="species-body">
+          <div class="common-name">
+            <span>${species.commonName}</span>
+          </div>
+          <div class="sci-name">${species.sciName}</div>
+          <div class="pop-count">Estimated remaining: <strong>${species.count}</strong></div>
+          <div class="bio-text">${species.bio}</div>
+          <ul class="threats">
+            <li><b>Key threats:</b> ${species.threats.join(", ")}</li>
+          </ul>
+          <div class="region-highlight"><span>📍</span>${species.region}</div>
+          <div class="ai-speech"><span>“</span>${species.aiTip}<span>”</span></div>
+          <div class="card-footer-row">
+            <span>Tap to let this species ‘speak’ louder.</span>
+            <span class="ask-ai-link" data-species="${species.id}">
+              🤖 Ask the AI about this species
+            </span>
+          </div>
+        </div>
+      `;
+
+      card.addEventListener("mouseenter",()=>card.classList.add("speak"));
+      card.addEventListener("mouseleave",()=>card.classList.remove("speak"));
+
+      grid.appendChild(card);
+    });
+  }
+
+  // === AI Panel logic (offline demo; later connect to Perplexity backend) ===
+  function showAiLoading(){
+    const box=document.getElementById("aiDisplay");
+    box.innerHTML=`
+      <div class="ai-loading">
+        <div class="ai-loading-spinner"></div>
+        <div class="ai-loading-label">
+          Analyzing conservation data and recent science for this species…
         </div>
       </div>
-    </section>
-  </main>
+    `;
+  }
 
-  <footer>
-    Biodiversity & Red List awareness powered by Vercel · Supabase · Planet · Perplexity AI
-  </footer>
+  function showAiAnswerBlock(speciesId){
+    const cfg = aiExplain[speciesId];
+    const species = endangeredSpecies.find(s=>s.id===speciesId);
+    if(!cfg || !species) return;
+    const box=document.getElementById("aiDisplay");
+    const metricsHTML = (cfg.metrics||[]).map(m=>`
+      <div class="ai-metric-card">
+        <div class="ai-metric-main">${m.main}</div>
+        <div class="ai-metric-label">${m.label}</div>
+      </div>
+    `).join("");
 
-  <script>
-    // Simple threatened species bar chart (example values)
-    const ctx = document.getElementById("speciesChart").getContext("2d");
-    const speciesChart = new Chart(ctx,{
-      type:"bar",
-      data:{
-        labels:["Fish","Amphibians","Insects","Molluscs","Reptiles","Mammals","Birds","Others"],
-        datasets:[{
-          label:"Approx. threatened species (example)",
-          data:[4085,2930,2680,2616,1859,1364,1256,1691],
-          backgroundColor:"#0b74de"
-        }]
-      },
-      options:{
-        responsive:true,
-        plugins:{legend:{display:false}},
-        scales:{
-          x:{ticks:{font:{size:11}},grid:{display:false}},
-          y:{grid:{color:"#f0f7fc"}}
-        }
-      }
+    const bodyHTML = (cfg.body||[]).map(p=>`<p class="ai-body-text">${p}</p>`).join("");
+
+    box.innerHTML=`
+      <div class="ai-answer-block">
+        <div class="ai-answer-title">
+          <span>🤖</span>
+          <span>${cfg.title}</span>
+        </div>
+        <div class="ai-metrics">${metricsHTML}</div>
+        ${bodyHTML}
+        <div class="ai-footer-text">
+          You’re exploring: <strong>${species.commonName}</strong> (<em>${species.sciName}</em>).
+          ${cfg.footer}
+        </div>
+      </div>
+    `;
+  }
+
+  function attachAiHandlers(){
+    document.querySelectorAll(".ask-ai-link").forEach(link=>{
+      link.addEventListener("click",()=>{
+        const speciesId = link.getAttribute("data-species");
+        showAiLoading();
+        // simulate AI latency
+        setTimeout(()=>showAiAnswerBlock(speciesId),900);
+      });
     });
 
-    // Self-assessment logic
-    const items = document.querySelectorAll(".plastic-item");
-    const avoidSlider = document.getElementById("avoidSlider");
-    const avoidLabel = document.getElementById("avoidLabel");
-    const scoreBox = document.getElementById("scoreBox");
-    const personalBadge = document.getElementById("personalBadge");
-
-    function updateSelfAssessment(){
-      let used = 0;
-      items.forEach(i => { if(i.checked) used += Number(i.value || 0); });
-
-      const avoided = Number(avoidSlider.value || 0);
-      avoidLabel.textContent = avoided;
-
-      const net = avoided - used; // positive is good
-      let message = `Plastic items used today: ${used}\nPlastic items avoided today: ${avoided}\n\n`;
-
-      if(used === 0 && avoided === 0){
-        message += "Start by tracking your plastic use honestly. Tomorrow, try to avoid at least one single‑use plastic item.";
-        personalBadge.textContent = "Reflecting";
-        personalBadge.className = "badge badge-warn";
-      } else if(net >= 2){
-        message += "Great job! You avoided more plastics than you used today. Keep bringing your own bottle, bag and lunch box to protect rivers and oceans.";
-        personalBadge.textContent = "On Track";
-        personalBadge.className = "badge badge-ok";
-      } else if(net >= 0){
-        message += "Balanced day. You avoided some items, but you can still reduce more single‑use plastics. Aim to increase the avoided number tomorrow.";
-        personalBadge.textContent = "Improving";
-        personalBadge.className = "badge badge-warn";
-      } else {
-        message += "You used more plastics than you avoided today. Think about which items were most common and plan easy swaps, like cloth bags or metal bottles.";
-        personalBadge.textContent = "High Use";
-        personalBadge.className = "badge badge-bad";
-      }
-
-      scoreBox.textContent = message;
+    const randomBtn=document.getElementById("aiRandomBtn");
+    if(randomBtn){
+      randomBtn.addEventListener("click",()=>{
+        const ids = Object.keys(aiExplain);
+        const pick = ids[Math.floor(Math.random()*ids.length)];
+        showAiLoading();
+        setTimeout(()=>showAiAnswerBlock(pick),900);
+      });
     }
+  }
 
-    items.forEach(i => i.addEventListener("change", updateSelfAssessment));
-    avoidSlider.addEventListener("input", updateSelfAssessment);
-    updateSelfAssessment();
-  </script>
+  document.addEventListener("DOMContentLoaded",()=>{
+    renderEndangeredCards();
+    attachAiHandlers();
+  });
+</script>
+
 </body>
 </html>
