@@ -176,7 +176,8 @@
       </div>
     </div>
 
-    <footer>Connect via Chrome/Edge on desktop • Web Serial works on HTTPS or localhost only.</footer>
+    <footer>Connect via Chrome/Edge on desktop • Web Serial works on HTTPS or localhost only.<br/>
+    <small style="color:#0b74de">✓ Camera events sync to Marine Dashboard via localStorage</small></footer>
   </main>
 
   <div id="errorBox"><strong>Debug:</strong><pre id="errorText" style="white-space:pre-wrap"></pre></div>
@@ -184,6 +185,9 @@
   <script>
     // API base (kept same)
     const API_BASE = "/api";
+
+    // NEW: localStorage key for camera events sync with dashboard
+    const CAMERA_EVENTS_KEY = "marineCameraEvents_v1";
 
     // model config
     const MODEL_URL = 'model/model.json';
@@ -202,13 +206,8 @@
     let webFishCount = 0, webTrashCount = 0, webEmergCount = 0;
 
     // Micro:bit connection variables (dual support)
-    // Web Serial:
     let serialPort = null;
     let serialWriter = null;
-    // Web Bluetooth:
-    // when connected via BLE we'll store tx characteristic in window._microbitTx (keeps compatibility)
-    // For Serial we'll also write using serialWriter.write(...)
-
     let _lastMicrobitSendAt = 0;
 
     function showStatus(text){ document.getElementById('statusText').textContent = 'Status: ' + text; }
@@ -227,6 +226,36 @@
       document.getElementById('emergCountDisplay').textContent = String(webEmergCount);
     }
 
+    // NEW: Save camera event to localStorage
+    function saveCameraEventToLocal(code, label, confidence) {
+      try {
+        const raw = localStorage.getItem(CAMERA_EVENTS_KEY);
+        const data = raw ? JSON.parse(raw) : { events: [] };
+
+        data.events.push({
+          code,
+          label: label || null,
+          confidence: confidence ?? null,
+          timestamp: Date.now()
+        });
+
+        localStorage.setItem(CAMERA_EVENTS_KEY, JSON.stringify(data));
+        console.log("Camera event saved locally:", { code, label, confidence });
+      } catch (err) {
+        console.error("Failed to save camera event locally", err);
+      }
+    }
+
+    // NEW: Reset camera events when starting new session
+    function resetCameraEventsLocal() {
+      try {
+        localStorage.removeItem(CAMERA_EVENTS_KEY);
+        console.log("Cleared saved camera events");
+      } catch (err) {
+        console.error("Failed to clear camera events", err);
+      }
+    }
+
     // helper: unified send that writes to whichever connection is active
     async function sendCodeToMicrobit(code){
       if (!code) return;
@@ -234,7 +263,6 @@
       if (now - _lastMicrobitSendAt < MICROBIt_SEND_DEBOUNCE_MS) return;
       _lastMicrobitSendAt = now;
 
-      // prefer BLE tx (window._microbitTx), else serialWriter
       try {
         if (window._microbitTx && typeof window._microbitTx.writeValue === 'function') {
           const enc = new TextEncoder();
@@ -247,48 +275,12 @@
           console.log('Sent over Serial ->', code);
           return;
         }
-        // no connection active
         console.warn('No micro:bit connection to send:', code);
       } catch (err) {
         console.warn('microbit write failed', err);
       }
     }
-    // NEW: Log camera detection event to backend
-async function logCameraEvent(code, label, confidence) {
-  try {
-    // Get location if available (you can add geolocation API)
-    const position = await new Promise((resolve) => {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => resolve({ lat: null, lng: null })
-        );
-      } else {
-        resolve({ lat: null, lng: null });
-      }
-    });
 
-    const event = {
-      code: code,
-      label: label,
-      confidence: confidence,
-      lat: position.lat,
-      lng: position.lng,
-      meta: { source: 'live-camera-demo' },
-      created_at: new Date().toISOString()
-    };
-
-    await fetch(`${API_BASE}/log-camera-event`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(event)
-    });
-    
-    console.log('Camera event logged:', event);
-  } catch (err) {
-    console.warn('Failed to log camera event:', err);
-  }
-}
     // map label string -> short code
     function labelToCode(label){
       if (!label) return null;
@@ -310,9 +302,12 @@ async function logCameraEvent(code, label, confidence) {
         videoEl.srcObject = stream;
         await videoEl.play();
         isPredicting = true;
+        
+        // NEW: Reset events for new session
+        resetCameraEventsLocal();
+        
         document.getElementById('startBtn').textContent = 'Camera running';
         showStatus('camera running, model active');
-        // attempt to notify microbit we started
         await sendCodeToMicrobit('YES');
         predictLoop();
       } catch(err){ showError(err); }
@@ -325,51 +320,52 @@ async function logCameraEvent(code, label, confidence) {
       showStatus('camera stopped');
     }
 
-  async function predictLoop(){
-  try {
-    if (!tmModel) throw new Error('Model not loaded');
-    const preds = await tmModel.predict(videoEl, false);
-    preds.sort((a,b)=>b.probability - a.probability);
-    const top = preds[0] || {className:'--', probability:0};
-    const pct = Math.round(top.probability * 100);
-    showStatus(`live · ${pct}% · ${top.className || '--'}`);
-    predictionsLog.push({t:Date.now(), label: top.className, conf: top.probability});
+    async function predictLoop(){
+      try {
+        if (!tmModel) throw new Error('Model not loaded');
+        const preds = await tmModel.predict(videoEl, false);
+        preds.sort((a,b)=>b.probability - a.probability);
+        const top = preds[0] || {className:'--', probability:0};
+        const pct = Math.round(top.probability * 100);
+        showStatus(`live · ${pct}% · ${top.className || '--'}`);
+        predictionsLog.push({t:Date.now(), label: top.className, conf: top.probability});
 
-    if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
-      const code = labelToCode(top.className);
+        if (top.probability >= SEND_CONFIDENCE_THRESHOLD){
+          const code = labelToCode(top.className);
 
-      if (code === 'F'){
-        webFishCount++;
-        updateWebCountersUI();
-        await sendCodeToMicrobit('F');
-        await logCameraEvent('F', top.className, top.probability); // NEW
+          if (code === 'F'){
+            webFishCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('F');
+            saveCameraEventToLocal('F', top.className, top.probability); // NEW
 
-      } else if (code === 'T'){
-        webTrashCount++;
-        updateWebCountersUI();
-        await sendCodeToMicrobit('T');
-        await logCameraEvent('T', top.className, top.probability); // NEW
+          } else if (code === 'T'){
+            webTrashCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('T');
+            saveCameraEventToLocal('T', top.className, top.probability); // NEW
 
-      } else if (code === 'E'){
-        webEmergCount++;
-        updateWebCountersUI();
-        await sendCodeToMicrobit('E');
-        await logCameraEvent('E', top.className, top.probability); // NEW
+          } else if (code === 'E'){
+            webEmergCount++;
+            updateWebCountersUI();
+            await sendCodeToMicrobit('E');
+            saveCameraEventToLocal('E', top.className, top.probability); // NEW
 
-        if (webEmergCount >= 5) {
-          await sendCodeToMicrobit('ALARM');
-          showStatus('ALARM sent to micro:bit');
+            if (webEmergCount >= 5) {
+              await sendCodeToMicrobit('ALARM');
+              showStatus('ALARM sent to micro:bit');
+            }
+          }
         }
+
+        if (isPredicting) {
+          setTimeout(() => requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
+        }
+      } catch(e){
+        showError(e);
       }
     }
 
-    if (isPredicting) {
-      setTimeout(() => requestAnimationFrame(predictLoop), PREDICT_INTERVAL_MS);
-    }
-  } catch(e){
-    showError(e);
-  }
-}
     function downloadCSV(){
       if (predictionsLog.length === 0){ alert('No predictions recorded yet'); return; }
       const header=['timestamp','label','confidence'];
@@ -383,31 +379,25 @@ async function logCameraEvent(code, label, confidence) {
       setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 2000);
     }
 
-    // ---------- Dual micro:bit connect function ----------
-    // Tries Web Serial (USB) first, falls back to Web Bluetooth (BLE) if needed.
     async function connectMicrobit() {
       hideError();
 
-      // If Web Serial available and we're on HTTPS/localhost, try it first
       if ('serial' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
         try {
           showStatus('Requesting USB micro:bit (Web Serial)...');
           serialPort = await navigator.serial.requestPort();
           await serialPort.open({ baudRate: 115200 });
 
-          // writer
           const textEncoder = new TextEncoderStream();
           const writableStreamClosed = textEncoder.readable.pipeTo(serialPort.writable);
           serialWriter = textEncoder.writable.getWriter();
 
-          // reader
           const textDecoder = new TextDecoderStream();
           const readableClosed = serialPort.readable.pipeTo(textDecoder.writable);
           const reader = textDecoder.readable.getReader();
 
           showStatus('micro:bit USB connected (Serial)');
 
-          // read loop
           (async function readLoop() {
             try {
               while (true) {
@@ -427,14 +417,12 @@ async function logCameraEvent(code, label, confidence) {
             }
           })();
 
-          return; // USB serial connected - done
+          return;
         } catch (err) {
           console.warn('Web Serial connection failed or cancelled:', err);
-          // continue to fallback to BLE
         }
       }
 
-      // Fallback to Web Bluetooth if available
       if ('bluetooth' in navigator) {
         try {
           showStatus('Requesting micro:bit (Web Bluetooth)...');
@@ -448,15 +436,12 @@ async function logCameraEvent(code, label, confidence) {
           const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
           const rx = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
 
-          // store tx characteristic to send data
           window._microbitTx = tx;
 
-          // set up notifications on rx (incoming data)
           await rx.startNotifications();
           rx.addEventListener('characteristicvaluechanged', (ev) => {
             try {
               const value = ev.target.value;
-              // read bytes and decode
               const arr = new Uint8Array(value.buffer);
               const text = new TextDecoder().decode(arr);
               const lines = text.replace(/\r/g,'').split('\n');
@@ -477,7 +462,6 @@ async function logCameraEvent(code, label, confidence) {
         }
       }
 
-      // No supported APIs
       alert('No supported micro:bit connection method available. Use Chrome/Edge (desktop) for Web Serial over HTTPS, or Chrome for Web Bluetooth.');
       showStatus('no micro:bit API available');
     }
@@ -524,7 +508,6 @@ async function logCameraEvent(code, label, confidence) {
         return;
       }
 
-      // generic: display incoming message in aiResult for debugging
       const aiArea = document.getElementById('aiResult');
       if (aiArea) {
         aiArea.value = (aiArea.value ? aiArea.value + '\n' : '') + `micro:bit -> ${raw}`;
@@ -634,7 +617,7 @@ async function logCameraEvent(code, label, confidence) {
       }
     });
 
-    console.log('SMART VISION live demo (fixed) loaded.');
+    console.log('SMART VISION live demo loaded with localStorage sync.');
   </script>
 </body>
 </html>
