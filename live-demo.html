@@ -1,10 +1,9 @@
-<!-- live-demo.html (enhanced: connects to Netlify functions + shows AI result) -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Live Demo — SMART VISION Ocean Clean</title>
+  <title>Live Demo — SMART VISION Ocean Clean (fixed)</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700,900&display=swap" rel="stylesheet">
 
@@ -13,7 +12,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js"></script>
 
   <style>
-    /* (unchanged styling from your original file) */
     :root{
       --ocean-900:#032735; --ocean-700:#0b74de; --ocean-500:#39a1ff; --muted:#6f8396;
       --card:#ffffff; --bg:#f7fbff; --radius:14px;
@@ -109,15 +107,15 @@
 </head>
 <body>
   <nav>
-  <a href="index.html">Home</a>
-  <a href="live-demo.html">Live Demo</a>
-  <a href="marine-dashboard.html">Marine AI Dashboard</a>
-  <a href="ocean-explorer.html">Ocean Explorer</a>
-</nav>
+    <a href="index.html">Home</a>
+    <a href="live-demo.html">Live Demo</a>
+    <a href="marine-dashboard.html">Marine AI Dashboard</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
+  </nav>
 
   <main class="wrap">
     <h1>Live Demo – SMART VISION Submarine</h1>
-    <p class="sub">Teachable Machine image model + micro:bit over Web Serial (USB).</p>
+    <p class="sub">Teachable Machine image model + micro:bit (USB or Bluetooth).</p>
 
     <div class="stage" aria-label="main demo stage">
       <div class="side-stack" aria-hidden="false">
@@ -131,7 +129,7 @@
         <div class="ocean-controls" role="toolbar" aria-label="controls">
           <button id="startBtn" class="start">Start Camera &amp; Load Model</button>
           <button id="stopBtn" class="stop">Stop Camera</button>
-          <button id="connectBtn" class="connect">Connect micro:bit (USB)</button>
+          <button id="connectBtn" class="connect">Connect micro:bit</button>
           <button id="downloadCsv" class="csv">Download CSV</button>
         </div>
 
@@ -143,13 +141,13 @@
           <div class="counter">Emerg: <span id="emergCountDisplay">0</span></div>
         </div>
 
-        <!-- NEW: AI result area (keeps layout minimal / fits design) -->
+        <!-- AI result (kept) -->
         <div id="aiPanel" style="margin-top:12px;width:100%;max-width:520px;text-align:left;">
           <div style="font-weight:700;margin-bottom:6px">Last AI Result</div>
           <textarea id="aiResult" readonly style="width:100%;height:120px;border-radius:8px;border:1px solid #eef6fb;padding:8px;background:#fbfdff"></textarea>
         </div>
 
-        <!-- NEW: Manual sample form (compact, uses your theme) -->
+        <!-- Manual sample form -->
         <div id="manualSample" style="margin-top:12px;width:100%;max-width:520px;text-align:left;">
           <div style="display:flex;gap:8px;margin-bottom:8px">
             <input id="inputLocation" placeholder="Location" style="flex:1;padding:8px;border-radius:8px;border:1px solid #eef6fb" />
@@ -164,6 +162,7 @@
             <button id="btnAskServerAI" class="connect" style="min-width:140px">Request AI</button>
           </div>
         </div>
+
       </div>
 
       <div class="side-stack">
@@ -178,18 +177,17 @@
   <div id="errorBox"><strong>Debug:</strong><pre id="errorText" style="white-space:pre-wrap"></pre></div>
 
   <script>
-    /* =========================
-       CONFIG: Netlify API base to vercel now to vercel
-       ========================= */
-    const API_BASE = "/api";  // no change - Netlify functions base
+    // API base (kept same)
+    const API_BASE = "/api";
 
-    /* (existing model + camera + micro:bit logic left intact) */
+    // model config
     const MODEL_URL = 'model/model.json';
     const METADATA_URL = 'model/metadata.json';
     const SEND_CONFIDENCE_THRESHOLD = 0.60;
     const PREDICT_INTERVAL_MS = 600;
     const MICROBIt_SEND_DEBOUNCE_MS = 700;
 
+    // state
     let tmModel = null;
     let videoEl = document.getElementById('webcam');
     let stream = null;
@@ -198,8 +196,14 @@
 
     let webFishCount = 0, webTrashCount = 0, webEmergCount = 0;
 
+    // Micro:bit connection variables (dual support)
+    // Web Serial:
     let serialPort = null;
     let serialWriter = null;
+    // Web Bluetooth:
+    // when connected via BLE we'll store tx characteristic in window._microbitTx (keeps compatibility)
+    // For Serial we'll also write using serialWriter.write(...)
+
     let _lastMicrobitSendAt = 0;
 
     function showStatus(text){ document.getElementById('statusText').textContent = 'Status: ' + text; }
@@ -210,21 +214,49 @@
       showStatus('error: ' + (e && e.message ? e.message : e));
       console.error(e);
     }
+    function hideError(){ document.getElementById('errorBox').style.display = 'none'; }
+
     function updateWebCountersUI(){
       document.getElementById('fishCountDisplay').textContent = String(webFishCount);
       document.getElementById('trashCountDisplay').textContent = String(webTrashCount);
       document.getElementById('emergCountDisplay').textContent = String(webEmergCount);
     }
 
+    // helper: unified send that writes to whichever connection is active
     async function sendCodeToMicrobit(code){
-      if (!serialWriter || !code) return;
+      if (!code) return;
       const now = Date.now();
       if (now - _lastMicrobitSendAt < MICROBIt_SEND_DEBOUNCE_MS) return;
       _lastMicrobitSendAt = now;
+
+      // prefer BLE tx (window._microbitTx), else serialWriter
       try {
-        await serialWriter.write(code + '\n');
-        console.log('Sent to micro:bit ->', code);
-      } catch(err){ console.warn('microbit write failed', err); }
+        if (window._microbitTx && typeof window._microbitTx.writeValue === 'function') {
+          const enc = new TextEncoder();
+          await window._microbitTx.writeValue(enc.encode(code + '\n'));
+          console.log('Sent over BLE ->', code);
+          return;
+        }
+        if (serialWriter) {
+          await serialWriter.write(code + '\n');
+          console.log('Sent over Serial ->', code);
+          return;
+        }
+        // no connection active
+        console.warn('No micro:bit connection to send:', code);
+      } catch (err) {
+        console.warn('microbit write failed', err);
+      }
+    }
+
+    // map label string -> short code
+    function labelToCode(label){
+      if (!label) return null;
+      const low = String(label).toLowerCase();
+      if (low.includes('fish')) return 'F';
+      if (low.includes('trash')) return 'T';
+      if (low.includes('emerg') || low.includes('emergency')) return 'E';
+      return null;
     }
 
     async function startCameraAndModel(){
@@ -240,6 +272,7 @@
         isPredicting = true;
         document.getElementById('startBtn').textContent = 'Camera running';
         showStatus('camera running, model active');
+        // attempt to notify microbit we started
         await sendCodeToMicrobit('YES');
         predictLoop();
       } catch(err){ showError(err); }
@@ -250,15 +283,6 @@
       isPredicting = false;
       document.getElementById('startBtn').textContent = 'Start Camera & Load Model';
       showStatus('camera stopped');
-    }
-
-    function labelToCode(label){
-      if (!label) return null;
-      const low = String(label).toLowerCase();
-      if (low.includes('fish')) return 'F';
-      if (low.includes('trash')) return 'T';
-      if (low.includes('emerg') || low.includes('emergency')) return 'E';
-      return null;
     }
 
     async function predictLoop(){
@@ -317,57 +341,103 @@
       setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 2000);
     }
 
+    // ---------- Dual micro:bit connect function ----------
+    // Tries Web Serial (USB) first, falls back to Web Bluetooth (BLE) if needed.
     async function connectMicrobit() {
-      if (!(location.protocol === 'https:' || location.hostname === 'localhost')) {
-        alert('Web Serial requires HTTPS or http://localhost. Open this page over HTTPS.');
-        return;
-      }
+      hideError();
 
-      if (!('serial' in navigator)) {
-        alert('Web Serial API not available. Use recent Chrome / Edge on desktop.');
-        return;
-      }
+      // If Web Serial available and we're on HTTPS/localhost, try it first
+      if ('serial' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        try {
+          showStatus('Requesting USB micro:bit (Web Serial)...');
+          serialPort = await navigator.serial.requestPort();
+          await serialPort.open({ baudRate: 115200 });
 
-      try {
-        showStatus('Requesting USB micro:bit...');
-        serialPort = await navigator.serial.requestPort();
-        await serialPort.open({ baudRate: 115200 });
+          // writer
+          const textEncoder = new TextEncoderStream();
+          const writableStreamClosed = textEncoder.readable.pipeTo(serialPort.writable);
+          serialWriter = textEncoder.writable.getWriter();
 
-        const textEncoder = new TextEncoderStream();
-        textEncoder.readable.pipeTo(serialPort.writable);
-        serialWriter = textEncoder.writable.getWriter();
+          // reader
+          const textDecoder = new TextDecoderStream();
+          const readableClosed = serialPort.readable.pipeTo(textDecoder.writable);
+          const reader = textDecoder.readable.getReader();
 
-        const textDecoder = new TextDecoderStream();
-        serialPort.readable.pipeTo(textDecoder.writable);
-        const reader = textDecoder.readable.getReader();
+          showStatus('micro:bit USB connected (Serial)');
 
-        showStatus('micro:bit USB connected');
-
-        (async function readLoop() {
-          try {
-            while (true) {
-              const { value, done } = await reader.read();
-              if (done) break;
-              if (value) {
-                const lines = value.replace(/\r/g,'').split('\n');
-                for (const line of lines) {
-                  const trimmed = line.trim();
-                  if (trimmed) handleIncomingFromMicrobit(trimmed);
+          // read loop
+          (async function readLoop() {
+            try {
+              while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                if (value) {
+                  const lines = value.replace(/\r/g,'').split('\n');
+                  for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed) handleIncomingFromMicrobit(trimmed);
+                  }
                 }
               }
+            } catch (e) {
+              console.error('Serial read error', e);
+              showStatus('micro:bit USB disconnected');
             }
-          } catch (e) {
-            console.error('Serial read error', e);
-            showStatus('micro:bit USB disconnected');
-          }
-        })();
+          })();
 
-      } catch (err) {
-        console.error('connectMicrobit error:', err);
-        showStatus('micro:bit USB connection failed');
-        alert('USB connection error: ' + (err && err.message ? err.message : String(err)) +
-              '\n\nCheck:\n• micro:bit is connected by USB\n• You select the micro:bit device in the dialog\n• No other program is using the serial port.');
+          return; // USB serial connected - done
+        } catch (err) {
+          console.warn('Web Serial connection failed or cancelled:', err);
+          // continue to fallback to BLE
+        }
       }
+
+      // Fallback to Web Bluetooth if available
+      if ('bluetooth' in navigator) {
+        try {
+          showStatus('Requesting micro:bit (Web Bluetooth)...');
+          const device = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'BBC micro:bit' }],
+            optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+          });
+          showStatus('connecting (BLE)...');
+          const server = await device.gatt.connect();
+          const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+          const tx = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+          const rx = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
+
+          // store tx characteristic to send data
+          window._microbitTx = tx;
+
+          // set up notifications on rx (incoming data)
+          await rx.startNotifications();
+          rx.addEventListener('characteristicvaluechanged', (ev) => {
+            try {
+              const value = ev.target.value;
+              // read bytes and decode
+              const arr = new Uint8Array(value.buffer);
+              const text = new TextDecoder().decode(arr);
+              const lines = text.replace(/\r/g,'').split('\n');
+              for (const ln of lines) {
+                const t = ln.trim();
+                if (t) handleIncomingFromMicrobit(t);
+              }
+            } catch (e) { console.warn('BLE read parse failed', e); }
+          });
+
+          showStatus('micro:bit connected (BLE)');
+          alert('micro:bit connected via Bluetooth. Page can now send messages.');
+          return;
+        } catch (err) {
+          showError(err);
+          alert('Bluetooth connection failed or was cancelled.');
+          return;
+        }
+      }
+
+      // No supported APIs
+      alert('No supported micro:bit connection method available. Use Chrome/Edge (desktop) for Web Serial over HTTPS, or Chrome for Web Bluetooth.');
+      showStatus('no micro:bit API available');
     }
 
     function handleIncomingFromMicrobit(raw){
@@ -411,8 +481,15 @@
         sendCodeToMicrobit('WAVE');
         return;
       }
+
+      // generic: display incoming message in aiResult for debugging
+      const aiArea = document.getElementById('aiResult');
+      if (aiArea) {
+        aiArea.value = (aiArea.value ? aiArea.value + '\n' : '') + `micro:bit -> ${raw}`;
+      }
     }
 
+    // button wiring
     document.getElementById('startBtn').addEventListener('click', startCameraAndModel);
     document.getElementById('stopBtn').addEventListener('click', stopCamera);
     document.getElementById('downloadCsv').addEventListener('click', downloadCSV);
@@ -425,15 +502,8 @@
       }
     });
 
-    /* =========================
-       NEW: Backend + AI integration
-       - Log sample to Netlify function
-       - Ask server AI via Netlify function (Perplexity)
-       - Show AI result in aiResult textarea
-       ========================= */
-
+    /* Backend + AI integration (kept from your live-demo) */
     async function postSampleToServer(sample) {
-      // calls netlify function /.netlify/functions/log-sample
       try {
         const res = await fetch(`${API_BASE}/log-sample`, {
           method: 'POST',
@@ -455,14 +525,13 @@
           body: JSON.stringify({ latestSample })
         });
         const json = await res.json();
-        return json; // { ai_text, stored }
+        return json;
       } catch (err) {
         console.error('askAiForSample error', err);
         throw err;
       }
     }
 
-    // wire up the manual Log Sample and Request AI buttons (preserve original design)
     document.getElementById('btnLogSample').addEventListener('click', async () => {
       const sample = {
         location: document.getElementById('inputLocation').value || 'unknown',
@@ -495,7 +564,6 @@
     document.getElementById('btnAskServerAI').addEventListener('click', async () => {
       try {
         showStatus('Fetching latest sample...');
-        // prefer latest from server
         const rows = await fetch(`${API_BASE}/latest-samples?limit=1`).then(r => r.json());
         const latest = (rows && rows[0]) ? rows[0] : {
           location: document.getElementById('inputLocation').value || 'unknown',
@@ -511,7 +579,6 @@
         if (aiRes && aiRes.ai_text) {
           document.getElementById('aiResult').value = String(aiRes.ai_text).slice(0, 10000);
           showStatus('AI analysis returned');
-          // optionally show stored id
           if (aiRes.stored && aiRes.stored.id) {
             showStatus('AI stored id: ' + aiRes.stored.id);
           }
@@ -525,7 +592,7 @@
       }
     });
 
-    console.log('SMART VISION live demo loaded (enhanced).');
+    console.log('SMART VISION live demo (fixed) loaded.');
   </script>
 </body>
 </html>
