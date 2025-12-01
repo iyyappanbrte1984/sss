@@ -277,33 +277,62 @@ async function loadRemoteLayer(key, layerType) {
       });
     }
 
-    setupLayerToggle('layerPlastic','plastic');
-    setupLayerToggle('layerChl','chl');
-    setupLayerToggle('layerSst','sst');
-    setupLayerToggle('layerCurrents','currents');
-    setupLayerToggle('layerTurb','turb');
-    setupLayerToggle('layerMpa','mpa');
+    setupLayerToggle('layerPlastic','plastic'); // still placeholder for now
+document.getElementById('layerChl').addEventListener('change', async (e) => {
+  if (e.target.checked) {
+    await loadRemoteLayer('chl','chlorophyll');
+  } else if (overlayLayers.chl) {
+    map.removeLayer(overlayLayers.chl);
+  }
+});
+document.getElementById('layerSst').addEventListener('change', async (e) => {
+  if (e.target.checked) {
+    await loadRemoteLayer('sst','sst');
+  } else if (overlayLayers.sst) {
+    map.removeLayer(overlayLayers.sst);
+  }
+});
+
+// keep others as before
+setupLayerToggle('layerCurrents','currents');
+setupLayerToggle('layerTurb','turb');
+setupLayerToggle('layerMpa','mpa');
+
 
     // Simple date slider logic (last 7 days)
     const dateSlider = document.getElementById('dateSlider');
-    const dateLabel = document.getElementById('dateLabel');
+const dateLabel = document.getElementById('dateLabel');
 
-    function updateDateLabel(){
-      const daysAgo = parseInt(dateSlider.value,10);
-      if(daysAgo === 0){
-        dateLabel.textContent = 'Today';
-      } else if(daysAgo === 1){
-        dateLabel.textContent = '1 day ago';
-      } else {
-        dateLabel.textContent = daysAgo + ' days ago';
-      }
+async function refreshActiveRemoteLayers() {
+  // If chlorophyll is on, reload it
+  if (document.getElementById('layerChl').checked) {
+    await loadRemoteLayer('chl','chlorophyll');
+  }
+  // If SST is on, reload it
+  if (document.getElementById('layerSst').checked) {
+    await loadRemoteLayer('sst','sst');
+  }
+}
 
-      // Later: use daysAgo to request dated tiles from /api/ocean-data-layers
-      // Example idea:
-      // fetch(`/api/ocean-data-layers?layer=chl&daysAgo=${daysAgo}`).then(...)
-    }
-    dateSlider.addEventListener('input', updateDateLabel);
-    updateDateLabel();
+async function updateDateLabel(){
+  const daysAgo = parseInt(dateSlider.value,10);
+  currentDaysAgo = daysAgo;
+
+  if(daysAgo === 0){
+    dateLabel.textContent = 'Today';
+  } else if(daysAgo === 1){
+    dateLabel.textContent = '1 day ago';
+  } else {
+    dateLabel.textContent = daysAgo + ' days ago';
+  }
+
+  await refreshActiveRemoteLayers();
+}
+
+dateSlider.addEventListener('input', () => {
+  updateDateLabel();
+});
+updateDateLabel();
 
     // Example: simple rule to update health badge based on active layers
     const healthBadge = document.getElementById('healthBadge');
