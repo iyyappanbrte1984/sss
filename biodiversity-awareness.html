@@ -7,11 +7,565 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
 
   <style>
-    /* ...CSS unchanged... */
+    :root{
+      --ocean-900:#032735;
+      --ocean-700:#0b74de;
+      --ocean-500:#39a1ff;
+      --bg:#f4f9ff;
+      --card:#ffffff;
+      --muted:#6f8396;
+      --accent-cr:#e63946;
+      --accent-en:#f77f00;
+      --accent-vu:#90be6d;
+      --ai-purple:#7b2ff2;
+    }
+    *{box-sizing:border-box;}
+    html,body{
+      margin:0;
+      font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--ocean-900);
+      -webkit-font-smoothing:antialiased;
+    }
+
+    nav{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      display:flex;
+      justify-content:center;
+      gap:24px;
+      padding:12px 24px;
+      background:linear-gradient(90deg,#0077be,#00a8e8);
+      flex-wrap:wrap;
+    }
+    nav a{
+      color:#fff;
+      text-decoration:none;
+      font-weight:700;
+      font-size:16px;
+      padding:6px 18px;
+      border-radius:999px;
+    }
+    nav a:hover{background:rgba(255,255,255,0.22);}
+    nav a.active{background:rgba(255,255,255,0.3);}
+
+    .ocean-header{
+      text-align:center;
+      padding:32px 16px 40px;
+      font-size:28px;
+      font-weight:900;
+      letter-spacing:0.03em;
+      background:linear-gradient(90deg,#005fa3,#0088cc,#00b9e0);
+      color:#ffffff;
+      position:relative;
+      overflow:hidden;
+    }
+    .ocean-header::after{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:-18px;
+      height:40px;
+      background:
+        radial-gradient(circle at 20px -10px, transparent 24px, #f4f9ff 25px),
+        radial-gradient(circle at 60px -10px, transparent 24px, #f4f9ff 25px),
+        radial-gradient(circle at 100px -10px, transparent 24px, #f4f9ff 25px);
+      background-size:80px 40px;
+      background-repeat:repeat-x;
+      animation:oceanWave 5s linear infinite;
+    }
+    @keyframes oceanWave{
+      from{background-position-x:0;}
+      to{background-position-x:-80px;}
+    }
+
+    .page-shell{
+      max-width:1200px;
+      margin:0 auto;
+      padding:32px 16px 48px;
+    }
+
+    #endangered-gallery{
+      margin-top:10px;
+      padding:28px 24px 32px;
+      border-radius:20px;
+      background:var(--card);
+      box-shadow:0 12px 40px rgba(0,0,0,0.08);
+      border:2px solid rgba(11,116,222,0.15);
+    }
+    .gallery-heading{
+      font-size:32px;
+      margin:0 0 8px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:var(--ocean-700);
+      justify-content:center;
+    }
+    .gallery-subtitle{
+      font-size:15px;
+      color:var(--muted);
+      text-align:center;
+      max-width:800px;
+      margin:0 auto 20px;
+      line-height:1.6;
+    }
+    .gallery-subtitle span{
+      color:var(--ocean-700);
+      font-weight:700;
+    }
+
+    .gallery-toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:14px;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:24px;
+      padding:16px;
+      background:linear-gradient(135deg,#e3f2fd,#fff);
+      border-radius:12px;
+      border:1px solid rgba(11,116,222,0.2);
+    }
+    .legend-chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      font-size:13px;
+    }
+    .legend-chip{
+      border-radius:999px;
+      padding:6px 14px;
+      border:2px solid;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background:#fff;
+      font-weight:600;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+    }
+    .legend-chip.cr{border-color:var(--accent-cr);color:var(--accent-cr);}
+    .legend-chip.en{border-color:var(--accent-en);color:var(--accent-en);}
+    .legend-chip.vu{border-color:var(--accent-vu);color:var(--accent-vu);}
+    .legend-dot{
+      width:12px;
+      height:12px;
+      border-radius:50%;
+    }
+    .legend-dot.cr{background:var(--accent-cr);}
+    .legend-dot.en{background:var(--accent-en);}
+    .legend-dot.vu{background:var(--accent-vu);}
+
+    .gallery-main{
+      display:grid;
+      grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+      gap:24px;
+      margin-top:10px;
+    }
+    @media(max-width:1000px){
+      .gallery-main{grid-template-columns:1fr;}
+    }
+
+    .gallery-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+      gap:20px;
+    }
+
+    .species-card{
+      background:#fff;
+      color:var(--ocean-900);
+      border-radius:20px;
+      overflow:hidden;
+      position:relative;
+      box-shadow:0 8px 24px rgba(0,0,0,0.08);
+      border:2px solid rgba(11,116,222,0.1);
+      display:flex;
+      flex-direction:column;
+      min-height:420px;
+      transform:translateY(10px);
+      opacity:0;
+      animation:card-in 0.6s ease forwards;
+      transition:transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .species-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 16px 40px rgba(11,116,222,0.2);
+    }
+    .species-card:nth-child(1){animation-delay:0.1s;}
+    .species-card:nth-child(2){animation-delay:0.2s;}
+    .species-card:nth-child(3){animation-delay:0.3s;}
+    .species-card:nth-child(4){animation-delay:0.4s;}
+    .species-card:nth-child(5){animation-delay:0.5s;}
+    .species-card:nth-child(6){animation-delay:0.6s;}
+
+    @keyframes card-in{
+      to{transform:translateY(0);opacity:1;}
+    }
+
+    .species-photo-wrap{
+      position:relative;
+      height:200px;
+      overflow:hidden;
+      background:linear-gradient(135deg,#e3f2fd,#bbdefb);
+    }
+    .species-photo{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      transition:transform 0.4s ease;
+      display:block;
+    }
+    .species-card:hover .species-photo{
+      transform:scale(1.08);
+    }
+    .photo-overlay{
+      position:absolute;
+      inset:0;
+      background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.6));
+      pointer-events:none;
+    }
+
+    .status-badge{
+      position:absolute;
+      top:14px;
+      left:14px;
+      padding:6px 14px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      color:#fff;
+      box-shadow:0 6px 16px rgba(0,0,0,0.3);
+      backdrop-filter:blur(8px);
+    }
+    .species-card.status-cr .status-badge{
+      background:linear-gradient(135deg,#e63946,#d62828);
+    }
+    .species-card.status-en .status-badge{
+      background:linear-gradient(135deg,#f77f00,#f9844a);
+    }
+    .species-card.status-vu .status-badge{
+      background:linear-gradient(135deg,#90be6d,#76c893);
+    }
+    .iucn-pill{
+      position:absolute;
+      top:14px;
+      right:14px;
+      font-size:11px;
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.95);
+      color:var(--ocean-900);
+      border:1px solid rgba(0,0,0,0.1);
+      font-weight:700;
+      box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .species-body{
+      padding:16px 18px 18px;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .common-name{
+      font-size:22px;
+      font-weight:700;
+      color:var(--ocean-700);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .sci-name{
+      font-size:13px;
+      font-style:italic;
+      color:var(--muted);
+    }
+    .pop-count{
+      font-size:12px;
+      color:var(--ocean-900);
+      background:#e3f2fd;
+      padding:6px 10px;
+      border-radius:8px;
+      font-weight:600;
+    }
+    .bio-text{
+      font-size:13px;
+      line-height:1.6;
+      margin-top:6px;
+      color:#374151;
+    }
+    .threats{
+      list-style:none;
+      margin:8px 0 0;
+      padding:0;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .threats b{
+      color:var(--ocean-900);
+    }
+    .region-highlight{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--ocean-700);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-weight:600;
+      background:#fff3e0;
+      padding:6px 10px;
+      border-radius:8px;
+    }
+    .region-highlight span{
+      font-size:14px;
+    }
+
+    .ai-speech{
+      margin-top:10px;
+      font-size:12px;
+      font-style:italic;
+      color:var(--ai-purple);
+      background:linear-gradient(135deg,#f3e5f5,#e1bee7);
+      border-radius:12px;
+      padding:10px 12px;
+      border:2px solid rgba(123,47,242,0.3);
+      position:relative;
+      overflow:hidden;
+      transition:all 0.3s ease;
+    }
+    .species-card:hover .ai-speech{
+      background:linear-gradient(135deg,#e1bee7,#ce93d8);
+      border-color:var(--ai-purple);
+      transform:scale(1.02);
+    }
+    .ai-speech span{
+      font-size:16px;
+      font-weight:700;
+    }
+
+    .card-footer-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:10px;
+      padding-top:10px;
+      border-top:2px solid #e3f2fd;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .ask-ai-link{
+      color:var(--ai-purple);
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      font-weight:700;
+      font-size:12px;
+      padding:6px 12px;
+      background:#f3e5f5;
+      border-radius:999px;
+      transition:all 0.3s ease;
+    }
+    .ask-ai-link:hover{
+      background:var(--ai-purple);
+      color:#fff;
+      transform:scale(1.05);
+    }
+
+    .ai-panel{
+      border-radius:20px;
+      background:linear-gradient(135deg,#fff,#e3f2fd);
+      padding:20px;
+      border:2px solid rgba(11,116,222,0.2);
+      box-shadow:0 12px 40px rgba(0,0,0,0.08);
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      position:sticky;
+      top:80px;
+      max-height:calc(100vh - 100px);
+      overflow:auto;
+    }
+    .ai-panel-header{
+      position:relative;
+    }
+    .ai-title-row{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .ai-orb{
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      background:conic-gradient(from 0deg,#4cc9f0,#f72585,#4cc9f0);
+      box-shadow:0 0 20px rgba(76,201,240,0.6);
+      animation:spin 3s linear infinite;
+    }
+    @keyframes spin{
+      to{transform:rotate(360deg);}
+    }
+    .ai-title{
+      font-size:18px;
+      font-weight:700;
+      color:var(--ocean-700);
+    }
+    .ai-subtitle{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:4px;
+      line-height:1.4;
+    }
+    .ai-badge{
+      position:absolute;
+      top:0;
+      right:0;
+      padding:5px 12px;
+      border-radius:999px;
+      font-size:11px;
+      background:var(--ai-purple);
+      color:#fff;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .ai-display{
+      border-radius:16px;
+      background:#fff;
+      border:2px solid rgba(11,116,222,0.15);
+      padding:16px;
+      min-height:200px;
+      font-size:13px;
+      color:var(--ocean-900);
+      overflow:auto;
+      box-shadow:inset 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .ai-placeholder{
+      text-align:center;
+      font-size:13px;
+      color:var(--muted);
+      padding:32px 12px;
+      line-height:1.8;
+    }
+    .ai-placeholder strong{
+      color:var(--ocean-700);
+    }
+
+    .ai-loading{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+      padding:24px 0;
+    }
+    .ai-loading-spinner{
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      border:4px solid rgba(11,116,222,0.2);
+      border-top-color:#4cc9f0;
+      border-right-color:#f72585;
+      animation:spin 0.8s linear infinite;
+    }
+    .ai-loading-label{
+      font-size:12px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    .ai-answer-block{
+      animation:fade-up 0.5s ease-out;
+    }
+    @keyframes fade-up{
+      from{opacity:0;transform:translateY(12px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+    .ai-answer-title{
+      font-size:16px;
+      font-weight:700;
+      margin-bottom:12px;
+      color:var(--ocean-700);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .ai-metrics{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
+      gap:10px;
+      margin:8px 0 16px;
+    }
+    .ai-metric-card{
+      background:linear-gradient(135deg,#e3f2fd,#bbdefb);
+      border-radius:12px;
+      padding:12px;
+      border:2px solid rgba(11,116,222,0.3);
+      text-align:center;
+    }
+    .ai-metric-main{
+      font-size:20px;
+      font-weight:700;
+      color:var(--ocean-700);
+    }
+    .ai-metric-label{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .ai-body-text{
+      font-size:13px;
+      line-height:1.7;
+      color:#374151;
+      margin-bottom:12px;
+    }
+    .ai-footer-text{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:8px;
+      padding-top:12px;
+      border-top:1px solid #e3f2fd;
+    }
+
+    .ai-actions-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .ai-refresh-btn{
+      border-radius:999px;
+      border:0;
+      padding:8px 16px;
+      font-size:12px;
+      font-weight:700;
+      background:linear-gradient(90deg,#4cc9f0,#f72585);
+      color:#fff;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      transition:all 0.3s ease;
+    }
+    .ai-refresh-btn:hover{
+      transform:scale(1.05);
+      box-shadow:0 6px 20px rgba(76,201,240,0.4);
+    }
+
+    footer{
+      text-align:center;
+      margin:32px 0 16px;
+      color:var(--muted);
+      font-size:13px;
+    }
   </style>
 </head>
 <body>
-  <!-- Navigation matching other pages -->
   <nav>
     <a href="index.html">Home</a>
     <a href="live-demo.html">Live Demo</a>
@@ -24,157 +578,359 @@
     <a href="presentation-mode.html">Presentation Mode</a>
   </nav>
 
-  <!-- Header with wave animation -->
   <div class="ocean-header">
     🌊 RARE & ENDANGERED OCEAN SPECIES 🐋
   </div>
 
-<div class="page-shell">
-  <section id="endangered-gallery">
-    <h2 class="gallery-heading">🌊 Ocean's Most Threatened Animals</h2>
-    <p class="gallery-subtitle">
-      Discover some of the ocean's most threatened animals. Each card shows real conservation
-      status and an AI‑style "voice" explaining what that species needs from us. <span>Hover or click</span> to
-      explore, or ask the AI panel on the right for deeper insights.
-    </p>
+  <div class="page-shell">
+    <section id="endangered-gallery">
+      <h2 class="gallery-heading">🌊 Ocean's Most Threatened Animals</h2>
+      <p class="gallery-subtitle">
+        Discover some of the ocean's most threatened animals. Each card shows real conservation
+        status and an AI‑style "voice" explaining what that species needs from us. <span>Hover or click</span> to
+        explore, or ask the AI panel on the right for deeper insights.
+      </p>
 
-    <div class="gallery-toolbar">
-      <div class="legend-chips">
-        <div class="legend-chip cr">
-          <div class="legend-dot cr"></div><span>CR – Critically Endangered</span>
-        </div>
-        <div class="legend-chip en">
-          <div class="legend-dot en"></div><span>EN – Endangered</span>
-        </div>
-        <div class="legend-chip vu">
-          <div class="legend-dot vu"></div><span>VU – Vulnerable</span>
+      <div class="gallery-toolbar">
+        <div class="legend-chips">
+          <div class="legend-chip cr">
+            <div class="legend-dot cr"></div><span>CR – Critically Endangered</span>
+          </div>
+          <div class="legend-chip en">
+            <div class="legend-dot en"></div><span>EN – Endangered</span>
+          </div>
+          <div class="legend-chip vu">
+            <div class="legend-dot vu"></div><span>VU – Vulnerable</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="gallery-main">
-      <div class="gallery-grid">
-        <!-- species cards injected by JS -->
-      </div>
+      <div class="gallery-main">
+        <div class="gallery-grid"></div>
 
-      <aside class="ai-panel">
-        <div class="ai-panel-header">
-          <div class="ai-title-row">
-            <div class="ai-orb"></div>
-            <div>
-              <div class="ai-title">🤖 Ocean Species AI Explainer</div>
-              <div class="ai-subtitle">
-                Click <strong>"Ask the AI"</strong> on any card to get a detailed explanation here.
+        <aside class="ai-panel">
+          <div class="ai-panel-header">
+            <div class="ai-title-row">
+              <div class="ai-orb"></div>
+              <div>
+                <div class="ai-title">🤖 Ocean Species AI Explainer</div>
+                <div class="ai-subtitle">
+                  Click <strong>"Ask the AI"</strong> on any card to get a detailed explanation here.
+                </div>
               </div>
             </div>
+            <div class="ai-badge">
+              <span>🤖</span> AI Demo
+            </div>
           </div>
-          <div class="ai-badge">
-            <span>🤖</span> AI Demo
-          </div>
-        </div>
 
-        <div id="aiDisplay" class="ai-display">
-          <div class="ai-placeholder">
-            Choose a species on the left and tap<br>
-            <strong>"🤖 Ask the AI about this species"</strong><br>
-            to see a smart, student‑friendly explanation here.
+          <div id="aiDisplay" class="ai-display">
+            <div class="ai-placeholder">
+              Choose a species on the left and tap<br>
+              <strong>"🤖 Ask the AI about this species"</strong><br>
+              to see a smart, student‑friendly explanation here.
+            </div>
           </div>
-        </div>
 
-        <div class="ai-actions-row">
-          <div class="ai-small-note">
-            Educational conservation insights
+          <div class="ai-actions-row">
+            <div class="ai-small-note">Educational conservation insights</div>
+            <button class="ai-refresh-btn" type="button" id="aiRandomBtn">
+              <span>🎲</span> Surprise me
+            </button>
           </div>
-          <button class="ai-refresh-btn" type="button" id="aiRandomBtn">
-            <span>🎲</span> Surprise me
-          </button>
-        </div>
-      </aside>
-    </div>
-  </section>
+        </aside>
+      </div>
+    </section>
 
-  <footer>
-    © Vanavil Mandram • SMART VISION FOR A CLEANER OCEAN — 2025
-  </footer>
-</div>
+    <footer>
+      © Vanavil Mandram • SMART VISION FOR A CLEANER OCEAN — 2025
+    </footer>
+  </div>
 
 <script>
-  // === DATA: Endangered & Threatened Ocean Species ===
-  const endangeredSpecies = [
-    {
-      id:"vaquita",
-      commonName:"Vaquita",
-      sciName:"Phocoena sinus",
-      status:"CR",
-      img:"https://upload.wikimedia.org/wikipedia/commons/5/5c/Vaquita4_Olson_NOAA.jpg",
-      count:"< 30",
-      bio:"The vaquita is the world's rarest marine mammal, found only in the northern Gulf of California. Scientists believe fewer than 30 remain.",
-      threats:["Illegal gillnet fishing","Bycatch in totoaba nets","Habitat degradation"],
-      aiTip:"If I could speak, I'd ask for a net‑free sanctuary in my last remaining home in the Gulf of California.",
-      region:"Northern Gulf of California, Mexico"
-    },
-    {
-      id:"north_atlantic_right_whale",
-      commonName:"North Atlantic Right Whale",
-      sciName:"Eubalaena glacialis",
-      status:"CR",
-      img:"https://upload.wikimedia.org/wikipedia/commons/c/cf/North_Atlantic_Right_Whale_noaa_Fishery2.jpg",
-      count:"~340",
-      bio:"Once heavily hunted, this whale now struggles mainly with ship strikes and fishing gear entanglement along busy shipping corridors.",
-      threats:["Ship strikes","Fishing rope entanglement","Noise pollution"],
-      aiTip:"Slower ships, quieter seas, and safer fishing gear would give my calves a real chance to grow up.",
-      region:"Western North Atlantic Ocean"
-    },
-    {
-      id:"hawksbill_turtle",
-      commonName:"Hawksbill Turtle",
-      sciName:"Eretmochelys imbricata",
-      status:"CR",
-      img:"https://upload.wikimedia.org/wikipedia/commons/3/34/Hawksbill_turtle_by_Pakmat_%28Wikimedia%29.jpg",
-      count:"~8,000 nesting females",
-      bio:"A reef‑dwelling turtle prized for its beautiful shell. Habitat loss, egg collection, and plastic pollution have driven severe declines.",
-      threats:["Illegal shell trade","Egg harvesting","Marine plastics","Coral reef loss"],
-      aiTip:"Healthy coral reefs and plastic‑free coasts are my best hope. Every piece of plastic you skip truly helps.",
-      region:"Tropical coral reefs worldwide"
-    },
-    {
-      id:"giant_manta_ray",
-      commonName:"Giant Manta Ray",
-      sciName:"Mobula birostris",
-      status:"EN",
-      img:"https://upload.wikimedia.org/wikipedia/commons/2/25/Manta_birostris-Thompson.JPG",
-      count:"Declining",
-      bio:"With a wingspan up to 7 meters, giant mantas are filter‑feeding giants that migrate across ocean basins and often gather at cleaning stations.",
-      threats:["Overfishing for gill plates","Bycatch in nets","Pollution and microplastics"],
-      aiTip:"Protecting key aggregation sites and regulating trade in my gill plates lets me keep 'flying' through the open ocean.",
-      region:"Tropical & subtropical oceans worldwide"
-    },
-    {
-      id:"hawaiian_monk_seal",
-      commonName:"Hawaiian Monk Seal",
-      sciName:"Neomonachus schauinslandi",
-      status:"EN",
-      img:"https://upload.wikimedia.org/wikipedia/commons/6/6a/Hawaiian_monk_seal_%281%29.jpg",
-      count:"~1,500",
-      bio:"One of the world's only tropical seals, found mostly around the Northwestern Hawaiian Islands. Threatened by entanglement, disease, and habitat loss.",
-      threats:["Fishing gear entanglement","Disease","Loss of pupping beaches"],
-      aiTip:"Clean beaches, careful fisheries, and disease monitoring can keep pups safe along our remote island shores.",
-      region:"Hawaiian Archipelago"
-    },
-    {
-      id:"dugong",
-      commonName:"Dugong",
-      sciName:"Dugong dugon",
-      status:"VU",
-      img:"https://upload.wikimedia.org/wikipedia/commons/a/a4/Dugong_Marsa_Alam.jpg",
-      count:"Patchy & declining",
-      bio:"A gentle seagrass‑grazing relative of manatees. Dugongs depend on shallow, healthy seagrass meadows for food and shelter.",
-      threats:["Boat strikes","Seagrass loss","Entanglement","Hunting in some regions"],
-      aiTip:"Protecting quiet, clear seagrass meadows gives me—and many fish and invertebrates—a living underwater garden.",
-      region:"Coastal Indian & western Pacific Oceans"
-    }
-  ];
-  // ...rest of JS unchanged...
+const endangeredSpecies = [
+  {
+    id:"vaquita",
+    commonName:"Vaquita",
+    sciName:"Phocoena sinus",
+    status:"CR",
+    img:"https://upload.wikimedia.org/wikipedia/commons/5/5c/Vaquita4_Olson_NOAA.jpg",
+    count:"< 30",
+    bio:"The vaquita is the world's rarest marine mammal, found only in the northern Gulf of California. Scientists believe fewer than 30 remain.",
+    threats:["Illegal gillnet fishing","Bycatch in totoaba nets","Habitat degradation"],
+    aiTip:"If I could speak, I'd ask for a net‑free sanctuary in my last remaining home in the Gulf of California.",
+    region:"Northern Gulf of California, Mexico"
+  },
+  {
+    id:"north_atlantic_right_whale",
+    commonName:"North Atlantic Right Whale",
+    sciName:"Eubalaena glacialis",
+    status:"CR",
+    img:"https://upload.wikimedia.org/wikipedia/commons/c/cf/North_Atlantic_Right_Whale_noaa_Fishery2.jpg",
+    count:"~340",
+    bio:"Once heavily hunted, this whale now struggles mainly with ship strikes and fishing gear entanglement along busy shipping corridors.",
+    threats:["Ship strikes","Fishing rope entanglement","Noise pollution"],
+    aiTip:"Slower ships, quieter seas, and safer fishing gear would give my calves a real chance to grow up.",
+    region:"Western North Atlantic Ocean"
+  },
+  {
+    id:"hawksbill_turtle",
+    commonName:"Hawksbill Turtle",
+    sciName:"Eretmochelys imbricata",
+    status:"CR",
+    img:"https://upload.wikimedia.org/wikipedia/commons/3/34/Hawksbill_turtle_by_Pakmat_%28Wikimedia%29.jpg",
+    count:"~8,000 nesting females",
+    bio:"A reef‑dwelling turtle prized for its beautiful shell. Habitat loss, egg collection, and plastic pollution have driven severe declines.",
+    threats:["Illegal shell trade","Egg harvesting","Marine plastics","Coral reef loss"],
+    aiTip:"Healthy coral reefs and plastic‑free coasts are my best hope. Every piece of plastic you skip truly helps.",
+    region:"Tropical coral reefs worldwide"
+  },
+  {
+    id:"giant_manta_ray",
+    commonName:"Giant Manta Ray",
+    sciName:"Mobula birostris",
+    status:"EN",
+    img:"https://upload.wikimedia.org/wikipedia/commons/2/25/Manta_birostris-Thompson.JPG",
+    count:"Declining",
+    bio:"With a wingspan up to 7 meters, giant mantas are filter‑feeding giants that migrate across ocean basins and often gather at cleaning stations.",
+    threats:["Overfishing for gill plates","Bycatch in nets","Pollution and microplastics"],
+    aiTip:"Protecting key aggregation sites and regulating trade in my gill plates lets me keep 'flying' through the open ocean.",
+    region:"Tropical & subtropical oceans worldwide"
+  },
+  {
+    id:"hawaiian_monk_seal",
+    commonName:"Hawaiian Monk Seal",
+    sciName:"Neomonachus schauinslandi",
+    status:"EN",
+    img:"https://upload.wikimedia.org/wikipedia/commons/6/6a/Hawaiian_monk_seal_%281%29.jpg",
+    count:"~1,500",
+    bio:"One of the world's only tropical seals, found mostly around the Northwestern Hawaiian Islands. Threatened by entanglement, disease, and habitat loss.",
+    threats:["Fishing gear entanglement","Disease","Loss of pupping beaches"],
+    aiTip:"Clean beaches, careful fisheries, and disease monitoring can keep pups safe along our remote island shores.",
+    region:"Hawaiian Archipelago"
+  },
+  {
+    id:"dugong",
+    commonName:"Dugong",
+    sciName:"Dugong dugon",
+    status:"VU",
+    img:"https://upload.wikimedia.org/wikipedia/commons/a/a4/Dugong_Marsa_Alam.jpg",
+    count:"Patchy & declining",
+    bio:"A gentle seagrass‑grazing relative of manatees. Dugongs depend on shallow, healthy seagrass meadows for food and shelter.",
+    threats:["Boat strikes","Seagrass loss","Entanglement","Hunting in some regions"],
+    aiTip:"Protecting quiet, clear seagrass meadows gives me—and many fish and invertebrates—a living underwater garden.",
+    region:"Coastal Indian & western Pacific Oceans"
+  }
+];
+
+const aiExplain = {
+  vaquita: {
+    title:"Why is the Vaquita so close to extinction?",
+    metrics:[
+      {main:"< 30",label:"Individuals left"},
+      {main:"1",label:"Small home range"},
+      {main:"Gillnets",label:"Top threat"}
+    ],
+    body:[
+      "The vaquita lives in only one small region of the ocean: the northern Gulf of California. That limited range makes it extremely vulnerable to any local threat.",
+      "For many years, illegal fishing for another fish (the totoaba) used gillnets that the vaquita cannot detect. These nearly invisible nets entangle and drown the porpoises.",
+      "Conservation efforts now focus on enforcing gillnet‑free zones and finding alternative livelihoods for local fishers. Each net removed from the water could mean one more vaquita survives."
+    ],
+    footer:"This explanation is based on conservation reports for the vaquita, simplified for students."
+  },
+  north_atlantic_right_whale:{
+    title:"What is pushing the North Atlantic right whale to the edge?",
+    metrics:[
+      {main:"~340",label:"Individuals left"},
+      {main:"Ship strikes",label:"Major cause of death"},
+      {main:"Entanglement",label:"Chronic stress"}
+    ],
+    body:[
+      "Right whales migrate through some of the busiest shipping lanes in the North Atlantic. Collisions with large vessels can be fatal, especially for calves.",
+      "Fishing ropes and lines can wrap around whales, cutting into skin and slowing them down. Over time, this makes it harder for them to feed, heal, and reproduce.",
+      "Solutions include speed restrictions, route changes, and new rope‑free fishing technologies designed to protect both whales and fishers' livelihoods."
+    ],
+    footer:"Data adapted from whale research organizations and IUCN summaries."
+  },
+  hawksbill_turtle:{
+    title:"Why are Hawksbill turtles critically endangered?",
+    metrics:[
+      {main:"CR",label:"IUCN status"},
+      {main:"Shell trade",label:"Historic threat"},
+      {main:"Coral reefs",label:"Key habitat at risk"}
+    ],
+    body:[
+      "Hawksbills were hunted for centuries for their beautifully patterned shells used in jewelry and ornaments. Although international trade is now banned, illegal trade still occurs.",
+      "They nest on tropical beaches and feed around coral reefs—both of which are threatened by coastal development, climate change, and pollution.",
+      "Reducing demand for wildlife products, protecting nesting beaches, and safeguarding coral reefs all help Hawksbill populations recover."
+    ],
+    footer:"Explanation inspired by sea turtle conservation groups and global assessments."
+  },
+  giant_manta_ray:{
+    title:"What makes Giant manta rays vulnerable?",
+    metrics:[
+      {main:"7 m",label:"Wingspan up to"},
+      {main:"Slow",label:"Reproduction rate"},
+      {main:"Gill trade",label:"Key threat"}
+    ],
+    body:[
+      "Giant mantas produce very few young, typically a single pup after a long gestation. That means populations recover slowly from any losses.",
+      "Targeted fishing and bycatch have increased due to demand for manta gill plates in some traditional medicines and markets.",
+      "Marine protected areas, ecotourism, and strict regulations on targeted fishing give these 'flying' rays a chance to rebuild their numbers."
+    ],
+    footer:"Summarized from scientific literature on manta ray life history and fisheries."
+  },
+  hawaiian_monk_seal:{
+    title:"Why is the Hawaiian monk seal endangered?",
+    metrics:[
+      {main:"~1,500",label:"Remaining seals"},
+      {main:"Beaches",label:"Crucial for pups"},
+      {main:"Entanglement",label:"Frequent hazard"}
+    ],
+    body:[
+      "Hawaiian monk seals rely on quiet, undisturbed beaches to give birth and raise pups. Coastal development and disturbance can reduce the quality of these pupping sites.",
+      "Fishing nets and marine debris can trap curious seals, leading to injury or death.",
+      "Conservation programs in Hawaii combine beach protection, debris removal, and careful human‑wildlife coexistence to support monk seal recovery."
+    ],
+    footer:"Based on NOAA and local conservation program summaries."
+  },
+  dugong:{
+    title:"How do Dugongs tell us if seagrass meadows are healthy?",
+    metrics:[
+      {main:"'Sea cows'",label:"Nicknamed"},
+      {main:"Seagrass",label:"Main food"},
+      {main:"Shallow",label:"Coastal habitat"}
+    ],
+    body:[
+      "Dugongs depend on shallow seagrass beds, which are sensitive to pollution, dredging, and climate‑driven changes.",
+      "Where dugongs thrive, it often means that water quality is high and seagrass meadows are doing well—supporting many fish, invertebrates, and coastal communities.",
+      "Protecting dugongs means protecting seagrass, which also stores 'blue carbon' and helps buffer coasts from erosion."
+    ],
+    footer:"Drawn from seagrass and marine mammal conservation research."
+  }
+};
+
+function renderEndangeredCards(){
+  const grid=document.querySelector(".gallery-grid");
+  grid.innerHTML="";
+  endangeredSpecies.forEach(species=>{
+    const card=document.createElement("article");
+    card.className=`species-card status-${species.status.toLowerCase()}`;
+
+    const statusLabel = species.status==="CR" ? "Critically Endangered" :
+                        species.status==="EN" ? "Endangered" :
+                        species.status==="VU" ? "Vulnerable" : species.status;
+
+    card.innerHTML=`
+      <div class="species-photo-wrap">
+        <img src="${species.img}" alt="${species.commonName}" class="species-photo"
+             onerror="this.src='https://via.placeholder.com/600x400/0b74de/ffffff?text=${encodeURIComponent(species.commonName)}';">
+        <div class="photo-overlay"></div>
+        <div class="status-badge">${statusLabel}</div>
+        <div class="iucn-pill">IUCN: ${species.status}</div>
+      </div>
+      <div class="species-body">
+        <div class="common-name">
+          <span>${species.commonName}</span>
+        </div>
+        <div class="sci-name">${species.sciName}</div>
+        <div class="pop-count">📊 Estimated remaining: <strong>${species.count}</strong></div>
+        <div class="bio-text">${species.bio}</div>
+        <ul class="threats">
+          <li><b>Key threats:</b> ${species.threats.join(", ")}</li>
+        </ul>
+        <div class="region-highlight"><span>📍</span>${species.region}</div>
+        <div class="ai-speech"><span>"</span>${species.aiTip}<span>"</span></div>
+        <div class="card-footer-row">
+          <span class="ask-ai-link" data-species="${species.id}">
+            🤖 Ask the AI about this species
+          </span>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener("click",()=>{
+      card.style.transform="scale(1.02)";
+      setTimeout(()=>card.style.transform="",200);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+function showAiLoading(){
+  const box=document.getElementById("aiDisplay");
+  if (!box) return;
+  box.innerHTML=`
+    <div class="ai-loading">
+      <div class="ai-loading-spinner"></div>
+      <div class="ai-loading-label">
+        🔍 Analyzing conservation data and recent science for this species…
+      </div>
+    </div>
+  `;
+}
+
+function showAiAnswerBlock(speciesId){
+  const cfg = aiExplain[speciesId];
+  const species = endangeredSpecies.find(s=>s.id===speciesId);
+  if(!cfg || !species) return;
+  const box=document.getElementById("aiDisplay");
+  if(!box) return;
+
+  const metricsHTML = (cfg.metrics||[]).map(m=>`
+    <div class="ai-metric-card">
+      <div class="ai-metric-main">${m.main}</div>
+      <div class="ai-metric-label">${m.label}</div>
+    </div>
+  `).join("");
+
+  const bodyHTML = (cfg.body||[]).map(p=>`
+    <p class="ai-body-text">${p}</p>
+  `).join("");
+
+  box.innerHTML=`
+    <div class="ai-answer-block">
+      <div class="ai-answer-title">
+        <span>🤖</span>
+        <span>${cfg.title}</span>
+      </div>
+      <div class="ai-metrics">${metricsHTML}</div>
+      ${bodyHTML}
+      <div class="ai-footer-text">
+        <strong>About ${species.commonName}</strong> (<em>${species.sciName}</em>): ${cfg.footer}
+      </div>
+    </div>
+  `;
+}
+
+function attachAiHandlers(){
+  document.querySelectorAll(".ask-ai-link").forEach(link=>{
+    link.addEventListener("click",(e)=>{
+      e.stopPropagation();
+      const speciesId = link.getAttribute("data-species");
+      if(!speciesId) return;
+      showAiLoading();
+      setTimeout(()=>showAiAnswerBlock(speciesId),900);
+    });
+  });
+
+  const randomBtn=document.getElementById("aiRandomBtn");
+  if(randomBtn){
+    randomBtn.addEventListener("click",()=>{
+      const ids = Object.keys(aiExplain);
+      if(!ids.length) return;
+      const pick = ids[Math.floor(Math.random()*ids.length)];
+      showAiLoading();
+      setTimeout(()=>showAiAnswerBlock(pick),900);
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  renderEndangeredCards();
+  attachAiHandlers();
+});
 </script>
 
 </body>
