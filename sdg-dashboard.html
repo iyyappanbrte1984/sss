@@ -101,7 +101,7 @@
     <a href="index.html">Home</a>
     <a href="live-demo.html">Live Demo</a>
     <a href="marine-dashboard.html">Marine AI Dashboard</a>
-        <a href="ocean-explorer.html">Ocean Explorer</a>
+    <a href="ocean-explorer.html">Ocean Explorer</a>
     <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
     <a href="pollution-pathways.html">Pollution Pathways</a>
     <a href="biodiversity-awareness.html">Red List & Self‑Assessment</a>
@@ -146,12 +146,12 @@
       </div>
     </section>
 
-    <!-- Charts + SDG explanation -->
+    <!-- Water trends + SDG explanation -->
     <section class="grid-2">
       <div class="card">
         <h3>Water Quality Trend</h3>
         <p>Shows how average conditions at your lakes are changing over time.</p>
-        anvas id="waterChart" height="140"></canvas>
+        <canvas id="waterChart" height="140"></canvas>
       </div>
 
       <div class="card">
@@ -160,8 +160,8 @@
         <div class="sdg-tags">
           <span class="sdg-tag">14.1 Marine Pollution</span>
           <span class="sdg-tag">14.2 Ecosystem Health</span>
-          <span class="sdg-tag">14.3 Climate & Acidification</span>
-          <span class="sdg-tag">14.5 Conservation</span>
+          <span class="sdg-tag">14.3 Ocean Acidification</span>
+          <span class="sdg-tag">14.5 Conservation Awareness</span>
         </div>
         <div style="margin-top:10px;font-size:12px;color:var(--muted);">
           Today’s SDG‑14 status:
@@ -172,8 +172,21 @@
       </div>
     </section>
 
-    <!-- Marine life + AI insight -->
+    <!-- Plastic pollution + marine life -->
     <section class="grid-2">
+      <div class="card">
+        <h3>Plastic Debris Density (SDG 14.1.1b)</h3>
+        <p>Plastic items per 100 m of shoreline from student clean‑up surveys.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;font-size:12px;">
+          <label for="pollutionSiteSelect">Site:</label>
+          <select id="pollutionSiteSelect"></select>
+        </div>
+        <canvas id="pollutionChart" height="150"></canvas>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px;">
+          UN SDG 14.1.1b uses plastic debris density to track progress on reducing marine pollution.[web:89][web:90]
+        </p>
+      </div>
+
       <div class="card">
         <h3>Marine Life & Coral Health</h3>
         <p>Your local plastic and water‑quality data can be linked to stress on fish, corals and other species in downstream rivers and the Bay of Bengal.</p>
@@ -184,17 +197,20 @@
           Waiting for latest samples...
         </div>
       </div>
+    </section>
 
+    <!-- SDG progress doughnut -->
+    <section class="grid-2">
       <div class="card">
         <h3>Your Contribution to SDG 14</h3>
         <p>A simple progress estimate towards your own 2030 goals.</p>
-        anvas id="progressChart" height="130"></canvas>
+        <canvas id="progressChart" height="130"></canvas>
       </div>
     </section>
   </main>
 
   <footer>
-    SDG 14 dashboard powered by Vercel · Supabase · Planet · Perplexity AI
+    SDG 14 dashboard powered by Vercel · Supabase · Planet · AI Assist
   </footer>
 
   <script>
@@ -202,6 +218,9 @@
 
     let waterChart = null;
     let progressChart = null;
+    let pollutionChart = null;
+    let pollutionData = [];
+    let pollutionSites = [];
 
     // Utility easing counter
     function animateValue(el, start, end, duration, suffix=""){
@@ -216,7 +235,7 @@
       requestAnimationFrame(update);
     }
 
-    async function fetchLatestSamples(limit=50){
+    async function fetchLatestSamples(limit=60){
       try{
         const r = await fetch(`${API_BASE}/latest-samples?limit=${limit}`);
         if(!r.ok) throw new Error("Failed to fetch samples");
@@ -227,7 +246,20 @@
       }
     }
 
-    // Placeholder: later replace with /api/sdg-metrics
+    async function fetchPollutionData(){
+      try{
+        const r = await fetch(`${API_BASE}/sdg-141-pollution`);
+        if(!r.ok) throw new Error("Failed to fetch SDG 14.1 data");
+        pollutionData = await r.json();
+        pollutionSites = [...new Set(pollutionData.map(d => d.site))];
+      }catch(e){
+        console.error("pollution error:",e);
+        pollutionData = [];
+        pollutionSites = [];
+      }
+    }
+
+    // Simple SDG metrics derived from samples
     function computeSdgMetrics(samples){
       const totalSamples = samples.length;
       if(totalSamples === 0){
@@ -236,15 +268,33 @@
           waterImprovement: 0,
           communityCount: 0,
           areaKm2: 0,
-          sdgProgress: 20
+          sdgProgress: 5
         };
       }
-      // Very simple mock calculations
-      const plasticKg = Math.min(120, totalSamples * 0.4); // pretend each sample represents 0.4kg prevented
-      const waterImprovement = Math.min(35, 5 + totalSamples * 0.3);
-      const communityCount = Math.min(450, 50 + totalSamples * 2);
-      const areaKm2 = 150 + totalSamples * 1.5;
-      const sdgProgress = Math.min(90, 30 + totalSamples * 0.5);
+
+      const plasticKg = Math.min(200, totalSamples * 0.4);
+
+      let goodCount = 0;
+      samples.forEach(s => {
+        const ph = Number(s.ph || 0);
+        const temp = Number(s.temperature || 0);
+        const turb = Number(s.turbidity || 0);
+        const okPh = ph >= 7.6 && ph <= 8.4;
+        const okTemp = temp >= 24 && temp <= 30;
+        const okTurb = turb <= 5;
+        if(okPh && okTemp && okTurb) goodCount++;
+      });
+      const waterImprovement = Math.round((goodCount / totalSamples) * 100);
+
+      const locations = new Set(samples.map(s => s.location || "Site"));
+      const communityCount = Math.min(500, locations.size * 40);
+
+      const areaKm2 = 5 + locations.size * 3;
+
+      const plasticScore = Math.min(100, (plasticKg / 150) * 100);
+      const waterScore = waterImprovement;
+      const communityScore = Math.min(100, (communityCount / 500) * 100);
+      const sdgProgress = Math.round((plasticScore*0.4 + waterScore*0.3 + communityScore*0.3));
 
       return {plasticKg, waterImprovement, communityCount, areaKm2, sdgProgress};
     }
@@ -255,8 +305,16 @@
 
       animateValue(document.getElementById("valWater"), 0, Math.round(metrics.waterImprovement), 700, "%");
       const chipWater = document.getElementById("chipWater");
-      chipWater.textContent = metrics.waterImprovement >= 20 ? "Status: Healthy" : "Status: Watch";
-      chipWater.className = "metric-chip " + (metrics.waterImprovement >= 20 ? "chip-ok" : "chip-warn");
+      if(metrics.waterImprovement >= 70){
+        chipWater.textContent = "Status: Healthy";
+        chipWater.className = "metric-chip chip-ok";
+      }else if(metrics.waterImprovement >= 40){
+        chipWater.textContent = "Status: Watch";
+        chipWater.className = "metric-chip chip-warn";
+      }else{
+        chipWater.textContent = "Status: Concern";
+        chipWater.className = "metric-chip chip-bad";
+      }
 
       animateValue(document.getElementById("valCommunity"), 0, Math.round(metrics.communityCount), 700, "");
       document.getElementById("chipCommunity").textContent = `Target: ${Math.round(metrics.communityCount)} / 500`;
@@ -266,7 +324,10 @@
     }
 
     function renderWaterChart(samples){
-      const ctx = document.getElementById("waterChart").getContext("2d");
+      const canvas = document.getElementById("waterChart");
+      if(!canvas) return;
+      const ctx = canvas.getContext("2d");
+
       const byDay = {};
       samples.forEach(s => {
         const d = new Date(s.recorded_at);
@@ -278,10 +339,12 @@
       });
 
       const labels = Object.keys(byDay).sort((a,b)=> new Date(a)-new Date(b));
-      const avgTemp = labels.map(k => byDay[k].temp / byDay[k].count);
-      const avgTurb = labels.map(k => byDay[k].turb / byDay[k].count);
+      const avgTemp = labels.map(k => byDay[k].temp / byDay[k].count || 0);
+      const avgTurb = labels.map(k => byDay[k].turb / byDay[k].count || 0);
 
       if(waterChart) waterChart.destroy();
+      if(labels.length === 0) return;
+
       waterChart = new Chart(ctx,{
         type:"line",
         data:{
@@ -317,7 +380,9 @@
     }
 
     function renderProgressChart(progress){
-      const ctx = document.getElementById("progressChart").getContext("2d");
+      const canvas = document.getElementById("progressChart");
+      if(!canvas) return;
+      const ctx = canvas.getContext("2d");
       if(progressChart) progressChart.destroy();
       progressChart = new Chart(ctx,{
         type:"doughnut",
@@ -336,39 +401,134 @@
       });
     }
 
-    async function fetchSdgAnalysis(samples, metrics){
+    function populateSiteDropdown(){
+      const sel = document.getElementById("pollutionSiteSelect");
+      if(!sel) return;
+      sel.innerHTML = "";
+
+      if(pollutionSites.length === 0){
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No survey data yet";
+        sel.appendChild(opt);
+        sel.disabled = true;
+        return;
+      }
+
+      sel.disabled = false;
+      pollutionSites.forEach(site => {
+        const opt = document.createElement("option");
+        opt.value = site;
+        opt.textContent = site;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderPollutionChart(site){
+      const canvas = document.getElementById("pollutionChart");
+      if(!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      const filtered = pollutionData.filter(d => !site || d.site === site);
+      const labels = filtered.map(d => new Date(d.date).toLocaleDateString());
+      const values = filtered.map(d => d.items_per_100m);
+
+      if(pollutionChart) pollutionChart.destroy();
+      if(labels.length === 0){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        return;
+      }
+
+      pollutionChart = new Chart(ctx,{
+        type:"line",
+        data:{
+          labels,
+          datasets:[{
+            label:"Plastic items per 100 m",
+            data:values,
+            borderColor:"#e63946",
+            backgroundColor:"rgba(230,57,70,0.12)",
+            tension:0.35,
+            fill:true,
+            pointRadius:4,
+            pointHoverRadius:6
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              callbacks:{
+                label:ctx => `${ctx.parsed.y.toFixed(1)} items / 100 m`
+              }
+            }
+          },
+          scales:{
+            y:{
+              title:{display:true,text:"Items per 100 m"},
+              beginAtZero:true,
+              grid:{color:"#f0f7fc"}
+            },
+            x:{grid:{display:false}}
+          }
+        }
+      });
+    }
+
+    function writeSdgAnalysis(samples, metrics){
       const box = document.getElementById("sdgAnalysis");
-      try{
-        // Later you can call your AI endpoint here.
-        // For now, create a simple text based on metrics.
-        const lines = [];
-        lines.push(`Plastic prevented so far: ~${Math.round(metrics.plasticKg)} kg.`);
-        lines.push(`Average water quality improvement: ${Math.round(metrics.waterImprovement)}%.`);
-        lines.push(`Community members engaged: ~${Math.round(metrics.communityCount)} people.`);
-        lines.push("");
-        lines.push("Local monitoring of lakes and rivers is helping to reduce plastic leakage into the Bay of Bengal, supporting SDG 14.1 on marine pollution and SDG 14.2 on ecosystem health.");
-        box.textContent = lines.join("\n");
-      }catch(e){
-        console.error("sdg analysis error:",e);
-        box.textContent = "Unable to generate SDG analysis right now.";
+      if(samples.length === 0){
+        box.textContent =
+`No field data has been logged yet.
+
+Once students start adding water‑quality samples and plastic observations, this panel will summarise how your project supports:
+• SDG 14.1 – reducing plastic and pollution entering rivers;
+• SDG 14.2 – protecting local freshwater and coastal ecosystems;
+• SDG 14.3 – tracking pH to watch for acidification trends.`;
+        return;
+      }
+
+      const lines = [];
+      lines.push(`Plastic prevented so far (school estimate): ~${Math.round(metrics.plasticKg)} kg.`);
+      lines.push(`Approximate water‑quality readings in safe range: ${Math.round(metrics.waterImprovement)}% of recent samples.`);
+      lines.push(`Estimated students and volunteers engaged: ~${Math.round(metrics.communityCount)} people.`);
+      lines.push("");
+      lines.push("This work directly supports SDG 14.1 by lowering plastic leakage and visible litter in local waterways (plastic debris density indicator).");
+      lines.push("Improving and tracking water quality supports SDG 14.2 on protecting aquatic ecosystems, because cleaner water benefits fish and wetlands downstream.");
+      lines.push("By watching pH trends you also connect to SDG 14.3 on ocean acidification, using local measurements to understand chemistry changes.");
+      box.textContent = lines.join("\n");
+
+      // If we have pollution data, append latest value
+      if(pollutionData.length){
+        const latest = pollutionData[pollutionData.length - 1];
+        const lastVal = latest.items_per_100m.toFixed(1);
+        box.textContent += `\n\nLatest shoreline survey at ${latest.site} recorded about ${lastVal} plastic items per 100 m. Repeated clean‑ups should gradually push this SDG 14.1.1b indicator downwards.`;
       }
     }
 
     function renderLifeAnalysis(samples){
       const box = document.getElementById("lifeAnalysis");
       if(samples.length === 0){
-        box.textContent = "No samples yet. Once water quality data is available, this panel can highlight possible stress on fish, invertebrates and coral reefs downstream.";
+        box.textContent =
+" No samples yet. Once water quality data is available, this panel can highlight possible stress on fish, invertebrates and coral reefs downstream.";
         return;
       }
       const latest = samples[0];
       const lines = [];
       lines.push(`Latest sample: ${new Date(latest.recorded_at).toLocaleString()} from ${latest.location || "unknown site"}.`);
-      lines.push(`pH: ${Number(latest.ph || 0).toFixed(2)}, temperature: ${Number(latest.temperature || 0).toFixed(1)} °C, turbidity: ${Number(latest.turbidity || 0).toFixed(2)}.`);
-
+      lines.push(`pH: ${Number(latest.ph || 0).toFixed(2)}, temperature: ${Number(latest.temperature || 0).toFixed(1)} °C, turbidity: ${Number(latest.turbidity || 0).toFixed(2)} NTU.`);
       lines.push("");
-      lines.push("If high turbidity and plastic persist, downstream habitats such as estuaries and coastal coral communities can face increased stress. Linking this dashboard with IUCN Red List information will help show which species may benefit when pollution is reduced.");
+      lines.push("If turbidity and plastic stay low, habitats downstream (rivers, estuaries and the Bay of Bengal) are more likely to support healthy fish and invertebrate populations. Linking this dashboard with Red List data will show which threatened species benefit when your SDG‑14 actions succeed.");
       box.textContent = lines.join("\n");
     }
+
+    // Dropdown change handler
+    document.addEventListener("change", e => {
+      if(e.target.id === "pollutionSiteSelect"){
+        renderPollutionChart(e.target.value);
+      }
+    });
 
     (async function init(){
       const samples = await fetchLatestSamples(60);
@@ -376,7 +536,13 @@
       renderMetrics(metrics);
       renderWaterChart(samples);
       renderProgressChart(metrics.sdgProgress);
-      await fetchSdgAnalysis(samples, metrics);
+
+      await fetchPollutionData();
+      populateSiteDropdown();
+      const defaultSite = pollutionSites[0] || null;
+      renderPollutionChart(defaultSite);
+
+      writeSdgAnalysis(samples, metrics);
       renderLifeAnalysis(samples);
     })();
   </script>
