@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SDG 14 Dashboard — SMART VISION</title>
+  <title>SDG 14 Impact Console — SMART VISION</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -39,6 +39,11 @@
 
     .wrap{max-width:1200px;margin:26px auto 30px;padding:0 20px;}
 
+    .card{
+      background:#fff;border-radius:16px;padding:20px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,119,190,0.08);
+    }
     .metrics-grid{
       display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
       gap:18px;margin-bottom:26px;
@@ -66,17 +71,9 @@
     .chip-bad{background:var(--bad);}
 
     .grid-2{
-      display:grid;grid-template-columns:2fr 1.2fr;gap:18px;margin-bottom:24px;
+      display:grid;grid-template-columns:2fr 1.3fr;gap:18px;margin-bottom:24px;
     }
     @media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
-
-    .card{
-      background:#fff;border-radius:16px;padding:20px;
-      box-shadow:0 10px 30px rgba(0,0,0,0.06);
-      border:1px solid rgba(0,119,190,0.08);
-    }
-    .card h3{font-size:18px;margin-bottom:8px;}
-    .card p{font-size:13px;color:var(--muted);margin-bottom:4px;}
 
     .sdg-tags{
       display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:11px;
@@ -92,6 +89,10 @@
       font-size:12px;color:var(--muted);
       max-height:180px;overflow:auto;white-space:pre-line;
     }
+
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+    th,td{padding:8px 6px;text-align:left;border-bottom:1px solid #e5f0f8;}
+    th{background:#f4f7fb;font-weight:600;}
 
     footer{margin:26px 0 16px;text-align:center;font-size:12px;color:var(--muted);}
   </style>
@@ -110,12 +111,33 @@
   </nav>
 
   <header class="hero-header">
-    <h1>SDG 14 IMPACT DASHBOARD</h1>
-    <p>Tracking plastic reduction, ocean health, and life below water</p>
+    <h1>SDG 14 IMPACT CONSOLE</h1>
+    <p>Marine‑engineer view of plastic pollution, water quality, and student SDG actions</p>
   </header>
 
   <main class="wrap">
-    <!-- Top metrics -->
+    <!-- PROJECT SCORECARD -->
+    <section class="card" style="margin-bottom:18px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;">
+      <div>
+        <h3 style="margin-bottom:4px;">Project SDG 14 Scorecard</h3>
+        <p style="font-size:13px;color:var(--muted);">
+          Live summary of how your students are advancing SDG 14: Life Below Water — pollution, ecosystem health, and pH / climate awareness.[web:79][web:80]
+        </p>
+      </div>
+      <div style="display:flex;gap:14px;font-size:12px;text-align:center;">
+        <div>
+          <strong id="score141">–</strong><br/>SDG 14.1<br/><span style="color:var(--muted);">Pollution</span>
+        </div>
+        <div>
+          <strong id="score142">–</strong><br/>SDG 14.2<br/><span style="color:var(--muted);">Ecosystems</span>
+        </div>
+        <div>
+          <strong id="score143">–</strong><br/>SDG 14.3<br/><span style="color:var(--muted);">pH & Climate</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOP METRICS -->
     <section class="metrics-grid">
       <div class="metric-card">
         <div class="metric-label">Plastic Removed</div>
@@ -127,7 +149,7 @@
       <div class="metric-card">
         <div class="metric-label">Water Quality Improvement</div>
         <div class="metric-value" id="valWater">0%</div>
-        <div class="metric-unit">vs. baseline pH, temperature, turbidity</div>
+        <div class="metric-unit">samples in safe pH, temperature, turbidity range</div>
         <span class="metric-chip chip-warn" id="chipWater">Status: Watch</span>
       </div>
 
@@ -139,59 +161,60 @@
       </div>
 
       <div class="metric-card">
-        <div class="metric-label">Ocean Area Monitored</div>
+        <div class="metric-label">Area Monitored</div>
         <div class="metric-value" id="valArea">0</div>
-        <div class="metric-unit">km² covered by your observations & maps</div>
+        <div class="metric-unit">km² of lakes, rivers & coastal zones</div>
         <span class="metric-chip chip-ok" id="chipArea">Expanding coverage</span>
       </div>
     </section>
 
-    <!-- Water trends + SDG explanation -->
+    <!-- WATER TREND + SDG TEXT -->
     <section class="grid-2">
       <div class="card">
         <h3>Water Quality Trend</h3>
-        <p>Shows how average conditions at your lakes are changing over time.</p>
+        <p style="font-size:13px;color:var(--muted);">
+          Engineering view of average temperature and turbidity across your sites. When both stay in the green band, ecosystems downstream are more resilient (SDG 14.2).[web:80]
+        </p>
         <canvas id="waterChart" height="140"></canvas>
       </div>
 
       <div class="card">
-        <h3>SDG 14 Targets</h3>
-        <p>This project contributes to several Life Below Water targets by reducing plastic leakage, improving local water quality, and raising student awareness.</p>
+        <h3>SDG 14 Targets Linked to This Project</h3>
+        <p style="font-size:13px;color:var(--muted);">
+          Your data connects directly to official SDG 14 targets used by the UN.[web:79][web:89]
+        </p>
         <div class="sdg-tags">
-          <span class="sdg-tag">14.1 Marine Pollution</span>
-          <span class="sdg-tag">14.2 Ecosystem Health</span>
+          <span class="sdg-tag">14.1 Reduce Marine Pollution</span>
+          <span class="sdg-tag">14.2 Protect Ecosystems</span>
           <span class="sdg-tag">14.3 Ocean Acidification</span>
-          <span class="sdg-tag">14.5 Conservation Awareness</span>
         </div>
-        <div style="margin-top:10px;font-size:12px;color:var(--muted);">
-          Today’s SDG‑14 status:
-          <div class="analysis-box" id="sdgAnalysis">
-            Loading short SDG analysis...
-          </div>
+        <div class="analysis-box" id="sdgAnalysis">
+          Loading SDG summary...
         </div>
       </div>
     </section>
 
-    <!-- Plastic pollution + marine life -->
+    <!-- PLASTIC POLLUTION + MARINE LIFE -->
     <section class="grid-2">
       <div class="card">
         <h3>Plastic Debris Density (SDG 14.1.1b)</h3>
-        <p>Plastic items per 100 m of shoreline from student clean‑up surveys.</p>
+        <p style="font-size:13px;color:var(--muted);">
+          Plastic items per 100 m of shoreline from student clean‑up and survey transects — a school‑level version of the UN plastic debris density indicator.[web:89][web:91]
+        </p>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;font-size:12px;">
           <label for="pollutionSiteSelect">Site:</label>
           <select id="pollutionSiteSelect"></select>
         </div>
         <canvas id="pollutionChart" height="150"></canvas>
-        <p style="font-size:11px;color:var(--muted);margin-top:6px;">
-          UN SDG 14.1.1b uses plastic debris density to track progress on reducing marine pollution.[web:89][web:90]
+        <p style="font-size:11px;color:var(--muted);margin-top:4px;">
+          If this line trends downward, your students are successfully reducing shoreline plastic and advancing SDG 14.1.[web:80][web:89]
         </p>
       </div>
 
       <div class="card">
-        <h3>Marine Life & Coral Health</h3>
-        <p>Your local plastic and water‑quality data can be linked to stress on fish, corals and other species in downstream rivers and the Bay of Bengal.</p>
-        <p style="font-size:12px;color:var(--muted);">
-          This panel can later connect to IUCN Red List information and show how many threatened species might benefit when plastic and pollution are reduced.
+        <h3>Marine Life & Coral Health View</h3>
+        <p style="font-size:13px;color:var(--muted);">
+          As a marine engineer, you would combine water‑quality signals and plastic loads to estimate stress on fish, invertebrates and coral habitats downstream.
         </p>
         <div class="analysis-box" id="lifeAnalysis">
           Waiting for latest samples...
@@ -199,18 +222,59 @@
       </div>
     </section>
 
-    <!-- SDG progress doughnut -->
+    <!-- SDG PROGRESS + STUDENT ACTION LOG -->
     <section class="grid-2">
       <div class="card">
-        <h3>Your Contribution to SDG 14</h3>
-        <p>A simple progress estimate towards your own 2030 goals.</p>
+        <h3>Your Contribution to SDG 14 (2030 Path)</h3>
+        <p style="font-size:13px;color:var(--muted);">
+          Composite progress indicator combining pollution reduction, water quality, and community engagement.
+        </p>
         <canvas id="progressChart" height="130"></canvas>
       </div>
+
+      <div class="card">
+        <h3>Recent Student SDG Actions</h3>
+        <p style="font-size:13px;color:var(--muted);">
+          Each shoreline survey or clean‑up added to the database is counted as an SDG 14 action.
+        </p>
+        <table id="actionsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Site</th>
+              <th>Plastic items / 100 m</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- STORY SECTION -->
+    <section class="card" style="margin-top:18px;">
+      <h3>How to Read This Console (Teacher Script)</h3>
+      <p style="font-size:13px;color:var(--muted);white-space:pre-line;">
+This dashboard turns student measurements into SDG 14 indicators:
+
+• SDG 14.1 – Reduce marine pollution:
+  – Plastic debris density from shoreline surveys (chart: Plastic Debris Density).
+  – Turbidity trends from water samples (chart: Water Quality Trend).[web:89][web:90]
+
+• SDG 14.2 – Protect and restore ecosystems:
+  – Percentage of samples within safe pH, temperature and turbidity ranges.
+  – Area of lakes / rivers monitored by students.
+
+• SDG 14.3 – Ocean acidification and climate:
+  – pH readings from local waters, used to discuss global ocean acidification.[web:79][web:110]
+
+When students see the pollution line fall and the SDG scores rise, they know their actions
+(clean‑ups, data collection, awareness campaigns) are truly helping life below water.
+      </p>
     </section>
   </main>
 
   <footer>
-    SDG 14 dashboard powered by Vercel · Supabase · Planet · AI Assist
+    SDG 14 impact console powered by Vercel · Supabase · Classroom SDG data
   </footer>
 
   <script>
@@ -221,6 +285,7 @@
     let pollutionChart = null;
     let pollutionData = [];
     let pollutionSites = [];
+    window.__samples__ = [];
 
     // Utility easing counter
     function animateValue(el, start, end, duration, suffix=""){
@@ -259,7 +324,7 @@
       }
     }
 
-    // Simple SDG metrics derived from samples
+    // SDG metrics from samples
     function computeSdgMetrics(samples){
       const totalSamples = samples.length;
       if(totalSamples === 0){
@@ -297,6 +362,33 @@
       const sdgProgress = Math.round((plasticScore*0.4 + waterScore*0.3 + communityScore*0.3));
 
       return {plasticKg, waterImprovement, communityCount, areaKm2, sdgProgress};
+    }
+
+    // Sub‑scores for 14.1 / 14.2 / 14.3
+    function computeSdgSubScores(metrics){
+      let pollutionScore = 70;
+      if (pollutionData.length) {
+        const last = pollutionData[pollutionData.length - 1].items_per_100m;
+        pollutionScore = Math.max(0, 100 - last * 2);
+      }
+
+      const ecosystemScore = metrics.waterImprovement;
+
+      const goodPhSamples = window.__samples__.filter(s => {
+        const ph = Number(s.ph || 0);
+        return ph >= 7.9 && ph <= 8.2;
+      }).length;
+      const phScore = window.__samples__.length
+        ? Math.round((goodPhSamples / window.__samples__.length) * 100)
+        : 0;
+
+      return { pollutionScore, ecosystemScore, phScore };
+    }
+
+    function renderScorecard(scores){
+      document.getElementById('score141').textContent = scores.pollutionScore + '%';
+      document.getElementById('score142').textContent = scores.ecosystemScore + '%';
+      document.getElementById('score143').textContent = scores.phScore + '%';
     }
 
     function renderMetrics(metrics){
@@ -476,42 +568,49 @@
       });
     }
 
+    function renderActionsTable(){
+      const tbody = document.querySelector('#actionsTable tbody');
+      if (!tbody || !pollutionData.length) return;
+
+      const last5 = pollutionData.slice(-5).reverse();
+      tbody.innerHTML = last5.map(d => `
+        <tr>
+          <td>${new Date(d.date).toLocaleDateString()}</td>
+          <td>${d.site}</td>
+          <td>${d.items_per_100m.toFixed(1)} items / 100 m</td>
+        </tr>
+      `).join('');
+    }
+
     function writeSdgAnalysis(samples, metrics){
       const box = document.getElementById("sdgAnalysis");
       if(samples.length === 0){
         box.textContent =
 `No field data has been logged yet.
 
-Once students start adding water‑quality samples and plastic observations, this panel will summarise how your project supports:
-• SDG 14.1 – reducing plastic and pollution entering rivers;
+Once students start adding water‑quality samples and plastic observations, this console will summarise how your project supports:
+• SDG 14.1 – reducing plastic and nutrient pollution entering rivers;
 • SDG 14.2 – protecting local freshwater and coastal ecosystems;
-• SDG 14.3 – tracking pH to watch for acidification trends.`;
+• SDG 14.3 – tracking pH to discuss ocean acidification.`;
         return;
       }
 
       const lines = [];
       lines.push(`Plastic prevented so far (school estimate): ~${Math.round(metrics.plasticKg)} kg.`);
-      lines.push(`Approximate water‑quality readings in safe range: ${Math.round(metrics.waterImprovement)}% of recent samples.`);
-      lines.push(`Estimated students and volunteers engaged: ~${Math.round(metrics.communityCount)} people.`);
+      lines.push(`Samples inside safe water‑quality range: ${Math.round(metrics.waterImprovement)}% of recent readings.`);
+      lines.push(`Estimated learners involved: ~${Math.round(metrics.communityCount)} students & volunteers.`);
       lines.push("");
-      lines.push("This work directly supports SDG 14.1 by lowering plastic leakage and visible litter in local waterways (plastic debris density indicator).");
-      lines.push("Improving and tracking water quality supports SDG 14.2 on protecting aquatic ecosystems, because cleaner water benefits fish and wetlands downstream.");
-      lines.push("By watching pH trends you also connect to SDG 14.3 on ocean acidification, using local measurements to understand chemistry changes.");
+      lines.push("These actions support SDG 14.1 by lowering plastic debris density and turbidity in local waters (UN indicator 14.1.1b).");
+      lines.push("Cleaner, more stable water quality helps restore and protect ecosystems, contributing to SDG 14.2.");
+      lines.push("pH trends from your sensors are a classroom‑scale way to explore SDG 14.3 on ocean acidification and climate change.");
       box.textContent = lines.join("\n");
-
-      // If we have pollution data, append latest value
-      if(pollutionData.length){
-        const latest = pollutionData[pollutionData.length - 1];
-        const lastVal = latest.items_per_100m.toFixed(1);
-        box.textContent += `\n\nLatest shoreline survey at ${latest.site} recorded about ${lastVal} plastic items per 100 m. Repeated clean‑ups should gradually push this SDG 14.1.1b indicator downwards.`;
-      }
     }
 
     function renderLifeAnalysis(samples){
       const box = document.getElementById("lifeAnalysis");
       if(samples.length === 0){
         box.textContent =
-" No samples yet. Once water quality data is available, this panel can highlight possible stress on fish, invertebrates and coral reefs downstream.";
+" No samples yet. When data arrives, this panel will highlight possible stress on fish, invertebrates and coral reefs downstream, using marine‑engineering style reasoning (temperature + turbidity + plastic loads).";
         return;
       }
       const latest = samples[0];
@@ -519,11 +618,10 @@ Once students start adding water‑quality samples and plastic observations, thi
       lines.push(`Latest sample: ${new Date(latest.recorded_at).toLocaleString()} from ${latest.location || "unknown site"}.`);
       lines.push(`pH: ${Number(latest.ph || 0).toFixed(2)}, temperature: ${Number(latest.temperature || 0).toFixed(1)} °C, turbidity: ${Number(latest.turbidity || 0).toFixed(2)} NTU.`);
       lines.push("");
-      lines.push("If turbidity and plastic stay low, habitats downstream (rivers, estuaries and the Bay of Bengal) are more likely to support healthy fish and invertebrate populations. Linking this dashboard with Red List data will show which threatened species benefit when your SDG‑14 actions succeed.");
+      lines.push("High turbidity or persistent plastic inputs can reduce light reaching aquatic plants, clog fish gills and introduce toxic additives, increasing risk for sensitive species. When these indicators move back into the safe zone, habitats in rivers, estuaries and the Bay of Bengal are more likely to recover.");
       box.textContent = lines.join("\n");
     }
 
-    // Dropdown change handler
     document.addEventListener("change", e => {
       if(e.target.id === "pollutionSiteSelect"){
         renderPollutionChart(e.target.value);
@@ -532,6 +630,7 @@ Once students start adding water‑quality samples and plastic observations, thi
 
     (async function init(){
       const samples = await fetchLatestSamples(60);
+      window.__samples__ = samples;
       const metrics = computeSdgMetrics(samples);
       renderMetrics(metrics);
       renderWaterChart(samples);
@@ -541,9 +640,13 @@ Once students start adding water‑quality samples and plastic observations, thi
       populateSiteDropdown();
       const defaultSite = pollutionSites[0] || null;
       renderPollutionChart(defaultSite);
+      renderActionsTable();
 
       writeSdgAnalysis(samples, metrics);
       renderLifeAnalysis(samples);
+
+      const subScores = computeSdgSubScores(metrics);
+      renderScorecard(subScores);
     })();
   </script>
 </body>
