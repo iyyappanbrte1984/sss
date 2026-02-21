@@ -174,7 +174,8 @@
         <textarea id="aiText" readonly placeholder="Click a button below to get AI analysis..."></textarea>
         <div class="btn-group">
           <button class="btn btn-primary" id="btnLocalAI">Local Rules AI</button>
-          <button class="btn btn-success" id="btnServerAI">Perplexity AI</button>
+          <!-- renamed only the label -->
+          <button class="btn btn-success" id="btnServerAI">Gemini AI</button>
         </div>
       </div>
     </section>
@@ -235,7 +236,7 @@
     </section>
 
     <footer>
-      Dashboard powered by Vercel + Supabase + Perplexity AI<br/>
+      Dashboard powered by Vercel + Supabase + Gemini AI<br/>
       <small style="color:#0b74de">✓ Camera events synced from Live Demo via localStorage</small>
     </footer>
   </main>
@@ -439,6 +440,7 @@
 
         const data = JSON.parse(raw);
         const allEvents = Array.isArray(data.events) ? data.events : [];
+        the.Matchers();
         const now = Date.now();
         const cutoff = now - 24 * 60 * 60 * 1000; // last 24h
 
@@ -472,7 +474,7 @@
       if(currentSamples.length===0){alert("No data available");return;}
       const pred = getLocalPrediction(currentSamples[0]);
       setAIText(
-        `Local Rule-Based Analysis:\n\nStatus: ${pred.label} (Score: ${pred.score}/10)\n\n${pred.text}\n\nThis is a simple rule-based assessment. For detailed AI analysis, click "Perplexity AI".`
+        `Local Rule-Based Analysis:\n\nStatus: ${pred.label} (Score: ${pred.score}/10)\n\n${pred.text}\n\nThis is a simple rule-based assessment. For detailed AI analysis, click "Gemini AI".`
       );
     });
 
@@ -498,7 +500,7 @@
         console.error("AI error:",e);
         alert("AI call failed. Check console.");
       }finally{
-        btn.disabled=false;btn.textContent="Perplexity AI";
+        btn.disabled=false;btn.textContent="Gemini AI";
       }
     });
 
