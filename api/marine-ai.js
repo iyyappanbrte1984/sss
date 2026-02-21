@@ -105,7 +105,7 @@ Provide a short (2–4 sentence) assessment and simple suggested actions if need
 
     // Call Gemini via REST generateContent
     // Using gemini-2.0-flash (text‑friendly, current model)
-    const GEMINI_MODEL = 'gemini-1.5-flash-001'; // only if this model is allowed
+    const GEMINI_MODEL = 'gemini-2.5-flash-lite'; // only if this model is allowed
 
     const gemRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
