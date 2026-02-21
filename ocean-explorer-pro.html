@@ -284,9 +284,9 @@
     <a href="ocean-explorer.html">Ocean Explorer</a>
     <a href="ocean-explorer-pro.html">Ocean Explorer Pro</a>
     <a href="pollution-pathways.html">Pollution Pathways</a>
-    <a href="biodiversity-awareness.html">Red List & Self‑Assessment</a>
-    <a href="sdg-dashboard.html">SDG & Biodiversity</a>
-    <a href="presentation-mode.html">Presentation Mode</a>   
+    <a href="biodiversity-awareness.html">Red List &amp; Self‑Assessment</a>
+    <a href="sdg-dashboard.html">SDG &amp; Biodiversity</a>
+    <a href="presentation-mode.html">Presentation Mode</a>
   </nav>
 
   <header class="hero-header">
@@ -488,6 +488,12 @@
     }).addTo(map);
 
     // NASA GIBS layers
+    function getGibsDateString(daysAgo) {
+      const d = new Date();
+      d.setDate(d.getDate() - daysAgo);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
     const nasaChlLayer = L.tileLayer(
       'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_Chlorophyll_A/default/{time}/{tilematrixset}/{z}/{y}/{x}.png',
       {
@@ -523,12 +529,6 @@
     const turbLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{opacity: 0.35});
     const mpaLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{opacity: 0.25});
 
-    function getGibsDateString(daysAgo) {
-      const d = new Date();
-      d.setDate(d.getDate() - daysAgo);
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-
     function setupLayerToggle(id, layer) {
       document.getElementById(id).addEventListener('change', (e) => {
         e.target.checked ? layer.addTo(map) : map.removeLayer(layer);
@@ -553,9 +553,9 @@
       const d = new Date();
       d.setDate(d.getDate() - daysAgo);
       const formatted = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
-      
-      dateLabel.textContent = daysAgo === 0 ? `Today (${formatted})` : 
-                              daysAgo === 1 ? `1 day ago (${formatted})` : 
+
+      dateLabel.textContent = daysAgo === 0 ? `Today (${formatted})` :
+                              daysAgo === 1 ? `1 day ago (${formatted})` :
                               `${daysAgo} days ago (${formatted})`;
 
       const gibsDate = getGibsDateString(daysAgo);
@@ -564,6 +564,8 @@
           map.removeLayer(layer);
           layer.options.time = gibsDate;
           layer.addTo(map);
+        } else {
+          layer.options.time = gibsDate;
         }
       });
     }
@@ -573,7 +575,7 @@
 
     // Health badge
     function updateHealthBadge() {
-      const score = 
+      const score =
         (document.getElementById('layerNasaSst').checked || document.getElementById('layerNoaaSst').checked ? 1 : 0) +
         (document.getElementById('layerPlastic').checked ? 2 : 0) +
         (document.getElementById('layerTurb').checked ? 1 : 0);
@@ -595,12 +597,12 @@
     map.on('click', function(e) {
       const lat = e.latlng.lat.toFixed(4);
       const lng = e.latlng.lng.toFixed(4);
-      
+
       const layers = [];
       if (document.getElementById('layerNasaChl').checked) layers.push('High chlorophyll');
       if (document.getElementById('layerNasaSst').checked) layers.push('Elevated SST');
-      
-      let text = layers.length === 0 ? 
+
+      let text = layers.length === 0 ?
         'Enable satellite layers to see conditions.' :
         `<strong>AI Ocean Analysis</strong><br/>Location: ${lat}°N, ${lng}°E<br/>Indicators: ${layers.join(', ')}<br/><br/>🔬 PACE hyperspectral analysis available below!`;
 
@@ -617,7 +619,7 @@
         title: 'Phytoplankton Species Detection',
         content: `
           <p><strong>PACE's Ocean Color Instrument (OCI) is revolutionary</strong> because it measures 200+ continuous wavelengths from 340-890 nanometers — like having super-powered color vision!</p>
-          
+
           <div class="ai-metrics-grid">
             <div class="ai-metric-card">
               <div class="ai-metric-value">200+</div>
@@ -787,7 +789,7 @@
         source: 'Coastal Ocean Optics • PACE Validation Studies'
       },
       climate: {
-        title: 'PACE's Critical Climate Role',
+        title: "PACE's Critical Climate Role",
         content: `
           <p><strong>PACE is NASA's "missing link" for understanding ocean-atmosphere-climate connections.</strong> Oceans drive 50% of climate regulation!</p>
 
@@ -833,9 +835,9 @@
       card.addEventListener('click', function() {
         const question = this.dataset.question;
         const response = aiResponses[question];
-        
+
         const aiArea = document.getElementById('aiResponseArea');
-        
+
         // Show loading state
         aiArea.innerHTML = `
           <div class="ai-thinking">
