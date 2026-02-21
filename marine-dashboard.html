@@ -417,7 +417,7 @@
     }
 
     // NEW: Load camera events from localStorage
-    function loadCameraEventsFromLocal() {
+        function loadCameraEventsFromLocal() {
       const statusEl = document.getElementById('cameraSummaryText');
       const fishEl   = document.getElementById('camFishCount');
       const trashEl  = document.getElementById('camTrashCount');
@@ -440,7 +440,6 @@
 
         const data = JSON.parse(raw);
         const allEvents = Array.isArray(data.events) ? data.events : [];
-        the.Matchers();
         const now = Date.now();
         const cutoff = now - 24 * 60 * 60 * 1000; // last 24h
 
